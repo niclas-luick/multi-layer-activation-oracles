@@ -24,6 +24,10 @@ dependencies = [
     "numpy",
     "transformers==4.51.1",
     "vllm>=0.9.1",
+    "slist",
+    "anthropic",
+    "tenacity",
+    "rapidfuzz"
 ]
 
 [build-system]
