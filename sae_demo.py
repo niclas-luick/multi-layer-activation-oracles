@@ -159,6 +159,7 @@ def get_activation_addition_output_hook(
 
     def hook_fn(module, input, output):
         resid_BLD, *rest = output if isinstance(output, tuple) else (output,)
+        resid_BLD = resid_BLD.clone()
 
         if resid_BLD.shape[1] > 1:
             for i, (vector, coeff, position) in enumerate(
@@ -259,6 +260,10 @@ pos_input = "What do we know?"
 neg_input = "We don't know anything."
 
 feature_idx = 5318
+feature_idx = 14070
+
+pos_input = "The function of the machine is unknown."
+neg_input = "The machine is old."
 
 encoded_pos_acts_BLF, encoded_neg_acts_BLF = get_paired_activations(
     model, submodule, sae, pos_input, neg_input, feature_idx
@@ -274,7 +279,7 @@ def few_shot_input(
 ) -> tuple[torch.Tensor, list[int]]:
     assert len(demo_idxs) == len(demo_inputs)
 
-    question = "Can you write me a sentence that relates to the word 'X'?"
+    question = "Can you write me a sentence that relates to the word 'X' and a similar sentence that does not relate to the word?"
 
     messages = []
     for demo_idx, demo_input in zip(demo_idxs, demo_inputs):
@@ -287,7 +292,7 @@ def few_shot_input(
         messages.append(
             {
                 "role": "assistant",
-                "content": f"A sentence that relates to the word is: {demo_input}",
+                "content": f"A sentence that relates to the word is: {demo_input[0]}\n\nA similar sentence that does not relate to the word is: {demo_input[1]}\n\n Explanation: {demo_input[2]}",
             }
         )
 
@@ -326,7 +331,17 @@ def few_shot_input(
 
 
 demo_idxs = [1835, 5318]
-demo_inputs = ["I traveled back in time.", "What do we know?"]
+demo_inputs = [
+    (
+        "I traveled back in time.",
+        "I traveled to Paris.",
+        "The word relates to time travel.",
+    ),
+    ("What do we know?", "We know.", "The word relates to questions."),
+]
+
+# demo_idxs = [1835]
+# demo_inputs = [("I traveled back in time.", "I traveled to Paris.")]
 
 input, positions = few_shot_input(demo_idxs, demo_inputs, tokenizer)
 
@@ -336,7 +351,7 @@ print(positions)
 
 new_feature_idx = 6941
 new_feature_idx = 7159
-new_feature_idx = 14070
+# new_feature_idx = 14070
 
 all_features = [sae.W_enc[:, i] for i in demo_idxs]
 all_features.append(sae.W_enc[:, new_feature_idx])
@@ -352,7 +367,7 @@ hook_fn = get_activation_addition_output_hook(
 context_manager = add_hook(submodule, hook_fn)
 
 with context_manager:
-    output = model.generate(input["input_ids"], **generation_kwargs)
+    output = model.generate(input["input_ids"], **generation_kwargs, max_new_tokens=200)
 
 print(tokenizer.decode(output[0]))
 
