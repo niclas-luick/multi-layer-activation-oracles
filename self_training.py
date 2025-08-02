@@ -7,7 +7,12 @@ import contextlib
 from typing import Callable, List, Dict, Tuple, Optional, Any
 from jaxtyping import Float
 from torch import Tensor
-from transformers import AutoModelForCausalLM, AutoTokenizer, PreTrainedTokenizer
+from transformers import (
+    AutoModelForCausalLM,
+    AutoTokenizer,
+    PreTrainedTokenizer,
+    get_linear_schedule_with_warmup,
+)
 import pickle
 from dataclasses import dataclass, field, asdict
 import einops
@@ -93,8 +98,14 @@ def load_sae_and_model(
 ) -> Tuple[AutoModelForCausalLM, AutoTokenizer, jumprelu_sae.JumpReluSAE]:
     """Loads the model, tokenizer, and SAE from Hugging Face."""
     print(f"Loading model: {cfg.model_name}...")
+
+    attn_kwargs = {}
+
+    if cfg.model_name == "google/gemma-2-9b-it":
+        attn_kwargs = {"attn_implementation": "eager"}
+
     model = AutoModelForCausalLM.from_pretrained(
-        cfg.model_name, device_map="auto", torch_dtype=dtype
+        cfg.model_name, device_map="auto", torch_dtype=dtype, **attn_kwargs
     )
 
     if cfg.use_lora:
@@ -808,9 +819,9 @@ def train_model(
     use_wandb: bool = True,
 ):
     num_epochs = 1
-    lr = 1e-5
+    lr = 5e-6
     max_grad_norm = 1.0
-    eval_interval = 250
+    eval_interval = 100
     wandb_project = "sae_introspection"
     run_name = f"{cfg.model_name}-layer{cfg.sae_layer}"
 
@@ -819,6 +830,15 @@ def train_model(
 
     model.train()
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
+
+    total_training_steps = num_epochs * len(training_data)
+    warmup_steps = int(0.1 * total_training_steps)  # 10 % warm-up
+    scheduler = get_linear_schedule_with_warmup(
+        optimizer,
+        num_warmup_steps=warmup_steps,
+        num_training_steps=total_training_steps,
+    )
+    # --------------------------------------------------------------
 
     global_step = 0
 
@@ -829,10 +849,17 @@ def train_model(
             loss.backward()
             clip_grad_norm_(model.parameters(), max_grad_norm)
             optimizer.step()
+            scheduler.step()
             optimizer.zero_grad()
 
             if use_wandb:
-                wandb.log({"train/loss": loss.item()}, step=global_step)
+                wandb.log(
+                    {
+                        "train/loss": loss.item(),
+                        "train/learning_rate": scheduler.get_last_lr()[0],
+                    },
+                    step=global_step,
+                )
             if verbose:
                 print(f"Step {global_step} loss: {loss.item()}")
 
