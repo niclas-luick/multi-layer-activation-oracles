@@ -75,6 +75,9 @@ class SelfInterpTrainingConfig:
     lora_dropout: float = 0.05
     lora_target_modules: str = "all-linear"
 
+    save_steps: int = 1000
+    save_dir: str = "checkpoints"
+
     def __post_init__(self):
         """Called after the dataclass is initialized."""
         self.sae_filename = f"layer_{self.sae_layer}/width_16k/average_l0_88/params.npz"
@@ -395,82 +398,14 @@ def collect_training_examples(
     return examples
 
 
-# %%
-
-"""Main script logic."""
-cfg = SelfInterpTrainingConfig()
-
-cfg.eval_set_size = 10
-cfg.steering_coefficient = 2.0
-cfg.batch_size = 4
-verbose = True
-
-# %%
-print(asdict(cfg))
-dtype = torch.bfloat16
-device = torch.device("cuda")
-
-model, tokenizer, sae = load_sae_and_model(cfg, dtype, device)
-submodule = model_utils.get_submodule(model, cfg.sae_layer)
-
-# %%
-
-api_data_filename = cfg.training_data_filename
-
-with open(api_data_filename, "rb") as f:
-    api_data = pickle.load(f)
-
-# %%
-
-max_activation = 0
-
-for feature_result in api_data["results"]:
-    for sentence_data in feature_result["sentence_data"]:
-        max_activation = max(max_activation, sentence_data["original_max_activation"])
-
-print(f"Max activation: {max_activation}")
-
-cfg.max_activation_required = cfg.max_activation_percentage_required * max_activation
-
-
-training_examples = collect_training_examples(
-    api_data,
-    cfg.max_acts_ratio_threshold,
-    cfg.max_distance_threshold,
-    cfg.max_activation_required,
-)
-
-train_features = set()
-
-for example in training_examples:
-    train_features.add(example["feature_idx"])
-
-test_features = set()
-
-for example in api_data["results"]:
-    if example["feature_idx"] not in train_features:
-        test_features.add(example["feature_idx"])
-
-print(f"train examples: {len(training_examples)}")
-print(f"Train features: {len(train_features)}, Test features: {len(test_features)}")
-
-cfg.eval_features = list(test_features)[: cfg.eval_set_size]
-
-assert len(cfg.eval_features) == cfg.eval_set_size
-
-# %%
-
-print(training_examples[0].keys())
-
-# %%
-
-
 def construct_train_dataset(
     cfg: SelfInterpTrainingConfig,
     dataset_size: int,
     input_prompt: str,
     training_examples: list[dict],
     sae: jumprelu_sae.JumpReluSAE,
+    tokenizer: PreTrainedTokenizer,
+    device: torch.device,
 ) -> list[dict]:
     cur = 0
 
@@ -488,7 +423,8 @@ def construct_train_dataset(
 
     training_data = []
 
-    while cur < len(train_features):
+    # TODO: double check this
+    while cur < dataset_size:
         all_conversations = []
 
         max_length = 0
@@ -598,6 +534,8 @@ def construct_eval_dataset(
     input_prompt: str,
     eval_feature_indices: list[int],
     sae: jumprelu_sae.JumpReluSAE,
+    tokenizer: PreTrainedTokenizer,
+    device: torch.device,
 ) -> list[dict]:
     """Every prompt is exactly the same - the only difference is the steering vectors."""
     cur = 0
@@ -612,7 +550,9 @@ def construct_eval_dataset(
         padding=False,
         enable_thinking=False,
     )
-    input_prompt_ids = torch.tensor(input_prompt_ids, dtype=torch.long).to(device)
+    input_prompt_ids = (
+        torch.tensor(input_prompt_ids, dtype=torch.long).to(device).squeeze()
+    )
     labels = input_prompt_ids.clone()
     attn_mask = torch.ones_like(input_prompt_ids, dtype=torch.bool).to(device)
 
@@ -659,9 +599,9 @@ def construct_eval_dataset(
 
             cur += 1
 
-        input_ids = torch.stack(batch_tokens)
-        labels = torch.stack(batch_labels)
-        attn_mask = torch.stack(batch_attn_masks)
+        batch_input_ids = torch.stack(batch_tokens)
+        batch_labels = torch.stack(batch_labels)
+        batch_attn_mask = torch.stack(batch_attn_masks)
 
         first_position = batch_positions[0][0]
 
@@ -671,9 +611,9 @@ def construct_eval_dataset(
             )
 
         eval_batch = {
-            "input_ids": input_ids,
-            "labels": labels,
-            "attention_mask": attn_mask,
+            "input_ids": batch_input_ids,
+            "labels": batch_labels,
+            "attention_mask": batch_attn_mask,
             "steering_vectors": batch_steering_vectors,
             "positions": batch_positions,
             "feature_indices": batch_feature_indices,
@@ -682,24 +622,6 @@ def construct_eval_dataset(
         eval_data.append(eval_batch)
 
     return eval_data
-
-
-# %%
-
-
-orig_input_ids, orig_positions = build_training_prompt(tokenizer, device)
-orig_input_ids = orig_input_ids.squeeze()
-train_eval_prompt = tokenizer.decode(orig_input_ids)
-
-training_data = construct_train_dataset(
-    cfg, len(training_examples), train_eval_prompt, training_examples, sae
-)
-
-eval_data = construct_eval_dataset(
-    cfg, cfg.eval_set_size, train_eval_prompt, cfg.eval_features, sae
-)
-
-# %%
 
 
 def train_batch(
@@ -737,12 +659,14 @@ def train_batch(
     return loss
 
 
+@torch.no_grad()
 def eval_batch(
     cfg: SelfInterpTrainingConfig,
     eval_batch: dict,
     model: AutoModelForCausalLM,
     submodule: torch.nn.Module,
     sae: jumprelu_sae.JumpReluSAE,
+    tokenizer: PreTrainedTokenizer,
     device: torch.device,
     dtype: torch.dtype,
 ) -> dict:
@@ -811,7 +735,6 @@ def eval_batch(
     for i, output in enumerate(decoded_output):
         feature_result = {
             "feature_idx": eval_batch["feature_indices"][i],
-            "api_prompt": train_eval_prompt,
             "api_response": output,
             "explanation": explanations[i],
             "sentence_data": [],
@@ -871,10 +794,13 @@ def train_model(
     training_data: list[dict],
     eval_data: list[dict],
     model: AutoModelForCausalLM,
+    tokenizer: PreTrainedTokenizer,
     submodule: torch.nn.Module,
     sae: jumprelu_sae.JumpReluSAE,
     device: torch.device,
     dtype: torch.dtype,
+    verbose: bool = False,
+    use_wandb: bool = True,
 ):
     num_epochs = 1
     lr = 1e-5
@@ -883,7 +809,8 @@ def train_model(
     wandb_project = "sae_introspection"
     run_name = f"{cfg.model_name}-layer{cfg.sae_layer}-itcp"
 
-    wandb.init(project=wandb_project, name=run_name, config=asdict(cfg))
+    if use_wandb:
+        wandb.init(project=wandb_project, name=run_name, config=asdict(cfg))
 
     model.train()
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
@@ -892,23 +819,33 @@ def train_model(
 
     for epoch in range(num_epochs):
         pbar = tqdm(training_data, desc=f"Epoch {epoch + 1}")
-        for batch_idx, batch in enumerate(pbar):
-            loss = train_batch(cfg, batch, model, submodule, device, dtype)
+        for batch_idx, t_batch in enumerate(pbar):
+            loss = train_batch(cfg, t_batch, model, submodule, device, dtype)
             loss.backward()
             clip_grad_norm_(model.parameters(), max_grad_norm)
             optimizer.step()
             optimizer.zero_grad()
 
-            wandb.log({"train/loss": loss.item(), "step": global_step})
+            if use_wandb:
+                wandb.log({"train/loss": loss.item()}, step=global_step)
+            if verbose:
+                print(f"Step {global_step} loss: {loss.item()}")
 
             # -------------------------------- evaluation --------------------------------
             if global_step % eval_interval == 0:
                 model.eval()
                 with torch.no_grad():
                     all_sentence_metrics = []
-                    for e_batch in eval_data:
+                    for e_batch in tqdm(eval_data, desc="Evaluating model"):
                         feature_results = eval_batch(
-                            cfg, e_batch, model, submodule, sae, device, dtype
+                            cfg=cfg,
+                            eval_batch=e_batch,
+                            model=model,
+                            submodule=submodule,
+                            sae=sae,
+                            tokenizer=tokenizer,
+                            device=device,
+                            dtype=dtype,
                         )
                         for res in feature_results:
                             all_sentence_metrics.extend(res["sentence_metrics"])
@@ -925,10 +862,135 @@ def train_model(
                         wandb_log_dict = {
                             f"eval/{k}": v for k, v in aggregated_metrics.items()
                         }
-                        wandb.log(wandb_log_dict, step=global_step)
+
+                        if use_wandb:
+                            wandb.log(wandb_log_dict, step=global_step)
+                        if verbose:
+                            print(
+                                f"Step {global_step} eval metrics: {aggregated_metrics}"
+                            )
 
                 model.train()
+
+            if global_step % cfg.save_steps == 0:
+                model.save_pretrained(f"{cfg.save_dir}/step_{global_step}")
+
             global_step += 1
 
     print("Training complete.")
     wandb.finish()
+
+
+def main():
+    """Main script logic."""
+    cfg = SelfInterpTrainingConfig()
+
+    cfg.eval_set_size = 10
+    cfg.steering_coefficient = 2.0
+    cfg.batch_size = 4
+    verbose = True
+
+    # %%
+    print(asdict(cfg))
+    dtype = torch.bfloat16
+    device = torch.device("cuda")
+
+    model, tokenizer, sae = load_sae_and_model(cfg, dtype, device)
+    submodule = model_utils.get_submodule(model, cfg.sae_layer, cfg.use_lora)
+
+    # %%
+
+    api_data_filename = cfg.training_data_filename
+
+    with open(api_data_filename, "rb") as f:
+        api_data = pickle.load(f)
+
+    # %%
+
+    max_activation = 0
+
+    for feature_result in api_data["results"]:
+        for sentence_data in feature_result["sentence_data"]:
+            max_activation = max(
+                max_activation, sentence_data["original_max_activation"]
+            )
+
+    print(f"Max activation: {max_activation}")
+
+    cfg.max_activation_required = (
+        cfg.max_activation_percentage_required * max_activation
+    )
+
+    training_examples = collect_training_examples(
+        api_data,
+        cfg.max_acts_ratio_threshold,
+        cfg.max_distance_threshold,
+        cfg.max_activation_required,
+    )
+
+    train_features = set()
+
+    for example in training_examples:
+        train_features.add(example["feature_idx"])
+
+    test_features = set()
+
+    for example in api_data["results"]:
+        if example["feature_idx"] not in train_features:
+            test_features.add(example["feature_idx"])
+
+    print(f"train examples: {len(training_examples)}")
+    print(f"Train features: {len(train_features)}, Test features: {len(test_features)}")
+
+    cfg.eval_features = list(test_features)[: cfg.eval_set_size]
+
+    assert len(cfg.eval_features) == cfg.eval_set_size
+
+    orig_input_ids, orig_positions = build_training_prompt(tokenizer, device)
+    orig_input_ids = orig_input_ids.squeeze()
+    train_eval_prompt = tokenizer.decode(orig_input_ids)
+
+    training_data = construct_train_dataset(
+        cfg,
+        len(training_examples),
+        train_eval_prompt,
+        training_examples,
+        sae,
+        tokenizer,
+        device,
+    )
+
+    eval_data = construct_eval_dataset(
+        cfg,
+        cfg.eval_set_size,
+        train_eval_prompt,
+        cfg.eval_features,
+        sae,
+        tokenizer,
+        device,
+    )
+
+    # %%
+
+    print(f"training data: {len(training_data)}, eval data: {len(eval_data)}")
+
+    temp_training_data = training_data[:300]
+    temp_eval_data = eval_data[:3]
+
+    train_model(
+        cfg,
+        temp_training_data,
+        temp_eval_data,
+        model,
+        tokenizer,
+        submodule,
+        sae,
+        device,
+        dtype,
+        verbose=True,
+        use_wandb=True,
+    )
+
+
+if __name__ == "__main__":
+    main()
