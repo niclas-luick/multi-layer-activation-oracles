@@ -28,117 +28,12 @@ import gc
 import interp_tools.saes.jumprelu_sae as jumprelu_sae
 import interp_tools.model_utils as model_utils
 import interp_tools.introspect_utils as introspect_utils
-
-
-# ==============================================================================
-# 1. CONFIGURATION
-# ==============================================================================
-
-
-@dataclass
-class SelfInterpTrainingConfig:
-    """Configuration settings for the script."""
-
-    # --- Foundational Settings ---
-    model_name: str = "google/gemma-2-9b-it"
-    batch_size: int = 4
-
-    max_acts_ratio_threshold: float = 0.1
-    max_distance_threshold: float = 0.2
-    max_activation_percentage_required: float = 0.01
-    max_activation_required: float = 0.0
-
-    # --- SAE (Sparse Autoencoder) Settings ---
-    sae_repo_id: str = "google/gemma-scope-9b-it-res"
-    sae_layer: int = 9
-    sae_width: int = 16  # For loading the correct max acts file
-    layer_percent: int = 25  # For loading the correct max acts file
-    context_length: int = 32
-    test_set_size: int = 1000
-
-    sae_filename: str = field(init=False)
-    training_data_filename: str = "contrastive_rewriting_results_10k.pkl"
-
-    # --- Experiment Settings ---
-    eval_set_size: int = 200  # How many random features to analyze
-
-    random_seed: int = 42  # For reproducible feature selection
-    use_decoder_vectors: bool = False
-
-    # Use a default_factory for mutable types like dicts
-    generation_kwargs: Dict[str, Any] = field(
-        default_factory=lambda: {
-            "do_sample": False,
-            "temperature": 0.0,
-            "max_new_tokens": 200,
-        }
-    )
-
-    eval_features: list[int] = field(default_factory=list)
-    steering_coefficient: float = 2.0
-
-    # --- LoRA Settings ---
-    use_lora: bool = True
-    lora_r: int = 16
-    lora_alpha: int = 32
-    lora_dropout: float = 0.05
-    lora_target_modules: str = "all-linear"
-
-    save_steps: int = 1000
-    save_dir: str = "checkpoints"
-
-    def __post_init__(self):
-        """Called after the dataclass is initialized."""
-        self.sae_filename = f"layer_{self.sae_layer}/width_16k/average_l0_88/params.npz"
+from interp_tools.config import SelfInterpTrainingConfig, get_sae_info
 
 
 # ==============================================================================
 # 2. UTILITY FUNCTIONS
 # ==============================================================================
-
-
-def load_sae_and_model(
-    cfg: SelfInterpTrainingConfig, dtype: torch.dtype, device: torch.device
-) -> Tuple[AutoModelForCausalLM, AutoTokenizer, jumprelu_sae.JumpReluSAE]:
-    """Loads the model, tokenizer, and SAE from Hugging Face."""
-    print(f"Loading model: {cfg.model_name}...")
-
-    attn_kwargs = {}
-
-    if cfg.model_name == "google/gemma-2-9b-it":
-        attn_kwargs = {"attn_implementation": "eager"}
-
-    model = AutoModelForCausalLM.from_pretrained(
-        cfg.model_name, device_map="auto", torch_dtype=dtype, **attn_kwargs
-    )
-
-    if cfg.use_lora:
-        print("Applying LoRA configuration...")
-        lora_config = LoraConfig(
-            r=cfg.lora_r,
-            lora_alpha=cfg.lora_alpha,
-            lora_dropout=cfg.lora_dropout,
-            target_modules=cfg.lora_target_modules,
-            bias="none",
-            task_type="CAUSAL_LM",
-        )
-        model = get_peft_model(model, lora_config)
-        model.print_trainable_parameters()
-
-    tokenizer = AutoTokenizer.from_pretrained(cfg.model_name)
-
-    print(f"Loading SAE for layer {cfg.sae_layer} from {cfg.sae_repo_id}...")
-    sae = jumprelu_sae.load_gemma_scope_jumprelu_sae(
-        repo_id=cfg.sae_repo_id,
-        filename=cfg.sae_filename,
-        layer=cfg.sae_layer,
-        model_name=cfg.model_name,
-        device=device,
-        dtype=dtype,
-    )
-
-    print("Model, tokenizer, and SAE loaded successfully.")
-    return model, tokenizer, sae
 
 
 def build_training_prompt(
@@ -765,10 +660,7 @@ def train_model(
     verbose: bool = False,
     use_wandb: bool = True,
 ):
-    num_epochs = 2
-    lr = 5e-6
     max_grad_norm = 1.0
-    eval_interval = 500
     wandb_project = "sae_introspection"
     run_name = f"{cfg.model_name}-layer{cfg.sae_layer}"
 
@@ -776,10 +668,10 @@ def train_model(
         wandb.init(project=wandb_project, name=run_name, config=asdict(cfg))
 
     model.train()
-    optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=cfg.lr)
 
-    total_training_steps = num_epochs * len(training_data)
-    warmup_steps = int(0.05 * total_training_steps)
+    total_training_steps = cfg.num_epochs * len(training_data)
+    warmup_steps = 200
     scheduler = get_linear_schedule_with_warmup(
         optimizer,
         num_warmup_steps=warmup_steps,
@@ -792,7 +684,7 @@ def train_model(
     if os.path.exists("eval_logs.json"):
         os.remove("eval_logs.json")
 
-    for epoch in range(num_epochs):
+    for epoch in range(cfg.num_epochs):
         pbar = tqdm(training_data, desc=f"Epoch {epoch + 1}")
         for batch_idx, t_batch in enumerate(pbar):
             if batch_idx % 100 == 0:
@@ -817,7 +709,7 @@ def train_model(
                 print(f"Step {global_step} loss: {loss.item()}")
 
             # -------------------------------- evaluation --------------------------------
-            if global_step % eval_interval == 0:
+            if global_step % cfg.eval_steps == 0:
                 model.eval()
                 with torch.no_grad():
                     all_sentence_metrics = []
@@ -881,11 +773,12 @@ def main():
     cfg.eval_set_size = 1000
     cfg.save_steps = 2000
     cfg.steering_coefficient = 2.0
-    cfg.batch_size = 2
+    cfg.batch_size = 3
     cfg.training_data_filename = "contrastive_rewriting_results_131k.pkl"
     # cfg.training_data_filename = "contrastive_rewriting_results_2k.pkl"
     # cfg.training_data_filename = "contrastive_rewriting_results.pkl"
     verbose = True
+    cfg.use_decoder_vectors = True
 
     # %%
     print(asdict(cfg))
@@ -904,7 +797,9 @@ def main():
     cfg.sae_filename = api_data["config"]["sae_filename"]
     cfg.sae_repo_id = api_data["config"]["sae_repo_id"]
 
-    model, tokenizer, sae = load_sae_and_model(cfg, dtype, device)
+    model = introspect_utils.load_model(cfg, device, dtype, use_lora=cfg.use_lora)
+    tokenizer = AutoTokenizer.from_pretrained(cfg.model_name)
+    sae = introspect_utils.load_sae(cfg, device, dtype)
     submodule = model_utils.get_submodule(model, cfg.sae_layer, cfg.use_lora)
 
     # %%
@@ -970,6 +865,8 @@ def main():
         with open(train_data_filename, "rb") as f:
             training_data = pickle.load(f)
 
+    cfg.batch_size = cfg.batch_size * 4
+
     if not os.path.exists(eval_data_filename):
         eval_data = construct_eval_dataset(
             cfg,
@@ -986,6 +883,8 @@ def main():
         with open(eval_data_filename, "rb") as f:
             eval_data = pickle.load(f)
 
+    cfg.batch_size = cfg.batch_size // 4
+
     # %%
 
     print(f"training data: {len(training_data)}, eval data: {len(eval_data)}")
@@ -993,7 +892,7 @@ def main():
     # training_data = training_data[:100]
     # temp_eval_data = eval_data[:10]
 
-    temp_eval_data = eval_data[:100]
+    temp_eval_data = eval_data[:25]
 
     train_model(
         cfg,

@@ -23,141 +23,11 @@ import interp_tools.model_utils as model_utils
 import interp_tools.api_utils.shared as shared
 import interp_tools.api_utils.api_caller as api_caller
 import interp_tools.introspect_utils as introspect_utils
-
-
-# ==============================================================================
-# 1. CONFIGURATION
-# ==============================================================================
-@dataclass
-class Config:
-    """Configuration settings for the script."""
-
-    # --- Foundational Settings ---
-    model_name: str = "google/gemma-2-9b-it"
-
-    # --- SAE (Sparse Autoencoder) Settings ---
-    sae_repo_id: str = "google/gemma-scope-9b-it-res"
-    sae_layer: int = 9
-    sae_width: int = 131  # For loading the correct max acts file
-    layer_percent: int = 25  # For loading the correct max acts file
-    context_length: int = 32
-
-    sae_filename: str = field(init=False)
-
-    # --- Experiment Settings ---
-    num_features_to_run: int = 200  # How many random features to analyze
-    num_sentences_per_feature: int = (
-        5  # How many top-activating examples to use per feature
-    )
-    random_seed: int = 42  # For reproducible feature selection
-    results_filename: str = "contrastive_rewriting_results.pkl"
-
-    # --- API and Generation Settings ---
-    api_model_name: str = "gpt-4.1-mini"
-    # Use a default_factory for mutable types like dicts
-    generation_kwargs: Dict[str, Any] = field(
-        default_factory=lambda: {
-            "temperature": 1.0,
-            "max_tokens": 2000,
-            "max_par": 200,  # Max parallel requests
-        }
-    )
-
-    def __post_init__(self):
-        """Called after the dataclass is initialized."""
-        if self.sae_width == 16:
-            self.sae_filename = (
-                f"layer_{self.sae_layer}/width_16k/average_l0_88/params.npz"
-            )
-        elif self.sae_width == 131:
-            self.sae_filename = f"layer_9/width_131k/average_l0_121/params.npz"
-        else:
-            raise ValueError(f"Unknown SAE width: {self.sae_width}")
-
+from interp_tools.config import SelfInterpTrainingConfig, get_sae_info
 
 # ==============================================================================
 # 2. UTILITY FUNCTIONS
 # ==============================================================================
-
-
-def load_sae_and_model(
-    cfg: Config,
-    device: torch.device,
-    dtype: torch.dtype,
-) -> Tuple[AutoModelForCausalLM, AutoTokenizer, jumprelu_sae.JumpReluSAE]:
-    """Loads the model, tokenizer, and SAE from Hugging Face."""
-    print(f"Loading model: {cfg.model_name}...")
-    model = AutoModelForCausalLM.from_pretrained(
-        cfg.model_name, device_map="auto", torch_dtype=dtype
-    )
-    tokenizer = AutoTokenizer.from_pretrained(cfg.model_name)
-
-    print(f"Loading SAE for layer {cfg.sae_layer} from {cfg.sae_repo_id}...")
-    sae = jumprelu_sae.load_gemma_scope_jumprelu_sae(
-        repo_id=cfg.sae_repo_id,
-        filename=cfg.sae_filename,
-        layer=cfg.sae_layer,
-        model_name=cfg.model_name,
-        device=device,
-        dtype=dtype,
-    )
-
-    print("Model, tokenizer, and SAE loaded successfully.")
-    return model, tokenizer, sae
-
-
-def get_feature_activations(
-    model: AutoModelForCausalLM,
-    tokenizer: PreTrainedTokenizer,
-    submodule: torch.nn.Module,
-    sae: jumprelu_sae.JumpReluSAE,
-    input_str: str,
-    feature_idx: int,
-    verbose: bool = False,
-    add_bos: bool = True,
-    ignore_bos: bool = True,
-    use_chat_template: bool = False,
-) -> torch.Tensor:
-    """
-    Calculates and prints the SAE feature activations for a pair of sentences.
-
-    This helps verify if a feature responds more strongly to the positive example,
-    as predicted by the model's generated explanation.
-    """
-
-    if use_chat_template:
-        input_str = tokenizer.apply_chat_template(
-            [{"role": "user", "content": input_str}],
-            tokenize=False,
-            add_generation_prompt=True,
-        )
-
-    tokenized_str = tokenizer(
-        input_str, return_tensors="pt", add_special_tokens=add_bos
-    ).to(model.device)
-
-    with torch.no_grad():
-        pos_acts_BLD = model_utils.collect_activations(model, submodule, tokenized_str)
-
-        encoded_pos_acts_BLF = sae.encode(pos_acts_BLD)
-
-    assert encoded_pos_acts_BLF.shape[0] == 1, (
-        "Only batch size 1 is currently supported"
-    )
-
-    pos_feature_acts = encoded_pos_acts_BLF[0, :, feature_idx]
-
-    if ignore_bos:
-        bos_mask = tokenized_str.input_ids[0, :] == tokenizer.bos_token_id
-        assert bos_mask.sum() > 0, "BOS token not found in input"
-        pos_feature_acts[bos_mask] = 0
-
-    if verbose:
-        print(
-            f"Feature {feature_idx} max activation: {pos_feature_acts.max():.4f}, mean: {pos_feature_acts.mean():.4f}"
-        )
-
-    return pos_feature_acts
 
 
 def load_acts(
@@ -318,7 +188,7 @@ def parse_llm_response(
 
 
 def parallel_eval(
-    cfg: Config,
+    cfg: SelfInterpTrainingConfig,
     feature_indices: list[int],
     all_prompts: list[str],
     api_responses: list[str],
@@ -346,10 +216,10 @@ def parallel_eval(
         api_response = api_responses[i]
 
         feature_tokens = acts_data["max_tokens"][
-            feature_idx, : cfg.num_sentences_per_feature
+            feature_idx, : cfg.api_num_sentences_per_feature
         ]
         explanation, planned_edits, rewritten_sentences_dict = parse_llm_response(
-            api_response, cfg.num_sentences_per_feature
+            api_response, cfg.api_num_sentences_per_feature
         )
 
         feature_result = {
@@ -363,7 +233,7 @@ def parallel_eval(
         }
         feature_results.append(feature_result)
 
-        for sent_idx in range(cfg.num_sentences_per_feature):
+        for sent_idx in range(cfg.api_num_sentences_per_feature):
             # [1:] to skip bos token
             original_sentence = "".join(
                 list_decode(feature_tokens[sent_idx][1:], tokenizer)[0]
@@ -427,7 +297,7 @@ def parallel_eval(
 # ==============================================================================
 # 3. MAIN EXPERIMENT LOGIC
 # ==============================================================================
-async def main(cfg: Config):
+async def main(cfg: SelfInterpTrainingConfig):
     """Main function to run the contrastive rewriting experiment."""
     print("--- Starting Contrastive Rewriting Experiment ---")
     print(f"Configuration: {asdict(cfg)}")
@@ -452,7 +322,7 @@ async def main(cfg: Config):
     num_features_available = acts_data["max_acts"].shape[0]
     feature_indices = random.sample(
         range(num_features_available),
-        min(cfg.num_features_to_run, num_features_available),
+        min(cfg.api_num_features_to_run, num_features_available),
     )
     print(f"\nSelected {len(feature_indices)} random features to analyze.")
 
@@ -460,10 +330,10 @@ async def main(cfg: Config):
     print("Generating prompts for each feature...")
     for feature_idx in feature_indices:
         feature_acts = acts_data["max_acts"][
-            feature_idx, : cfg.num_sentences_per_feature
+            feature_idx, : cfg.api_num_sentences_per_feature
         ]
         feature_tokens = acts_data["max_tokens"][
-            feature_idx, : cfg.num_sentences_per_feature
+            feature_idx, : cfg.api_num_sentences_per_feature
         ]
         prompt = make_contrastive_prompt(feature_acts, feature_tokens, tokenizer)
         all_prompts.append(prompt)
@@ -482,15 +352,21 @@ async def main(cfg: Config):
             cfg.api_model_name,
             chat_prompts,
             caller,
-            temperature=cfg.generation_kwargs["temperature"],
-            max_tokens=cfg.generation_kwargs["max_tokens"],
-            max_par=cfg.generation_kwargs["max_par"],
+            temperature=cfg.api_generation_kwargs["temperature"],
+            max_tokens=cfg.api_generation_kwargs["max_tokens"],
+            max_par=cfg.api_generation_kwargs["max_par"],
         )
     finally:
         caller.client.close()
     print("Received all API responses.")
 
-    model, tokenizer, sae = load_sae_and_model(cfg, device, dtype)
+    cfg.sae_width, cfg.sae_layer, cfg.sae_layer_percent, cfg.sae_filename = (
+        get_sae_info(cfg.sae_repo_id)
+    )
+
+    model = introspect_utils.load_model(cfg, device, dtype, use_lora=False)
+    sae = introspect_utils.load_sae(cfg, device, dtype)
+    tokenizer = AutoTokenizer.from_pretrained(cfg.model_name)
     submodule = model_utils.get_submodule(model, cfg.sae_layer)
 
     all_results_data = parallel_eval(
@@ -506,11 +382,13 @@ async def main(cfg: Config):
         batch_size=32,
     )
 
-    cfg.results_filename = "contrastive_rewriting_results_131k.pkl"
+    model_name_str = cfg.model_name.replace("/", "_").replace(".", "_")
+
+    cfg.training_data_filename = f"contrastive_rewriting_results_{model_name_str}.pkl"
 
     # 5. Save Results
-    print(f"\nSaving all results to {cfg.results_filename}...")
-    with open(cfg.results_filename, "wb") as f:
+    print(f"\nSaving all results to {cfg.training_data_filename}...")
+    with open(cfg.training_data_filename, "wb") as f:
         # We can also save the config itself for perfect reproducibility
         pickle.dump({"config": asdict(cfg), "results": all_results_data}, f)
 
@@ -523,7 +401,9 @@ async def main(cfg: Config):
 if __name__ == "__main__":
     # Ensure you are in an environment that supports asyncio, like a Jupyter notebook
     # or a standard Python script.
-    cfg = Config()
-    cfg.num_features_to_run = 200000
+    cfg = SelfInterpTrainingConfig()
+    cfg.model_name = "meta-llama/Llama-3.1-8B-Instruct"
+    cfg.sae_repo_id = "fnlp/Llama3_1-8B-Base-LXR-32x"
+    cfg.api_num_features_to_run = 200000
     # This is the standard way to run an async function from a sync context.
     asyncio.run(main(cfg))

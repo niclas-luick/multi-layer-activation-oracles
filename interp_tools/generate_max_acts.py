@@ -4,76 +4,46 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from dataclasses import dataclass, asdict
 import os
 import itertools
+from huggingface_hub import HfApi
 
 import interp_tools.model_utils as model_utils
 import interp_tools.interp_utils as interp_utils
 import interp_tools.saes.jumprelu_sae as jumprelu_sae
+import interp_tools.saes.topk_sae as topk_sae
+from interp_tools.config import SelfInterpTrainingConfig, get_sae_info
+import interp_tools.introspect_utils as introspect_utils
 
 
-def upload_acts_to_hf():
-    from huggingface_hub import HfApi
+def upload_acts_to_hf(filename: str):
+    # filename should be in the format of:
+    # filename = "max_acts/acts_google_gemma-2-9b-it_layer_9_trainer_16_layer_percent_25_context_length_32.pt"
+    path_in_repo = filename.split("/")[-1]
 
     api = HfApi()
 
-    filename = "max_acts/acts_google_gemma-2-9b-it_layer_9_trainer_16_layer_percent_25_context_length_32.pt"
-
     api.upload_file(
         path_or_fileobj=filename,
-        path_in_repo="acts_google_gemma-2-9b-it_layer_9_trainer_16_layer_percent_25_context_length_32.pt",
+        path_in_repo=path_in_repo,
         repo_type="dataset",
         repo_id="adamkarvonen/sae_max_acts",
     )
 
 
-@dataclass
-class MaxActsConfig:
-    """Configuration settings for the script."""
-
-    # --- Foundational Settings ---
-    model_name: str = "google/gemma-2-9b-it"
-
-    # --- SAE (Sparse Autoencoder) Settings ---
-    sae_repo_id: str = "google/gemma-scope-9b-it-res"
-    sae_layer: int = 9
-    sae_width: int = 131  # For loading the correct max acts file
-    sae_filename: str = f"layer_{sae_layer}/width_{sae_width}k/average_l0_121/params.npz"
-    layer_percent: int = 25  # For loading the correct max acts file
-
-    # --- Experiment Settings ---
-    context_length: int = 32
-    num_tokens: int = 60_000_000
-    batch_size: int = 128
-
-
-def load_sae_and_model(
-    cfg: MaxActsConfig, device: torch.device, dtype: torch.dtype
-) -> tuple[AutoModelForCausalLM, AutoTokenizer, jumprelu_sae.JumpReluSAE]:
-    """Loads the model, tokenizer, and SAE from Hugging Face."""
-    print(f"Loading model: {cfg.model_name}...")
-    model = AutoModelForCausalLM.from_pretrained(
-        cfg.model_name, device_map="auto", torch_dtype=dtype
-    )
-    tokenizer = AutoTokenizer.from_pretrained(cfg.model_name)
-
-    print(f"Loading SAE for layer {cfg.sae_layer} from {cfg.sae_repo_id}...")
-    sae = jumprelu_sae.load_gemma_scope_jumprelu_sae(
-        repo_id=cfg.sae_repo_id,
-        filename=cfg.sae_filename,
-        layer=cfg.sae_layer,
-        model_name=cfg.model_name,
-        device=device,
-        dtype=dtype,
-    )
-
-    print("Model, tokenizer, and SAE loaded successfully.")
-    return model, tokenizer, sae
-
-
-cfg = MaxActsConfig()
+cfg = SelfInterpTrainingConfig()
 device = torch.device("cuda")
 dtype = torch.bfloat16
 
-model, tokenizer, sae = load_sae_and_model(cfg, device, dtype)
+cfg.sae_repo_id = "fnlp/Llama3_1-8B-Base-LXR-32x"
+cfg.model_name = "meta-llama/Llama-3.1-8B-Instruct"
+cfg.sae_width, cfg.sae_layer, cfg.sae_layer_percent, cfg.sae_filename = get_sae_info(
+    cfg.sae_repo_id
+)
+
+cfg.num_tokens = 60_000_000
+
+model = introspect_utils.load_model(cfg, device, dtype, use_lora=False)
+tokenizer = AutoTokenizer.from_pretrained(cfg.model_name)
+sae = introspect_utils.load_sae(cfg, device, dtype)
 
 
 gradient_checkpointing = False
@@ -102,7 +72,7 @@ if not os.path.exists(acts_filename):
         torch.tensor(list(range(sae.W_dec.shape[0]))),
         context_length=cfg.context_length,
         tokenizer=tokenizer,
-        batch_size=cfg.batch_size,
+        batch_size=cfg.max_acts_batch_size,
         num_tokens=cfg.num_tokens,
     )
     acts_data = {
@@ -111,3 +81,5 @@ if not os.path.exists(acts_filename):
         "cfg": asdict(cfg),
     }
     torch.save(acts_data, acts_filename)
+
+    upload_acts_to_hf(acts_filename)

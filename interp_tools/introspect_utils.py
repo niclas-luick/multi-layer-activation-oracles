@@ -2,9 +2,75 @@ import torch
 from transformers import AutoModelForCausalLM, PreTrainedTokenizer
 import interp_tools.saes.jumprelu_sae as jumprelu_sae
 from rapidfuzz.distance import Levenshtein as lev
+from peft import LoraConfig, get_peft_model
 
 import interp_tools.model_utils as model_utils
+import interp_tools.saes.base_sae as base_sae
 import interp_tools.saes.jumprelu_sae as jumprelu_sae
+import interp_tools.saes.topk_sae as topk_sae
+from interp_tools.config import get_sae_info, SelfInterpTrainingConfig
+
+
+def load_model(
+    cfg: SelfInterpTrainingConfig,
+    device: torch.device,
+    dtype: torch.dtype,
+    use_lora: bool,
+) -> AutoModelForCausalLM:
+    attn_kwargs = {}
+
+    if cfg.model_name == "google/gemma-2-9b-it":
+        attn_kwargs = {"attn_implementation": "eager"}
+
+    model = AutoModelForCausalLM.from_pretrained(
+        cfg.model_name, device_map="auto", torch_dtype=dtype, **attn_kwargs
+    )
+
+    if use_lora:
+        print("Applying LoRA configuration...")
+        lora_config = LoraConfig(
+            r=cfg.lora_r,
+            lora_alpha=cfg.lora_alpha,
+            lora_dropout=cfg.lora_dropout,
+            target_modules=cfg.lora_target_modules,
+            bias="none",
+            task_type="CAUSAL_LM",
+        )
+        model = get_peft_model(model, lora_config)
+        model.print_trainable_parameters()
+
+    return model
+
+
+def load_sae(
+    cfg: SelfInterpTrainingConfig,
+    device: torch.device,
+    dtype: torch.dtype,
+) -> base_sae.BaseSAE:
+    # Note: There's some duplication here with saes.sae_loading_utils.py
+    print(f"Loading SAE for layer {cfg.sae_layer} from {cfg.sae_repo_id}...")
+
+    if cfg.sae_repo_id == "google/gemma-scope-9b-it-res":
+        sae = jumprelu_sae.load_gemma_scope_jumprelu_sae(
+            repo_id=cfg.sae_repo_id,
+            filename=cfg.sae_filename,
+            layer=cfg.sae_layer,
+            model_name=cfg.model_name,
+            device=device,
+            dtype=dtype,
+        )
+    elif cfg.sae_repo_id == "fnlp/Llama3_1-8B-Base-LXR-32x":
+        sae = topk_sae.load_llama_scope_topk_sae(
+            model_name=cfg.model_name,
+            device=device,
+            dtype=dtype,
+            layer=cfg.sae_layer,
+            expansion_factor=cfg.sae_width,
+        )
+    else:
+        raise ValueError(f"Unknown SAE repo ID: {cfg.sae_repo_id}")
+
+    return sae
 
 
 def get_bos_eos_pad_mask(
