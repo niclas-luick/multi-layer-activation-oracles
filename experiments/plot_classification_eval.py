@@ -13,17 +13,9 @@ from typing import Any
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from peft import LoraConfig
 from transformers import BitsAndBytesConfig
 
 # External project imports (assumed available in your env)
-from nl_probes.dataset_classes.act_dataset_manager import DatasetLoaderConfig
-from nl_probes.dataset_classes.classification import (
-    ClassificationDatasetConfig,
-    ClassificationDatasetLoader,
-)
-from nl_probes.utils.activation_utils import get_hf_submodule
-from nl_probes.utils.common import load_model, load_tokenizer
 from nl_probes.utils.eval import parse_answer, run_evaluation
 
 # -----------------------------
@@ -48,12 +40,9 @@ GENERATION_KWARGS = {
 
 model_name_str = MODEL_NAME.split("/")[-1].replace(".", "_").replace(" ", "_")
 RESULTS_FILENAME = f"0919_{model_name_str}_classification_results.json"
-EXPERIMENTS_DIR = "experiments"
+EXPERIMENTS_DIR = ""
 DATA_DIR = "classification_eval"
-RESULTS_FILENAME = f"{EXPERIMENTS_DIR}/{DATA_DIR}/{RESULTS_FILENAME}"
-
-os.makedirs(EXPERIMENTS_DIR, exist_ok=True)
-os.makedirs(f"{EXPERIMENTS_DIR}/{DATA_DIR}", exist_ok=True)
+RESULTS_FILENAME = f"{DATA_DIR}/{RESULTS_FILENAME}"
 
 
 device = torch.device("cuda")
@@ -203,105 +192,16 @@ def score_predictions(cleaned_responses: list[str], target_responses: list[str])
     }
 
 
-# %%
-# Tokenizer and dataset loading
-
-tokenizer = load_tokenizer(MODEL_NAME)
-
-classification_dataset_loaders: list[ClassificationDatasetLoader] = []
-for dataset_name, dcfg in CLASSIFICATION_DATASETS.items():
-    classification_config = ClassificationDatasetConfig(
-        classification_dataset_name=dataset_name,
-        max_end_offset=-5,
-        min_end_offset=-3,
-        max_window_size=1,
-    )
-    dataset_config = DatasetLoaderConfig(
-        custom_dataset_params=classification_config,
-        num_train=dcfg["num_train"],
-        num_test=dcfg["num_test"],
-        splits=dcfg["splits"],
-        model_name=MODEL_NAME,
-        layer_percents=LAYER_PERCENTS,
-        save_acts=False,
-        batch_size=BATCH_SIZE,
-    )
-    classification_dataset_loaders.append(
-        ClassificationDatasetLoader(dataset_config=dataset_config, model_kwargs=model_kwargs)
-    )
-
-# Pull test sets for evaluation
-all_eval_data: dict[str, list[Any]] = {}
-for loader in classification_dataset_loaders:
-    if "test" in loader.dataset_config.splits:
-        ds_id = canonical_dataset_id(loader.dataset_config.dataset_name)
-        all_eval_data[ds_id] = loader.load_dataset("test")
-
-print(f"Loaded datasets: {list(all_eval_data.keys())}")
-
-# %%
-# Model and submodule
-
-model = load_model(MODEL_NAME, dtype, **model_kwargs)
-submodule = get_hf_submodule(model, HOOK_LAYER)
-
-dummy_config = LoraConfig()
-model.add_adapter(dummy_config, adapter_name="default")
-
-# %%
-# Evaluation (fast path: load JSON if available, heavy path: run fresh)
-
-
-def run_eval_for_datasets(eval_data_by_ds: dict[str, list[Any]]) -> dict[str, dict[str, Any]]:
-    """
-    Returns:
-        results[dataset_id][method_key] -> metrics dict
-    """
-    out: dict[str, dict[str, Any]] = {}
-    for ds_id, eval_data in eval_data_by_ds.items():
-        out[ds_id] = {}
-        for m in METHODS:
-            # we do this as None is not convenient to store in JSON
-            if m.lora_path == KEY_FOR_NONE:
-                lora_path = None
-            else:
-                lora_path = m.lora_path
-            # Heavy call - returns list of FeatureResult-like with .api_response
-            raw_results = run_evaluation(
-                eval_data=eval_data,
-                model=model,
-                tokenizer=tokenizer,
-                submodule=submodule,
-                device=device,
-                dtype=dtype,
-                global_step=-1,
-                lora_path=lora_path,
-                eval_batch_size=BATCH_SIZE,
-                steering_coefficient=STEERING_COEFFICIENT,
-                generation_kwargs=GENERATION_KWARGS,
-            )
-
-            cleaned = [parse_answer(r.api_response) for r in raw_results]
-            targets = [parse_answer(dp.target_output) for dp in eval_data]
-            metrics = score_predictions(cleaned, targets)
-            out[ds_id][m.lora_path] = metrics
-            print(f"[{ds_id}] {m.label}: p={metrics['p']:.3f} n={metrics['n']}")
-    return out
-
-
 # Orchestrate load-or-run
 results_by_ds: dict[str, dict[str, Any]] = {}
 meta_loaded: dict[str, Any] | None = None
 
-if not RUN_FRESH_EVAL and Path(RESULTS_FILENAME).exists():
+if Path(RESULTS_FILENAME).exists():
     print(f"Loading existing results from {RESULTS_FILENAME}")
     with open(RESULTS_FILENAME, "r") as f:
         results_by_ds = json.load(f)
 else:
-    print("Running fresh evaluation - this can be slow.")
-    results_by_ds = run_eval_for_datasets(all_eval_data)
-    with open(RESULTS_FILENAME, "w") as f:
-        json.dump(results_by_ds, f)
+    raise ValueError(f"plotting only, {RESULTS_FILENAME}")
 
 # %%
 # Plotting utilities - robust to missing entries
