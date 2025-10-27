@@ -6,7 +6,7 @@ os.environ["TORCHDYNAMO_DISABLE"] = "1"
 
 import json
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Any
 from tqdm import tqdm
 import random
 import itertools
@@ -45,10 +45,10 @@ PREFIX = "Answer with 'Male' or 'Female' only. "
 
 if MODEL_NAME == "google/gemma-2-9b-it":
     INVESTIGATOR_LORA_PATHS = [
-        "adamkarvonen/checkpoints_cls_latentqa_only_addition_gemma-2-9b-it",
+        # "adamkarvonen/checkpoints_cls_latentqa_only_addition_gemma-2-9b-it",
         "adamkarvonen/checkpoints_latentqa_only_addition_gemma-2-9b-it",
-        "adamkarvonen/checkpoints_cls_only_addition_gemma-2-9b-it",
-        "adamkarvonen/checkpoints_latentqa_cls_past_lens_addition_gemma-2-9b-it",
+        # "adamkarvonen/checkpoints_cls_only_addition_gemma-2-9b-it",
+        # "adamkarvonen/checkpoints_latentqa_cls_past_lens_addition_gemma-2-9b-it",
     ]
     ACTIVE_LORA_PATH_TEMPLATE: Optional[str] = "bcywinski/gemma-2-9b-it-user-{word}"
 else:
@@ -60,10 +60,11 @@ ACT_LAYERS = [layer_percent_to_layer(MODEL_NAME, lp) for lp in LAYER_PERCENTS]
 ACTIVE_LAYER = ACT_LAYERS[1]
 
 INJECTION_LAYER: int = 1  # where to inject steering vectors during evaluation
+ACT_BATCH_SIZE: int = 128
 
 # Evaluation params
 STEERING_COEFFICIENT: float = 1.0
-EVAL_BATCH_SIZE: int = 128
+EVAL_BATCH_SIZE: int = 1024
 GENERATION_KWARGS = {"do_sample": False, "temperature": 1.0, "max_new_tokens": 40}
 
 # Chat template params
@@ -113,9 +114,9 @@ VERBALIZER_PROMPTS: list[str] = [
 
 
 # Control output size during dev
-MAX_WORDS: Optional[int] = None  # set to an int to cap, or None for all
+MAX_WORDS: Optional[int] = 20  # set to an int to cap, or None for all
 if MAX_WORDS is not None:
-    WORD_NAMES = WORD_NAMES[:MAX_WORDS]
+    CONTEXT_PROMPTS = CONTEXT_PROMPTS[:MAX_WORDS]
 
 # ========================================
 # HELPERS
@@ -235,66 +236,84 @@ def create_training_data_from_activations(
     prompt_layer: int,
     tokenizer: AutoTokenizer,
     batch_idx: int = 0,
+    left_pad: int = 0,
+    base_meta: dict[str, Any] | None = None,
 ) -> list[TrainingDataPoint]:
     training_data: list[TrainingDataPoint] = []
 
     # Token-level probes
     for i in range(len(context_input_ids)):
-        context_positions = [i]
+        context_positions_rel = [i]
+        context_positions_abs = [left_pad + i]
         acts_BLD = acts_BLD_by_layer_dict[act_layer][batch_idx, :]  # [L, D]
-        acts_BD = acts_BLD[context_positions]  # [1, D]
+        acts_BD = acts_BLD[context_positions_abs]  # [1, D]
+        meta = {"dp_kind": "token", "token_index": i}
+        if base_meta is not None:
+            meta.update(base_meta)
         dp = create_training_datapoint(
             datapoint_type="N/A",
             prompt=investigator_prompt,
             target_response="N/A",
             layer=prompt_layer,
-            num_positions=len(context_positions),
+            num_positions=len(context_positions_rel),
             tokenizer=tokenizer,
             acts_BD=acts_BD,
             feature_idx=-1,
             context_input_ids=context_input_ids,
-            context_positions=context_positions,
+            context_positions=context_positions_rel,
             ds_label="N/A",
+            meta_info=meta,
         )
         training_data.append(dp)
 
-    # Full-sequence probes - repeat 10 times for stability
+    # Full-sequence probes - last 10 tokens, repeat 10 times for stability
     for _ in range(10):
-        context_positions = list(range(len(context_input_ids) - 10, len(context_input_ids)))
+        start_rel = len(context_input_ids) - 10
+        context_positions_rel = list(range(start_rel, len(context_input_ids)))
+        context_positions_abs = [left_pad + p for p in context_positions_rel]
         acts_BLD = acts_BLD_by_layer_dict[act_layer][batch_idx, :]  # [L, D]
-        acts_BD = acts_BLD[context_positions]  # [L, D]
+        acts_BD = acts_BLD[context_positions_abs]  # [L, D]
+        meta = {"dp_kind": "full_last10"}
+        if base_meta is not None:
+            meta.update(base_meta)
         dp = create_training_datapoint(
             datapoint_type="N/A",
             prompt=investigator_prompt,
             target_response="N/A",
             layer=prompt_layer,
-            num_positions=len(context_positions),
+            num_positions=len(context_positions_rel),
             tokenizer=tokenizer,
             acts_BD=acts_BD,
             feature_idx=-1,
             context_input_ids=context_input_ids,
-            context_positions=context_positions,
+            context_positions=context_positions_rel,
             ds_label="N/A",
+            meta_info=meta,
         )
         training_data.append(dp)
 
-    # Full-sequence probes - repeat 10 times for stability
+    # Full-sequence probes - all tokens, repeat 10 times for stability
     for _ in range(10):
-        context_positions = list(range(len(context_input_ids)))
+        context_positions_rel = list(range(len(context_input_ids)))
+        context_positions_abs = [left_pad + p for p in context_positions_rel]
         acts_BLD = acts_BLD_by_layer_dict[act_layer][batch_idx, :]  # [L, D]
-        acts_BD = acts_BLD[context_positions]  # [L, D]
+        acts_BD = acts_BLD[context_positions_abs]  # [L, D]
+        meta = {"dp_kind": "full_all"}
+        if base_meta is not None:
+            meta.update(base_meta)
         dp = create_training_datapoint(
             datapoint_type="N/A",
             prompt=investigator_prompt,
             target_response="N/A",
             layer=prompt_layer,
-            num_positions=len(context_positions),
+            num_positions=len(context_positions_rel),
             tokenizer=tokenizer,
             acts_BD=acts_BD,
             feature_idx=-1,
             context_input_ids=context_input_ids,
-            context_positions=context_positions,
+            context_positions=context_positions_rel,
             ds_label="N/A",
+            meta_info=meta,
         )
         training_data.append(dp)
 
@@ -315,7 +334,6 @@ tokenizer = load_tokenizer(MODEL_NAME)
 
 print(f"Loading model: {MODEL_NAME} on {DEVICE} with dtype={DTYPE}")
 model = load_model(MODEL_NAME, DTYPE)
-model.to(DEVICE)
 model.eval()
 
 # Add dummy adapter so peft_config exists
@@ -366,12 +384,13 @@ for INVESTIGATOR_LORA_PATH in INVESTIGATOR_LORA_PATHS:
 
     for word in WORD_NAMES:
         active_lora_path = ACTIVE_LORA_PATH_TEMPLATE.format(word=word)
+        active_lora_name = active_lora_path.replace(".", "_")
 
         # Load ACTIVE_LORA_PATH adapter if specified
         if active_lora_path not in model.peft_config:
             model.load_adapter(
                 active_lora_path,
-                adapter_name=active_lora_path,
+                adapter_name=active_lora_name,
                 is_trainable=False,
                 low_cpu_mem_usage=True,
             )
@@ -379,7 +398,7 @@ for INVESTIGATOR_LORA_PATH in INVESTIGATOR_LORA_PATHS:
         if ADD_RESPONSE_TO_CONTEXT_PROMPT:
             # Generate one assistant response per context prompt using the active LoRA.
             # Do this once per word, batched for efficiency.
-            model.set_adapter(active_lora_path)
+            model.set_adapter(active_lora_name)
             context_to_response: dict[str, str] = {}
             for i in range(0, len(CONTEXT_PROMPTS), EVAL_BATCH_SIZE):
                 batch_prompts = CONTEXT_PROMPTS[i : i + EVAL_BATCH_SIZE]
@@ -400,21 +419,48 @@ for INVESTIGATOR_LORA_PATH in INVESTIGATOR_LORA_PATHS:
                 for cp, out in zip(batch_prompts, decoded):
                     context_to_response[cp] = out.strip()
 
-        for context_prompt, verbalizer_prompt, correct_word in itertools.product(
-            CONTEXT_PROMPTS, VERBALIZER_PROMPTS, [None]
-        ):
-            # Build a simple user message per persona
-            test_message = [{"role": "user", "content": context_prompt}]
+        # Build all combinations for this word
+        all_combos = list(itertools.product(CONTEXT_PROMPTS, VERBALIZER_PROMPTS, [None]))
 
-            if ADD_RESPONSE_TO_CONTEXT_PROMPT:
-                # Add assistant turn with the pre-generated response for this context
-                if context_prompt in context_to_response:
-                    test_message.append({"role": "assistant", "content": context_to_response[context_prompt]})
-                    context_prompt += "\nResponse: " + context_to_response[context_prompt]
+        # Submodules for the layers we will probe (constant across batches)
+        submodules = {layer: get_hf_submodule(model, layer) for layer in ACT_LAYERS}
 
-            message_dicts = [test_message]
+        # Process in activation batches
+        for start in range(0, len(all_combos), ACT_BATCH_SIZE):
+            batch = all_combos[start : start + ACT_BATCH_SIZE]
 
-            # Tokenize inputs once per persona
+            # Build messages and keep combo metadata
+            message_dicts: list[list[dict[str, str]]] = []
+            combo_bases: list[dict[str, Any]] = []
+
+            for (context_prompt, verbalizer_prompt, _none_placeholder) in batch:
+
+                # User turn
+                test_message: list[dict[str, str]] = [{"role": "user", "content": context_prompt}]
+
+                # Optionally include the assistant reply to the context
+                ctx_for_record = context_prompt
+                if ADD_RESPONSE_TO_CONTEXT_PROMPT and (context_prompt in context_to_response):
+                    assistant_resp = context_to_response[context_prompt]
+                    test_message.append({"role": "assistant", "content": assistant_resp})
+                    ctx_for_record = ctx_for_record + "\nResponse: " + assistant_resp
+
+                message_dicts.append(test_message)
+
+                investigator_prompt = PREFIX + verbalizer_prompt
+                correct_answer = word
+
+                combo_bases.append(
+                    {
+                        "word": word,
+                        "context_prompt": ctx_for_record,
+                        "investigator_prompt": investigator_prompt,
+                        "ground_truth": correct_answer,
+                        "combo_index": start + len(combo_bases),
+                    }
+                )
+
+            # Tokenize as a batch (left padding is configured in load_tokenizer)
             inputs_BL = encode_messages(
                 tokenizer=tokenizer,
                 message_dicts=message_dicts,
@@ -422,13 +468,20 @@ for INVESTIGATOR_LORA_PATH in INVESTIGATOR_LORA_PATHS:
                 enable_thinking=ENABLE_THINKING,
                 device=DEVICE,
             )
-            context_input_ids = inputs_BL["input_ids"][0, :].tolist()
 
-            # Submodules for the layers we will probe
-            model.set_adapter(active_lora_path)
-            submodules = {layer: get_hf_submodule(model, layer) for layer in ACT_LAYERS}
+            # Compute per-sample unpadded input_ids and left pad lengths
+            seq_len = int(inputs_BL["input_ids"].shape[1])
+            context_input_ids_list: list[list[int]] = []
+            left_pads: list[int] = []
+            for b_idx in range(len(message_dicts)):
+                attn = inputs_BL["attention_mask"][b_idx]
+                real_len = int(attn.sum().item())
+                left_pad = seq_len - real_len
+                left_pads.append(left_pad)
+                context_input_ids_list.append(inputs_BL["input_ids"][b_idx, left_pad:].tolist())
 
-            # Collect activations for this persona
+            # Collect activations for the whole batch under the active persona
+            model.set_adapter(active_lora_name)
             if active_lora_path is None:
                 orig_acts = collect_activations_without_lora(model, submodules, inputs_BL)
                 act_types = {"orig": orig_acts}
@@ -440,87 +493,111 @@ for INVESTIGATOR_LORA_PATH in INVESTIGATOR_LORA_PATHS:
                 lora_acts = collect_activations_lora_only(model, submodules, inputs_BL)
                 act_types = {"lora": lora_acts}
 
-            # if correct_word:
-            #     correct_answer = "Yes"
-            #     investigator_prompt = verbalizer_prompt.format(word=word)
-            # else:
-            #     correct_answer = "No"
-            #     investigator_prompt = verbalizer_prompt.format(word=other_word)
+            # Build a single eval batch across all combos and act types
+            training_data: list[TrainingDataPoint] = []
+            for b_idx in range(len(message_dicts)):
+                base = combo_bases[b_idx]
+                context_input_ids = context_input_ids_list[b_idx]
+                left_pad = left_pads[b_idx]
+                for act_key, acts_dict in act_types.items():
+                    base_meta = {
+                        "word": base["word"],
+                        "context_prompt": base["context_prompt"],
+                        "investigator_prompt": base["investigator_prompt"],
+                        "ground_truth": base["ground_truth"],
+                        "combo_index": base["combo_index"],
+                        "act_key": act_key,
+                        "num_tokens": len(context_input_ids),
+                        "context_index_within_batch": b_idx,
+                    }
+                    training_data.extend(
+                        create_training_data_from_activations(
+                            acts_BLD_by_layer_dict=acts_dict,
+                            context_input_ids=context_input_ids,
+                            investigator_prompt=base["investigator_prompt"],
+                            act_layer=ACTIVE_LAYER,
+                            prompt_layer=ACTIVE_LAYER,
+                            tokenizer=tokenizer,
+                            batch_idx=b_idx,
+                            left_pad=left_pad,
+                            base_meta=base_meta,
+                        )
+                    )
 
-            investigator_prompt = verbalizer_prompt
-            correct_answer = word
+            # Run evaluation once for the giant batch
+            responses = run_evaluation(
+                eval_data=training_data,
+                model=model,
+                tokenizer=tokenizer,
+                submodule=injection_submodule,
+                device=DEVICE,
+                dtype=DTYPE,
+                global_step=-1,
+                lora_path=INVESTIGATOR_LORA_PATH,
+                eval_batch_size=EVAL_BATCH_SIZE,
+                steering_coefficient=STEERING_COEFFICIENT,
+                generation_kwargs=GENERATION_KWARGS,
+            )
 
-            investigator_prompt = PREFIX + investigator_prompt
+            # Aggregate responses per combo and act_key
+            agg: dict[tuple[str, int], dict[str, Any]] = {}
+            for r in responses:
+                meta = r.meta_info
+                key = (meta["act_key"], int(meta["combo_index"]))
+                if key not in agg:
+                    agg[key] = {
+                        "word": meta["word"],
+                        "context_prompt": meta["context_prompt"],
+                        "investigator_prompt": meta["investigator_prompt"],
+                        "ground_truth": meta["ground_truth"],
+                        "num_tokens": int(meta["num_tokens"]),
+                        "context_index_within_batch": int(meta["context_index_within_batch"]),
+                        "token_responses": [None] * int(meta["num_tokens"]),
+                        "full_last10": [],
+                        "full_all": [],
+                    }
+                bucket = agg[key]
+                dp_kind = meta["dp_kind"]
+                if dp_kind == "token":
+                    idx = int(meta["token_index"])
+                    bucket["token_responses"][idx] = r.api_response.lower().strip()
+                elif dp_kind == "full_last10":
+                    bucket["full_last10"].append(r.api_response)
+                elif dp_kind == "full_all":
+                    bucket["full_all"].append(r.api_response)
+                else:
+                    raise ValueError(f"Unknown dp_kind: {dp_kind}")
 
-            # For each activation type, build training data and evaluate
-            for act_key, acts_dict in act_types.items():
-                # Build training data for this prompt and act type
-                training_data = create_training_data_from_activations(
-                    acts_BLD_by_layer_dict=acts_dict,
-                    context_input_ids=context_input_ids,
-                    investigator_prompt=investigator_prompt,
-                    act_layer=ACTIVE_LAYER,
-                    prompt_layer=ACTIVE_LAYER,
-                    tokenizer=tokenizer,
-                    batch_idx=0,
-                )
+            # Finalize records
+            for (act_key, combo_idx), bucket in agg.items():
+                correct_answer = bucket["ground_truth"]
+                token_responses = bucket["token_responses"]
+                num_tok_yes = sum(1 for t in token_responses if t is not None and correct_answer.lower() in t.lower())
+                full_sequence_responses = bucket["full_all"]
+                num_fin_yes = sum(1 for t in full_sequence_responses if correct_answer.lower() in t.lower())
+                mean_gt_containment = num_tok_yes / max(1, bucket["num_tokens"])
 
-                # Run evaluation with investigator LoRA
-                responses = run_evaluation(
-                    eval_data=training_data,
-                    model=model,
-                    tokenizer=tokenizer,
-                    submodule=injection_submodule,
-                    device=DEVICE,
-                    dtype=DTYPE,
-                    global_step=-1,
-                    lora_path=INVESTIGATOR_LORA_PATH,
-                    eval_batch_size=EVAL_BATCH_SIZE,
-                    steering_coefficient=STEERING_COEFFICIENT,
-                    generation_kwargs=GENERATION_KWARGS,
-                )
-
-                # Parse responses
-                token_responses = []
-                num_tok_yes = 0
-                for i in range(len(context_input_ids)):
-                    r = responses[i].api_response.lower().strip()
-                    token_responses.append(r)
-                    if correct_answer.lower() in r.lower():
-                        num_tok_yes += 1
-
-                    if VERBOSE:
-                        print(f"[resp] word: {word}, correct: {correct_answer}, resp: {r}")
-
-                control_token_responses = [responses[-i - 1].api_response for i in range(10, 20)]
-
-                full_sequence_responses = [responses[-i - 1].api_response for i in range(10)]
-                num_fin_yes = sum(1 for r in full_sequence_responses if correct_answer.lower() in r.lower())
-
-                mean_gt_containment = num_tok_yes / max(1, len(context_input_ids))
-
-                # Store a flat record
                 record = {
-                    "word": word,
-                    "context_prompt": context_prompt,
-                    "act_key": act_key,  # "orig", "lora", or "diff"
-                    "investigator_prompt": investigator_prompt,
-                    "ground_truth": correct_answer,
-                    "num_tokens": len(context_input_ids),
+                    "word": bucket["word"],
+                    "context_prompt": bucket["context_prompt"],
+                    "act_key": act_key,
+                    "investigator_prompt": bucket["investigator_prompt"],
+                    "ground_truth": bucket["ground_truth"],
+                    "num_tokens": bucket["num_tokens"],
                     "token_yes_count": num_tok_yes,
                     "fullseq_yes_count": num_fin_yes,
                     "mean_ground_truth_containment": mean_gt_containment,
                     "token_responses": token_responses,
                     "full_sequence_responses": full_sequence_responses,
-                    "control_token_responses": control_token_responses,
-                    "context_input_ids": context_input_ids,
+                    "control_token_responses": bucket["full_last10"],
+                    "context_input_ids": context_input_ids_list[bucket["context_index_within_batch"]],
                 }
                 results["records"].append(record)
 
             pbar.set_postfix({"inv": INVESTIGATOR_LORA_PATH.split("/")[-1][:40], "word": word})
-            pbar.update(1)
+            pbar.update(len(batch))
 
-        model.delete_adapter(active_lora_path)
+        model.delete_adapter(active_lora_name)
 
     # Optionally save to JSON
     if OUTPUT_JSON_TEMPLATE is not None:
