@@ -223,7 +223,7 @@ def plot_results(results_by_lora):
         bars,
         legend_labels,
         loc="upper center",
-        bbox_to_anchor=(0.5, -0.15),
+        bbox_to_anchor=(0.5, -0.05),
         fontsize=FONT_SIZE_LEGEND,
         ncol=3,
         frameon=False,

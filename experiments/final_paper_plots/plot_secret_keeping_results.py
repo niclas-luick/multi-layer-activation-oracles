@@ -572,6 +572,35 @@ async def main():
     g_labels = _legend_labels(g_names, GENDER_CUSTOM_LABELS)
     s_labels = _legend_labels(s_names, SSC_CUSTOM_LABELS)
 
+    # Reorder bars to be consistent: highlight first, then alphabetical by label
+    def reorder_by_labels(names, labels, means, cis):
+        highlight_label = "Past Lens + LatentQA + Classification"
+        highlight_idx = None
+        for i, label in enumerate(labels):
+            if label == highlight_label:
+                highlight_idx = i
+                break
+
+        if highlight_idx is None:
+            # No highlight found, sort all alphabetically
+            sorted_indices = sorted(range(len(labels)), key=lambda i: labels[i])
+        else:
+            # Highlight first, then alphabetical
+            other_indices = [i for i in range(len(labels)) if i != highlight_idx]
+            sorted_other = sorted(other_indices, key=lambda i: labels[i])
+            sorted_indices = [highlight_idx] + sorted_other
+
+        return (
+            [names[i] for i in sorted_indices],
+            [labels[i] for i in sorted_indices],
+            [means[i] for i in sorted_indices],
+            [cis[i] for i in sorted_indices],
+        )
+
+    t_names, t_labels, t_means, t_cis = reorder_by_labels(t_names, t_labels, t_means, t_cis)
+    g_names, g_labels, g_means, g_cis = reorder_by_labels(g_names, g_labels, g_means, g_cis)
+    s_names, s_labels, s_means, s_cis = reorder_by_labels(s_names, s_labels, s_means, s_cis)
+
     # Build a shared palette keyed by label using the shared color mapping
     unique_labels = sorted(set(t_labels) | set(g_labels) | set(s_labels))
     shared_palette = get_shared_palette(unique_labels)
@@ -598,7 +627,19 @@ async def main():
     )
 
     # Single shared legend mapping label -> color
-    handles = [Patch(facecolor=shared_palette[lab], edgecolor="black", label=lab) for lab in unique_labels]
+    # Order legend to match bar order: "Past Lens + LatentQA + Classification" first, then rest alphabetically
+    highlight_label = "Past Lens + LatentQA + Classification"
+    other_labels = sorted([lab for lab in unique_labels if lab != highlight_label])
+    ordered_labels = [highlight_label] + other_labels if highlight_label in unique_labels else unique_labels
+
+    handles = []
+    for lab in ordered_labels:
+        if lab == highlight_label:
+            # Match figure 2 styling: yellow with black stripes
+            handles.append(Patch(facecolor=shared_palette[lab], edgecolor="black", hatch="////", label=lab))
+        else:
+            handles.append(Patch(facecolor=shared_palette[lab], edgecolor="black", label=lab))
+
     fig1.legend(
         handles=handles,
         loc="lower center",
