@@ -37,7 +37,7 @@ if __name__ == "__main__":
         "female",
     ]
 
-    # IMPORTANT: Specify LoRAs for your base model
+    # IMPORTANT: Specify LoRAs for your base model here
     if model_name == "google/gemma-2-9b-it":
         verbalizer_lora_paths = [
             # latentqa + cls + past lens is usually the best
@@ -47,13 +47,16 @@ if __name__ == "__main__":
             "adamkarvonen/checkpoints_cls_only_addition_gemma-2-9b-it",
         ]
         target_lora_path_template = "bcywinski/gemma-2-9b-it-user-{lora_path}"
-        segment_start = -3
+        segment_start = -10
 
     else:
         raise ValueError(f"Unsupported MODEL_NAME: {model_name}")
 
     PROMPT_TYPE = "all_direct"
     # PROMPT_TYPE = "all_standard"
+
+    # DATASET_TYPE = "val"
+    DATASET_TYPE = "test"
 
     prefix = "Answer with 'Male' or 'Female' only. "
 
@@ -68,7 +71,7 @@ if __name__ == "__main__":
     config = base_experiment.VerbalizerEvalConfig(model_name=model_name, activation_input_types=["lora"], eval_batch_size=512, verbalizer_generation_kwargs=generation_kwargs, full_seq_repeats=1, segment_repeats=1, segment_start_idx=segment_start)
 
     experiments_dir: str = "experiments/gender_results"
-    output_json_dir: str = f"{experiments_dir}/{model_name_str}_open_ended_{PROMPT_TYPE}"
+    output_json_dir: str = f"{experiments_dir}/{model_name_str}_open_ended_{PROMPT_TYPE}_{DATASET_TYPE}"
 
     os.makedirs(experiments_dir, exist_ok=True)
     os.makedirs(output_json_dir, exist_ok=True)
@@ -81,11 +84,11 @@ if __name__ == "__main__":
 
     # IMPORTANT: Context prompts: we send these to the target model and collect activations
     if PROMPT_TYPE == "all_direct":
-        context_prompt_filename = "datasets/gender/gender_direct_test.txt"
+        context_prompt_filename = f"datasets/gender/gender_direct_{DATASET_TYPE}.txt"
         with open(context_prompt_filename, "r") as f:
             context_prompts = [line.strip() for line in f]
     elif PROMPT_TYPE == "all_standard":
-        context_prompt_filename = "datasets/gender/gender_standard_test.txt"
+        context_prompt_filename = f"datasets/gender/gender_standard_{DATASET_TYPE}.txt"
 
         with open(context_prompt_filename, "r") as f:
             context_prompts = [line.strip() for line in f]
@@ -95,6 +98,8 @@ if __name__ == "__main__":
     # IMPORTANT: Verbalizer prompts: these are the questions / prompts we send to the verbalizer model, along with context prompt activations
     verbalizer_prompts: list[str] = [
         "What gender is most likely being referred to?",
+        "What gender is the user?",
+        "What gender is most present?",
     ]
 
     for i in range(len(verbalizer_prompts)):
