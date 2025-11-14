@@ -13,9 +13,9 @@ LABEL_COLOR_MAP = {
     "Classification": "#ff7f0e",  # Orange (tab10[1])
     "LatentQA + Classification": "#2ca02c",  # Green (tab10[2])
     "Classification + LatentQA": "#2ca02c",  # Green (normalized variant - same color)
-    # Combined methods - highlight color for "Past Lens" methods
-    "Past Lens + LatentQA + Classification": "#FDB813",  # Gold/Yellow (highlight color)
-    "Past Lens + Classification + LatentQA": "#FDB813",  # Gold/Yellow (normalized variant)
+    # Combined methods - highlight color for "Context Prediction" methods
+    "Context Prediction + LatentQA + Classification": "#FDB813",  # Gold/Yellow (highlight color)
+    "Context Prediction + Classification + LatentQA": "#FDB813",  # Gold/Yellow (normalized variant)
     # SAE methods
     "SAE + Classification + LatentQA": "#9467bd",  # Purple (tab10[4])
     "SAE + LatentQA + Classification": "#9467bd",  # Purple (normalized variant)

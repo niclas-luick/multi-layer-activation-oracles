@@ -190,7 +190,10 @@ def _collect_stats(results_by_lora: dict[str, list[float]], highlight_keyword: s
     cis = []
 
     for lora_path, accs in results_by_lora.items():
-        name = lora_path.split("/")[-1]
+        if lora_path is None:
+            name = "base_model"
+        else:
+            name = lora_path.split("/")[-1]
         lora_names.append(name)
         means.append(sum(accs) / len(accs))
         cis.append(ci95(accs))

@@ -65,19 +65,19 @@ TABOO_CUSTOM_LABELS = {
     "checkpoints_cls_latentqa_only_addition_gemma-2-9b-it": "LatentQA + Classification",
     "checkpoints_latentqa_only_addition_gemma-2-9b-it": "LatentQA",
     "checkpoints_cls_only_addition_gemma-2-9b-it": "Classification",
-    "checkpoints_latentqa_cls_past_lens_addition_gemma-2-9b-it": "Past Lens + LatentQA + Classification",
+    "checkpoints_latentqa_cls_past_lens_addition_gemma-2-9b-it": "Context Prediction + LatentQA + Classification",
 }
 
 GENDER_CUSTOM_LABELS = {
     "checkpoints_cls_latentqa_only_addition_gemma-2-9b-it": "LatentQA + Classification",
     "checkpoints_latentqa_only_addition_gemma-2-9b-it": "LatentQA",
     "checkpoints_cls_only_addition_gemma-2-9b-it": "Classification",
-    "checkpoints_latentqa_cls_past_lens_addition_gemma-2-9b-it": "Past Lens + LatentQA + Classification",
+    "checkpoints_latentqa_cls_past_lens_addition_gemma-2-9b-it": "Context Prediction + LatentQA + Classification",
 }
 
 SSC_CUSTOM_LABELS = {
     "checkpoints_latentqa_only_adding_Llama-3_3-70B-Instruct": "LatentQA",
-    "checkpoints_act_cls_latentqa_pretrain_mix_adding_Llama-3_3-70B-Instruct": "Past Lens + LatentQA + Classification",
+    "checkpoints_act_cls_latentqa_pretrain_mix_adding_Llama-3_3-70B-Instruct": "Context Prediction + LatentQA + Classification",
     "checkpoints_cls_only_adding_Llama-3_3-70B-Instruct": "Classification",
 }
 
@@ -438,7 +438,10 @@ def _collect_stats(results_by_lora: dict[str, list[float]], highlight_keyword: s
     cis = []
 
     for lora_path, accs in results_by_lora.items():
-        name = lora_path.split("/")[-1]
+        if lora_path is None:
+            name = "base_model"
+        else:
+            name = lora_path.split("/")[-1]
         lora_names.append(name)
         means.append(sum(accs) / len(accs))
         cis.append(ci95(accs))
@@ -577,7 +580,7 @@ async def main():
 
     # Reorder bars to be consistent: highlight first, then alphabetical by label
     def reorder_by_labels(names, labels, means, cis):
-        highlight_label = "Past Lens + LatentQA + Classification"
+        highlight_label = "Context Prediction + LatentQA + Classification"
         highlight_idx = None
         for i, label in enumerate(labels):
             if label == highlight_label:
@@ -607,10 +610,10 @@ async def main():
     # Build a shared palette keyed by label using the shared color mapping
     unique_labels = sorted(set(t_labels) | set(g_labels) | set(s_labels))
     shared_palette = get_shared_palette(unique_labels)
-    # Override "Past Lens + LatentQA + Classification" with highlight color
+    # Override "Context Prediction + LatentQA + Classification" with highlight color
     rgb = tuple(int(INTERP_BAR_COLOR[i : i + 2], 16) / 255.0 for i in (1, 3, 5))
-    shared_palette["Past Lens + LatentQA + Classification"] = (*rgb, 1.0)
-    shared_palette["Past Lens + Classification + LatentQA"] = (*rgb, 1.0)  # Also handle variant
+    shared_palette["Context Prediction + LatentQA + Classification"] = (*rgb, 1.0)
+    shared_palette["Context Prediction + Classification + LatentQA"] = (*rgb, 1.0)  # Also handle variant
 
     _plot_results_panel(
         axes1[0], t_names, t_labels, t_means, t_cis, title="Taboo", palette=shared_palette, show_ylabel=True
@@ -630,8 +633,8 @@ async def main():
     )
 
     # Single shared legend mapping label -> color
-    # Order legend to match bar order: "Past Lens + LatentQA + Classification" first, then rest alphabetically
-    highlight_label = "Past Lens + LatentQA + Classification"
+    # Order legend to match bar order: "Context Prediction + LatentQA + Classification" first, then rest alphabetically
+    highlight_label = "Context Prediction + LatentQA + Classification"
     other_labels = sorted([lab for lab in unique_labels if lab != highlight_label])
     ordered_labels = [highlight_label] + other_labels if highlight_label in unique_labels else unique_labels
 

@@ -15,7 +15,7 @@ FONT_SIZE_LEGEND = 14  # Legend text size
 
 # Configuration
 OUTPUT_JSON_DIR = "experiments/personaqa_single_eval_results_all/Qwen3-8B_yes_no_v1"
-OUTPUT_JSON_DIR = "experiments/personaqa_all_persona_eval_results/Qwen3-8B_yes_no"
+OUTPUT_JSON_DIR = "experiments/personaqa_results/Qwen3-8B_yes_no"
 
 DATA_DIR = OUTPUT_JSON_DIR.split("/")[-1]
 
@@ -62,8 +62,10 @@ CUSTOM_LABELS = {
     "checkpoints_cls_latentqa_only_addition_Qwen3-8B": "LatentQA + Classification",
     "checkpoints_latentqa_only_addition_Qwen3-8B": "LatentQA",
     "checkpoints_cls_only_addition_Qwen3-8B": "Classification",
-    "checkpoints_latentqa_cls_past_lens_addition_Qwen3-8B": "Past Lens + Classification + LatentQA",
+    "checkpoints_latentqa_cls_past_lens_addition_Qwen3-8B": "Context Prediction + Classification + LatentQA",
     "checkpoints_cls_latentqa_sae_addition_Qwen3-8B": "SAE + Classification + LatentQA",
+    "checkpoints_latentqa_sae_past_lens_addition_Qwen3-8B": "SAE + Past Lens + LatentQA + Classification",
+    "base_model": "Original Model",
 }
 
 
@@ -127,10 +129,10 @@ def load_results(json_dir):
             if record["act_key"] != "lora":
                 continue
             accuracy = calculate_accuracy(record)
-            # word = record["word"]
+            word = record["verbalizer_prompt"]
 
             results_by_lora[investigator_lora].append(accuracy)
-            # results_by_lora_word[investigator_lora][word].append(accuracy)
+            results_by_lora_word[investigator_lora][word].append(accuracy)
 
     return results_by_lora, results_by_lora_word
 
@@ -163,7 +165,10 @@ def plot_results(results_by_lora):
 
     for lora_path, accuracies in results_by_lora.items():
         # Extract a readable name from the path
-        lora_name = lora_path.split("/")[-1]
+        if lora_path is None:
+            lora_name = "base_model"
+        else:
+            lora_name = lora_path.split("/")[-1]
         lora_names.append(lora_name)
         mean_acc = sum(accuracies) / len(accuracies)
         mean_accuracies.append(mean_acc)
@@ -245,12 +250,20 @@ def plot_per_word_accuracy(results_by_lora_word):
         return
 
     for lora_path, word_accuracies in results_by_lora_word.items():
-        lora_name = lora_path.split("/")[-1]
+        if lora_path is None:
+            lora_name = "base_model"
+        else:
+            lora_name = lora_path.split("/")[-1]
 
         # Calculate mean accuracy and CI per word
         words = sorted(word_accuracies.keys())
         mean_accs = [sum(word_accuracies[w]) / len(word_accuracies[w]) for w in words]
         error_bars = [calculate_confidence_interval(word_accuracies[w]) for w in words]
+
+        for w, accs in word_accuracies.items():
+            mean_acc = sum(accs) / len(accs)
+            ci = calculate_confidence_interval(accs)
+            print(f"{lora_name} - Word '{w}': {mean_acc:.3f} ± {ci:.3f} (n={len(accs)})")
 
         # Create figure
         fig, ax = plt.subplots(figsize=(14, 6))
@@ -287,6 +300,7 @@ def main():
     # Plot 1: Overall accuracy by investigator
     plot_results(results_by_lora)
 
+    # doesn't make sense to plot per-word accuracy for personaqa
     # Plot 2: Per-word accuracy for each investigator
     # plot_per_word_accuracy(results_by_lora_word)
 

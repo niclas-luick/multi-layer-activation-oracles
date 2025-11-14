@@ -66,12 +66,12 @@ CUSTOM_LABELS = {
     "checkpoints_cls_latentqa_only_addition_gemma-2-9b-it": "Classification + LatentQA",
     "checkpoints_latentqa_only_addition_gemma-2-9b-it": "LatentQA",
     "checkpoints_cls_only_addition_gemma-2-9b-it": "Classification",
-    "checkpoints_latentqa_cls_past_lens_addition_gemma-2-9b-it": "Past Lens + LatentQA + Classification",
+    "checkpoints_latentqa_cls_past_lens_addition_gemma-2-9b-it": "Context Prediction + LatentQA + Classification",
     # qwen3 8b
     "checkpoints_cls_latentqa_only_addition_Qwen3-8B": "Classification + LatentQA",
     "checkpoints_latentqa_only_addition_Qwen3-8B": "LatentQA",
     "checkpoints_cls_only_addition_Qwen3-8B": "Classification",
-    "checkpoints_latentqa_cls_past_lens_addition_Qwen3-8B": "Past Lens + Classification + LatentQA",
+    "checkpoints_latentqa_cls_past_lens_addition_Qwen3-8B": "Context Prediction + Classification + LatentQA",
     "checkpoints_cls_latentqa_sae_addition_Qwen3-8B": "SAE + Classification + LatentQA",
 }
 
@@ -170,7 +170,10 @@ def plot_results(results_by_lora, highlight_keyword, highlight_color="#FDB813", 
     error_bars = []
 
     for lora_path, accuracies in results_by_lora.items():
-        lora_name = lora_path.split("/")[-1]
+        if lora_path is None:
+            lora_name = "base_model"
+        else:
+            lora_name = lora_path.split("/")[-1]
         lora_names.append(lora_name)
         mean_acc = sum(accuracies) / len(accuracies)
         mean_accuracies.append(mean_acc)
@@ -264,12 +267,20 @@ def plot_per_word_accuracy(results_by_lora_word):
         return
 
     for lora_path, word_accuracies in results_by_lora_word.items():
-        lora_name = lora_path.split("/")[-1]
+        if lora_path is None:
+            lora_name = "base_model"
+        else:
+            lora_name = lora_path.split("/")[-1]
 
         # Calculate mean accuracy and CI per word
         words = sorted(word_accuracies.keys())
         mean_accs = [sum(word_accuracies[w]) / len(word_accuracies[w]) for w in words]
         error_bars = [calculate_confidence_interval(word_accuracies[w]) for w in words]
+
+        for w, accs in word_accuracies.items():
+            mean_acc = sum(accs) / len(accs)
+            ci = calculate_confidence_interval(accs)
+            print(f"{lora_name} - Word '{w}': {mean_acc:.3f} ± {ci:.3f} (n={len(accs)})")
 
         # Create figure
         fig, ax = plt.subplots(figsize=(14, 6))

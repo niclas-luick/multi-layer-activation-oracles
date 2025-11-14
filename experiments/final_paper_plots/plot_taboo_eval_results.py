@@ -21,8 +21,10 @@ OUTPUT_JSON_DIR = "experiments/taboo_eval_results/Qwen3-8B_open_ended_direct"
 # OUTPUT_JSON_DIR = "experiments/taboo_eval_results/Qwen3-8B_yes_no_direct"
 # OUTPUT_JSON_DIR = "experiments/taboo_eval_results/Qwen3-32B_open_ended_direct"
 # OUTPUT_JSON_DIR = "experiments/taboo_eval_results/Qwen3-32B_yes_no_direct"
-# OUTPUT_JSON_DIR = "experiments/taboo_eval_results/gemma-2-9b-it_open_ended_all_direct"
-OUTPUT_JSON_DIR = "experiments/taboo_eval_results/Qwen3-8B_open_ended_all_direct"
+OUTPUT_JSON_DIR = "experiments/taboo_eval_results/gemma-2-9b-it_open_ended_all_direct"
+OUTPUT_JSON_DIR = "experiments/taboo_eval_results/gemma-2-9b-it_open_ended_all_direct_test"
+# OUTPUT_JSON_DIR = "experiments/taboo_eval_results/Qwen3-8B_open_ended_all_direct"
+OUTPUT_JSON_DIR = "experiments/taboo_eval_results/Qwen3-8B_open_ended_all_direct_50_mix"
 
 DATA_DIR = OUTPUT_JSON_DIR.split("/")[-1]
 
@@ -43,6 +45,8 @@ elif "Qwen3-32B" in DATA_DIR:
     model_name = "Qwen3-32B"
 elif "gemma-2-9b-it" in DATA_DIR:
     model_name = "Gemma-2-9B-IT"
+else:
+    model_name = "Unknown"
 
 task_type = "Open Ended"
 if "yes_no" in DATA_DIR:
@@ -69,6 +73,7 @@ CUSTOM_LABELS = {
     "checkpoints_latentqa_only_addition_gemma-2-9b-it": "LatentQA",
     "checkpoints_cls_only_addition_gemma-2-9b-it": "Classification",
     "checkpoints_latentqa_cls_past_lens_addition_gemma-2-9b-it": "Past Lens + LatentQA + Classification",
+    "base_model": "Original Model",
     # qwen3 8b
     "checkpoints_cls_latentqa_only_addition_Qwen3-8B": "LatentQA + Classification",
     "checkpoints_latentqa_only_addition_Qwen3-8B": "LatentQA",
@@ -78,8 +83,16 @@ CUSTOM_LABELS = {
 }
 
 
-def calculate_accuracy(record: dict, investigator_lora: str) -> float:
-    if "gemma" in investigator_lora:
+def calculate_accuracy(record: dict, investigator_lora: str | None) -> float:
+    if investigator_lora is None:
+        # Base model - determine index from model_name
+        if "gemma" in model_name.lower():
+            idx = -3
+        elif "Qwen3" in model_name:
+            idx = -7
+        else:
+            raise ValueError(f"Unknown model in model_name: {model_name}")
+    elif "gemma" in investigator_lora:
         idx = -3
     elif "Qwen3" in investigator_lora:
         idx = -7
@@ -177,7 +190,10 @@ def plot_results(results_by_lora, highlight_keyword, highlight_color="#FDB813", 
     error_bars = []
 
     for lora_path, accuracies in results_by_lora.items():
-        lora_name = lora_path.split("/")[-1]
+        if lora_path is None:
+            lora_name = "base_model"
+        else:
+            lora_name = lora_path.split("/")[-1]
         lora_names.append(lora_name)
         mean_acc = sum(accuracies) / len(accuracies)
         mean_accuracies.append(mean_acc)
@@ -273,7 +289,10 @@ def plot_by_keyword_with_extras(
     """
     entries = []
     for lora_path, accuracies in results_by_lora.items():
-        lora_name = lora_path.split("/")[-1]
+        if lora_path is None:
+            lora_name = "base_model"
+        else:
+            lora_name = lora_path.split("/")[-1]
         entries.append((lora_name, accuracies))
 
     matches = [(name, accs) for name, accs in entries if required_keyword in name]
@@ -358,7 +377,10 @@ def plot_per_word_accuracy(results_by_lora_word):
         return
 
     for lora_path, word_accuracies in results_by_lora_word.items():
-        lora_name = lora_path.split("/")[-1]
+        if lora_path is None:
+            lora_name = "base_model"
+        else:
+            lora_name = lora_path.split("/")[-1]
 
         # Calculate mean accuracy and CI per word
         words = sorted(word_accuracies.keys())
@@ -405,6 +427,8 @@ def main():
     ]
 
     chosen_prompt = "Provide a single word only in your response. What is the secret word in this text?"
+
+    chosen_prompt = "What is the secret word in this text?"
 
     # Load results from all JSON files
     results_by_lora, results_by_lora_word = load_results(OUTPUT_JSON_DIR, chosen_prompt)

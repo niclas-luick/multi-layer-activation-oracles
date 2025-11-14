@@ -15,7 +15,9 @@ RUN_DIR = "experiments/classification/classification_eval_Qwen3-8B_single_token"
 RUN_DIR = "experiments/classification/classification_Qwen3-8B_single_token_v1"
 RUN_DIR = "experiments/classification/classification_Qwen3-8B_single_token"
 RUN_DIR = "experiments/classification/classification_gemma-2-9b-it_single_token"
+RUN_DIR = "experiments/classification/classification_Llama-3_3-70B-Instruct_single_token"
 RUN_DIR = "experiments/classification/classification_Qwen3-8B_single_token"
+# RUN_DIR = "experiments/classification/classification_Qwen3-8B_single_token"
 # RUN_DIR = "experiments/classification/classification_Qwen3-8B_multi_token"
 DATA_DIR = RUN_DIR.split("/")[-1]
 
@@ -31,6 +33,7 @@ OUTPUT_PATH_BASE = f"{CLS_IMAGE_FOLDER}/classification_results_{DATA_DIR}"
 
 # Filter out files containing any of these strings
 FILTERED_FILENAMES = ["sae", "single"]
+FILTERED_FILENAMES = ["single"]
 
 # Custom legend labels for specific LoRA checkpoints (use last path segment).
 # If a name is not present here, the raw LoRA name is used in the legend.
@@ -48,11 +51,13 @@ CUSTOM_LABELS = {
     "checkpoints_latentqa_cls_past_lens_addition_Qwen3-8B": "Past Lens + LatentQA + Classification",
     "checkpoints_cls_latentqa_sae_addition_Qwen3-8B": "SAE + LatentQA + Classification",
     "checkpoints_classification_single_token_Qwen3-8B": "Classification Single Token Training",
+    "checkpoints_cls_latentqa_sae_past_lens_Qwen3-8B": "SAE + Past Lens + LatentQA + Classification",
     # zero-shot baseline
     "Qwen3-8B": "Zero-Shot Baseline",
     "checkpoints_act_cls_latentqa_pretrain_mix_adding_Llama-3_3-70B-Instruct": "Past Lens + LatentQA + Classification",
     "checkpoints_cls_only_adding_Llama-3_3-70B-Instruct": "Classification",
     "checkpoints_latentqa_only_adding_Llama-3_3-70B-Instruct": "LatentQA",
+    "base_model": "Original Model",
 }
 
 if "llama" in RUN_DIR.lower():
@@ -160,7 +165,10 @@ def load_results_from_folder(folder_path, verbose=False):
 
         # Prefer the LoRA path's last segment as the key (consistent with other plots)
         lora_path = data["meta"]["investigator_lora_path"]
-        lora_name = lora_path.split("/")[-1]
+        if lora_path is None:
+            lora_name = "base_model"
+        else:
+            lora_name = lora_path.split("/")[-1]
 
         records = data["records"]
 
