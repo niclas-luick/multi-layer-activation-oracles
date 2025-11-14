@@ -50,11 +50,12 @@ else:
 TITLE = f"PersonAQA{person_type} Results: {task_type} Response with {sequence_str.capitalize()}-Level Inputs for {model_name}"
 
 
-OUTPUT_PATH = f"{CLS_IMAGE_FOLDER}/personaqa_results_{DATA_DIR}_{sequence_str}_{person_str}.pdf"
-
-
 # Filter filenames - skip files containing any of these strings
-FILTER_FILENAMES = []  # No filtering
+# We'll generate two versions with different filters
+FILTER_CONFIGS = [
+    (["400k"], True),  # Excludes 400k, includes sae -> add "sae" to filename
+    (["400k", "sae"], False),  # Excludes both -> no "sae" in filename
+]
 
 # Define your custom labels here (fill in the empty strings with your labels)
 CUSTOM_LABELS = {
@@ -64,7 +65,8 @@ CUSTOM_LABELS = {
     "checkpoints_cls_only_addition_Qwen3-8B": "Classification",
     "checkpoints_latentqa_cls_past_lens_addition_Qwen3-8B": "Context Prediction + Classification + LatentQA",
     "checkpoints_cls_latentqa_sae_addition_Qwen3-8B": "SAE + Classification + LatentQA",
-    "checkpoints_latentqa_sae_past_lens_addition_Qwen3-8B": "SAE + Past Lens + LatentQA + Classification",
+    "checkpoints_latentqa_sae_past_lens_addition_Qwen3-8B": "SAE + Context Prediction + LatentQA + Classification",
+    "checkpoints_cls_latentqa_sae_past_lens_Qwen3-8B": "SAE + Context Prediction + LatentQA + Classification",
     "base_model": "Original Model",
 }
 
@@ -92,7 +94,7 @@ def calculate_accuracy(record):
         return num_correct / total if total > 0 else 0
 
 
-def load_results(json_dir):
+def load_results(json_dir, filter_filenames=None):
     """Load all JSON files from the directory."""
     results_by_lora = defaultdict(list)
     results_by_lora_word = defaultdict(lambda: defaultdict(list))
@@ -105,10 +107,10 @@ def load_results(json_dir):
     json_files = list(json_dir.glob("*.json"))
 
     # Apply filename filter
-    if FILTER_FILENAMES:
+    if filter_filenames:
         filtered_files = []
         for json_file in json_files:
-            if not any(filter_str in json_file.name for filter_str in FILTER_FILENAMES):
+            if not any(filter_str in json_file.name for filter_str in filter_filenames):
                 filtered_files.append(json_file)
             else:
                 print(f"Skipping filtered file: {json_file.name}")
@@ -152,7 +154,7 @@ def calculate_confidence_interval(accuracies, confidence=0.95):
     return margin
 
 
-def plot_results(results_by_lora):
+def plot_results(results_by_lora, output_path):
     """Create a bar chart of average accuracy by investigator LoRA."""
     if not results_by_lora:
         print("No results to plot!")
@@ -207,6 +209,15 @@ def plot_results(results_by_lora):
         range(len(lora_names)), mean_accuracies, color=colors, yerr=error_bars, capsize=5, error_kw={"linewidth": 2}
     )
 
+    # Apply black stripes to "Context Prediction + Classification + LatentQA" bar
+    target_label = "Context Prediction + Classification + LatentQA"
+    for i, label in enumerate(legend_labels):
+        if label == target_label:
+            bars[i].set_hatch("////")
+            bars[i].set_edgecolor("black")
+            bars[i].set_linewidth(2.0)
+            break
+
     # Add random chance baseline
     baseline_line = ax.axhline(y=0.5, color="red", linestyle="--", linewidth=2)
 
@@ -239,14 +250,15 @@ def plot_results(results_by_lora):
         loc="upper center",
         bbox_to_anchor=(0.5, -0.05),
         fontsize=FONT_SIZE_LEGEND,
-        ncol=3,
+        ncol=2,
         frameon=False,
     )
 
     plt.tight_layout()
     plt.subplots_adjust(bottom=0.2)  # Make room for legend below
-    plt.savefig(OUTPUT_PATH, dpi=300, bbox_inches="tight")
-    print(f"\nPlot saved as '{OUTPUT_PATH}'")
+    plt.savefig(output_path, dpi=300, bbox_inches="tight")
+    print(f"\nPlot saved as '{output_path}'")
+    plt.close()
     # plt.show()
 
 
@@ -301,15 +313,27 @@ def plot_per_word_accuracy(results_by_lora_word):
 
 
 def main():
-    # Load results from all JSON files
-    results_by_lora, results_by_lora_word = load_results(OUTPUT_JSON_DIR)
+    # Generate two versions with different filters
+    for filter_filenames, include_sae_in_filename in FILTER_CONFIGS:
+        print(f"\n{'=' * 60}")
+        print(f"Generating plot with filter: {filter_filenames}")
+        print(f"{'=' * 60}\n")
 
-    # Plot 1: Overall accuracy by investigator
-    plot_results(results_by_lora)
+        # Load results from all JSON files with current filter
+        results_by_lora, results_by_lora_word = load_results(OUTPUT_JSON_DIR, filter_filenames=filter_filenames)
 
-    # doesn't make sense to plot per-word accuracy for personaqa
-    # Plot 2: Per-word accuracy for each investigator
-    # plot_per_word_accuracy(results_by_lora_word)
+        # Construct output path
+        if include_sae_in_filename:
+            output_path = f"{CLS_IMAGE_FOLDER}/personaqa_results_{DATA_DIR}_{sequence_str}_{person_str}_sae.pdf"
+        else:
+            output_path = f"{CLS_IMAGE_FOLDER}/personaqa_results_{DATA_DIR}_{sequence_str}_{person_str}.pdf"
+
+        # Plot: Overall accuracy by investigator
+        plot_results(results_by_lora, output_path)
+
+        # doesn't make sense to plot per-word accuracy for personaqa
+        # Plot 2: Per-word accuracy for each investigator
+        # plot_per_word_accuracy(results_by_lora_word)
 
 
 if __name__ == "__main__":
