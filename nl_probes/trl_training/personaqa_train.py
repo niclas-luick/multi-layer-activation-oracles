@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional
 
 import torch
 from config import CustomLoraConfig, CustomSFTConfig, EvalConfig
-from peft import LoraConfig, PeftModel
+from peft import LoraConfig, PeftModel, get_peft_model, prepare_model_for_kbit_training
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from transformers.trainer_callback import EarlyStoppingCallback, TrainerCallback
@@ -68,9 +68,6 @@ def train_with_sft_only(
     gc.collect()
     torch.cuda.empty_cache()
 
-    local_rank = int(os.environ.get("LOCAL_RANK", "0"))
-    torch.cuda.set_device(local_rank)
-
     # ---- tokenizer & base model ----
     tokenizer = AutoTokenizer.from_pretrained(config.model_name, trust_remote_code=True)
     if not tokenizer.pad_token:
@@ -92,7 +89,6 @@ def train_with_sft_only(
 
     # this is how I programmatically set initialization arguments for the Model
     if quantize:
-        llm_kwargs["device_map"] = {"": local_rank}
         llm_kwargs["quantization_config"] = bnb_config
         # llm_kwargs["use_cache"] = False
 
@@ -100,20 +96,26 @@ def train_with_sft_only(
         **llm_kwargs,
     )
 
-    model.enable_input_require_grads()
+    if quantize:
+        model = prepare_model_for_kbit_training(
+            model,
+        )
 
     # I use this to continue training from an existing LoRA checkpoint
     if load_lora_path is not None:
         assert load_lora_path.exists(), f"LoRA path does not exist: {load_lora_path}"
-        model = PeftModel.from_pretrained(model, load_lora_path, is_trainable=True, autocast_adapter_dtype=True)
-        peft_config = None
+        model = PeftModel.from_pretrained(model, load_lora_path, is_trainable=True)
+        lora_config = None
     else:
-        # Don't apply LoRA here - let SFTTrainer handle it
-        peft_config = CustomLoraConfig()
+        lora_config = CustomLoraConfig()
+        model = get_peft_model(model, lora_config)
 
     print_trainable_parameters(model)
 
     model.config.use_cache = False
+
+    if sft_config.gradient_checkpointing:
+        model.enable_input_require_grads()
 
     sft_trainer = SFTTrainer(
         model=model,
@@ -121,7 +123,6 @@ def train_with_sft_only(
         eval_dataset=sft_hf_eval_test_ds,
         args=sft_config,
         callbacks=callbacks,
-        peft_config=peft_config,
     )
 
     # if rollout_cb is not None:
@@ -222,13 +223,13 @@ def create_personaqa_dataset(folder: str) -> Dataset:
 
 if __name__ == "__main__":
     model_names = [
-        # "Qwen/Qwen3-1.7B",
         # "Qwen/Qwen3-8B",
         # "Qwen/Qwen3-14B",
         # "google/gemma-2-9b-it",
         # "Qwen/Qwen3-32B",
         # "google/gemma-2-27b-it",
         "meta-llama/Llama-3.3-70B-Instruct",
+        # "Qwen/Qwen3-1.7B",
     ]
 
     final_message_loss_only = True
@@ -242,10 +243,8 @@ if __name__ == "__main__":
 
         if model_name == "meta-llama/Llama-3.3-70B-Instruct":
             quantize = True
-            gradient_checkpointing = True
         else:
             quantize = False
-            gradient_checkpointing = False
 
         run_name = f"{model_name}_{dataset_name}"
         run_name = run_name.replace("/", "-")
@@ -271,7 +270,6 @@ if __name__ == "__main__":
             model_name=config.model_name,
             batch_size=batch_size,
             real_batch_size=real_batch_size,
-            gradient_checkpointing=gradient_checkpointing,
         )
 
         sft_config.run_name = f"{run_name}_{run_str}"
