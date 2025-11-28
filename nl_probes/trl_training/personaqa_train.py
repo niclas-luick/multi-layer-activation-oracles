@@ -22,6 +22,27 @@ from trl import GRPOConfig, GRPOTrainer, SFTConfig, SFTTrainer
 import wandb
 from datasets import Dataset, DatasetDict, load_dataset, load_from_disk
 
+def make_debug_collator(original_collator, tokenizer, max_prints=3):
+    """Wrap a collator to print tokenization details for debugging."""
+    counter = {"n": 0}
+
+    def wrapper(features):
+        batch = original_collator(features)
+        if counter["n"] < max_prints:
+            counter["n"] += 1
+            print(f"\n{'='*60}\nBATCH {counter['n']}\n{'='*60}")
+            for k, v in batch.items():
+                print(f"{k}: shape={v.shape}")
+            ids = batch["input_ids"][0]
+            labels = batch["labels"][0]
+            print(f"\nDecoded input:\n{tokenizer.decode(ids)}")
+            print(f"\nLabels (non -100):\n{tokenizer.decode(labels[labels != -100])}")
+            print(f"{'='*60}\n")
+        return batch
+
+    return wrapper
+
+
 MODEL_NAME_TO_BATCH_SIZE = {
     "meta-llama/Llama-3.1-8B-Instruct": 4,
     "google/gemma-2-9b-it": 8,
@@ -125,6 +146,9 @@ def train_with_sft_only(
         callbacks=callbacks,
     )
 
+    # Debug: print tokenization details for first few batches
+    sft_trainer.data_collator = make_debug_collator(sft_trainer.data_collator, tokenizer, max_prints=3)
+
     # if rollout_cb is not None:
     #     sft_trainer.add_callback(rollout_cb)
 
@@ -150,21 +174,74 @@ def train_with_sft_only(
     torch.cuda.empty_cache()
 
 
-def format_sft_dataset(ds: Dataset, max_length_chars: int | None = None) -> Dataset:
-    rows = []
+def create_assistant_mask(
+    messages: list[dict[str, str]], tokenizer: AutoTokenizer
+) -> dict[str, torch.Tensor]:
+    """
+    Create input_ids and assistant_masks for training, where assistant_masks indicates
+    which tokens should have loss computed (1 for assistant tokens, 0 for user/system tokens).
 
-    for row in ds:
-        messages = row["messages"]
-        assert len(messages) == 2, f"Expected 2 messages, got {len(messages)}"
-        assert messages[0]["role"] == "user" and messages[1]["role"] == "assistant", (
-            f"Expected user and assistant messages, got {messages}"
-        )
-        prompt = messages[0]["content"]
-        completion = messages[1]["content"]
+    Works generically with any chat-formatted tokenizer by comparing lengths of
+    prompt-only vs full conversation tokenization.
 
-        rows.append({"prompt": prompt, "completion": completion})
+    Args:
+        messages: List of message dicts with 'role' and 'content' keys (must be exactly 2)
+        tokenizer: The tokenizer to use
 
-    return Dataset.from_list(rows)
+    Returns:
+        Dict with 'input_ids' and 'assistant_masks' tensors
+    """
+    assert len(messages) == 2, f"Expected 2 messages, got {len(messages)}"
+    assert messages[0]["role"] == "user" and messages[1]["role"] == "assistant"
+
+    input_messages = [messages[0]]
+
+    # Build kwargs for apply_chat_template
+    chat_template_kwargs = dict(
+        tokenize=True,
+        return_tensors=None,
+        padding=False,
+        enable_thinking=False,
+    )
+
+    # Tokenize just the user message with generation prompt (to find where assistant starts)
+    input_prompt_ids = tokenizer.apply_chat_template(
+        input_messages,
+        add_generation_prompt=True,
+        **chat_template_kwargs,
+    )
+
+    # Tokenize full conversation
+    full_prompt_ids = tokenizer.apply_chat_template(
+        messages,
+        add_generation_prompt=False,
+        **chat_template_kwargs,
+    )
+
+    assistant_start_idx = len(input_prompt_ids)
+
+    # Create mask: 0 for user/prompt tokens, 1 for assistant tokens
+    assistant_mask = torch.zeros(len(full_prompt_ids), dtype=torch.long)
+    assistant_mask[assistant_start_idx:] = 1
+
+    input_ids = torch.tensor(full_prompt_ids, dtype=torch.long)
+
+    return {
+        "input_ids": input_ids,
+        "assistant_masks": assistant_mask,
+    }
+
+
+def prepare_sft_dataset(dataset: Dataset, tokenizer: AutoTokenizer) -> Dataset:
+    remove_cols = [c for c in dataset.column_names if c not in {"messages"}]
+
+    new_ds = dataset.map(
+        lambda ex: create_assistant_mask(ex["messages"], tokenizer),
+        remove_columns=remove_cols,
+        desc="Tokenizing dataset with chat template",
+    )
+    new_ds = new_ds.remove_columns(["messages"])
+    return new_ds
 
 
 def create_personaqa_dataset(folder: str) -> Dataset:
@@ -225,14 +302,12 @@ if __name__ == "__main__":
     model_names = [
         # "Qwen/Qwen3-8B",
         # "Qwen/Qwen3-14B",
-        # "google/gemma-2-9b-it",
+        "google/gemma-2-9b-it",
         # "Qwen/Qwen3-32B",
         # "google/gemma-2-27b-it",
-        "meta-llama/Llama-3.3-70B-Instruct",
+        # "meta-llama/Llama-3.3-70B-Instruct",
         # "Qwen/Qwen3-1.7B",
     ]
-
-    final_message_loss_only = True
 
     dataset_names = ["datasets/personaqa_data/shuffled"]
     num_epochs = 3
@@ -286,8 +361,8 @@ if __name__ == "__main__":
 
         tokenizer = AutoTokenizer.from_pretrained(config.model_name)
 
-        train_ds = format_sft_dataset(train_ds)
-        eval_ds = format_sft_dataset(eval_ds)
+        train_ds = prepare_sft_dataset(train_ds, tokenizer)
+        eval_ds = prepare_sft_dataset(eval_ds, tokenizer)
 
         # early_stopping_callback = EarlyStoppingCallback(early_stopping_patience=2)
 
