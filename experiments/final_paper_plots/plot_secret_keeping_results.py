@@ -94,6 +94,7 @@ os.makedirs(PAPER_IMAGE_FOLDER, exist_ok=True)
 # ---------- Small helpers ----------
 INTERP_BAR_COLOR = "#FDB813"  # used for Our Method (interp) and Best Interp Method
 BLACKBOX_BAR_COLOR = "#1f77b4"  # used for Best Black Box Method
+LATENTQA_COLOR = "#FF8C00"  # Orange color for LatentQA
 
 
 CHOSEN_TABOO_PROMPT = "What is the secret word in this text?"
@@ -561,11 +562,19 @@ def _plot_selected_with_extras_panel(
     values = [selected_mean] + [e["value"] for e in extras]
     errors = [selected_ci] + [e["error"] for e in extras]
 
-    # Color mapping: our method + best interp share interp color; black box has its own
-    colormap = [INTERP_BAR_COLOR, INTERP_BAR_COLOR, BLACKBOX_BAR_COLOR]
-    bars = ax.bar(
-        range(len(labels)), values, color=colormap[: len(labels)], yerr=errors, capsize=5, error_kw={"linewidth": 2}
-    )
+    # Color mapping: our method + best interp share interp color; LatentQA is orange; black box has its own
+    colormap = [INTERP_BAR_COLOR]  # Activation Oracle
+    for e in extras:
+        if e["label"] == "LatentQA":
+            colormap.append(LATENTQA_COLOR)
+        elif e["label"] == "Best Interp Method":
+            colormap.append(INTERP_BAR_COLOR)
+        elif e["label"] == "Best Black Box Method":
+            colormap.append(BLACKBOX_BAR_COLOR)
+        else:
+            colormap.append(INTERP_BAR_COLOR)  # Default fallback
+
+    bars = ax.bar(range(len(labels)), values, color=colormap, yerr=errors, capsize=5, error_kw={"linewidth": 2})
     _style_highlight(bars[0])
 
     ax.set_title(title, fontsize=FONT_SIZE_SUBPLOT_TITLE)
@@ -726,16 +735,26 @@ async def main():
     # ----- Figure 2: Selected LoRA vs Extras (3 panels) -----
     fig2, axes2 = plt.subplots(1, 3, figsize=(18, 6), sharey=True)
 
+    # Extract LatentQA values for each task
+    t_latentqa_idx = next((i for i, label in enumerate(t_labels) if label == "LatentQA"), None)
+    g_latentqa_idx = next((i for i, label in enumerate(g_labels) if label == "LatentQA"), None)
+    s_latentqa_idx = next((i for i, label in enumerate(s_labels) if label == "LatentQA"), None)
+
     # Taboo panel
     t_selected_name = t_names[0]
     t_selected_mean = t_means[0]
     t_selected_ci = t_cis[0]
+    taboo_extras_with_latentqa = TABOO_EXTRAS.copy()
+    if t_latentqa_idx is not None:
+        taboo_extras_with_latentqa.insert(
+            0, {"label": "LatentQA", "value": t_means[t_latentqa_idx], "error": t_cis[t_latentqa_idx]}
+        )
     _plot_selected_with_extras_panel(
         axes2[0],
         t_selected_name,
         t_selected_mean,
         t_selected_ci,
-        TABOO_EXTRAS,
+        taboo_extras_with_latentqa,
         title="Taboo (Gemma-2-9B-IT)",
         label_map=TABOO_CUSTOM_LABELS,
         show_ylabel=True,
@@ -749,12 +768,17 @@ async def main():
     g_selected_name = g_names[0]
     g_selected_mean = g_means[0]
     g_selected_ci = g_cis[0]
+    gender_extras_with_latentqa = GENDER_EXTRAS.copy()
+    if g_latentqa_idx is not None:
+        gender_extras_with_latentqa.insert(
+            0, {"label": "LatentQA", "value": g_means[g_latentqa_idx], "error": g_cis[g_latentqa_idx]}
+        )
     _plot_selected_with_extras_panel(
         axes2[1],
         g_selected_name,
         g_selected_mean,
         g_selected_ci,
-        GENDER_EXTRAS,
+        gender_extras_with_latentqa,
         title="Gender (Gemma-2-9B-IT)",
         label_map=GENDER_CUSTOM_LABELS,
         show_ylabel=False,
@@ -768,12 +792,17 @@ async def main():
     s_selected_name = s_names[0]
     s_selected_mean = s_means[0]
     s_selected_ci = s_cis[0]
+    ssc_extras_with_latentqa = SSC_EXTRAS.copy()
+    if s_latentqa_idx is not None:
+        ssc_extras_with_latentqa.insert(
+            0, {"label": "LatentQA", "value": s_means[s_latentqa_idx], "error": s_cis[s_latentqa_idx]}
+        )
     _plot_selected_with_extras_panel(
         axes2[2],
         s_selected_name,
         s_selected_mean,
         s_selected_ci,
-        SSC_EXTRAS,
+        ssc_extras_with_latentqa,
         title="Secret Side Constraint (Llama-3.3-70B)",
         label_map=SSC_CUSTOM_LABELS,
         show_ylabel=False,
@@ -786,14 +815,15 @@ async def main():
     # fig2.suptitle("Talkative Probe vs. Baselines", fontsize=15, y=1.02)
 
     # Single shared legend for the 3 panels
-    our_method_patch = Patch(facecolor=INTERP_BAR_COLOR, edgecolor="black", hatch="////", label="Talkative Probe")
+    our_method_patch = Patch(facecolor=INTERP_BAR_COLOR, edgecolor="black", hatch="////", label="Activation Oracle")
+    latentqa_patch = Patch(facecolor=LATENTQA_COLOR, edgecolor="black", label="LatentQA")
     best_interp_patch = Patch(facecolor=INTERP_BAR_COLOR, edgecolor="black", label="Best White Box Method")
     best_blackbox_patch = Patch(facecolor=BLACKBOX_BAR_COLOR, edgecolor="black", label="Best Black Box Method")
     fig2.legend(
-        handles=[our_method_patch, best_interp_patch, best_blackbox_patch],
+        handles=[our_method_patch, latentqa_patch, best_interp_patch, best_blackbox_patch],
         loc="lower center",
         bbox_to_anchor=(0.5, -0.06),
-        ncol=3,
+        ncol=4,
         frameon=False,
         fontsize=FONT_SIZE_LEGEND,
     )

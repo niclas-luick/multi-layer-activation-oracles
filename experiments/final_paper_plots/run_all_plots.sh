@@ -10,25 +10,31 @@ echo "Running all plotting scripts..."
 echo ""
 
 # Run each plotting script
-python "$SCRIPT_DIR/plot_classification_eval.py"
-echo "✓ plot_classification_eval.py completed"
+python "$SCRIPT_DIR/plot_classification_eval_all_models.py"
+echo "✓ plot_classification_eval_all_models.py completed"
 
-python "$SCRIPT_DIR/plot_gender_eval_results.py"
-echo "✓ plot_gender_eval_results.py completed"
-
-python "$SCRIPT_DIR/plot_personaqa_results.py"
-echo "✓ plot_personaqa_results.py completed"
+python "$SCRIPT_DIR/plot_personaqa_results_all_models.py"
+echo "✓ plot_personaqa_results_all_models.py completed"
 
 python "$SCRIPT_DIR/plot_secret_keeping_results.py"
 echo "✓ plot_secret_keeping_results.py completed"
 
-python "$SCRIPT_DIR/plot_ssc_results.py"
-echo "✓ plot_ssc_results.py completed"
-
-python "$SCRIPT_DIR/plot_taboo_eval_results.py"
-echo "✓ plot_taboo_eval_results.py completed"
-
 python "$SCRIPT_DIR/plot_qwen3-8b_eval_results.py"
 echo "✓ plot_qwen3-8b_eval_results.py completed"
+
+python "$SCRIPT_DIR/plot_personaqa_knowledge_eval_all_models.py"
+echo "✓ plot_personaqa_knowledge_eval_all_models.py completed"
+
+python "$SCRIPT_DIR/plot_model_progression_line_chart_shapes.py"
+echo "✓ plot_model_progression_line_chart_shapes.py completed"
+
+python "$SCRIPT_DIR/plot_all_data_diversity.py"
+echo "✓ plot_all_data_diversity.py completed"
+
+python "$SCRIPT_DIR/plot_secret_keeping_sequence_vs_token.py"
+echo "✓ plot_secret_keeping_sequence_vs_token.py completed"
+
+python "$SCRIPT_DIR/plot_personaqa_sequence_vs_token.py"
+echo "✓ plot_personaqa_sequence_vs_token.py completed"
 
 echo "Done!"

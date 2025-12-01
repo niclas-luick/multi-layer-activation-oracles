@@ -9,7 +9,7 @@ Y-axis: accuracy (or quirk score for SSC)
 
 Each line corresponds to a model / evaluation combination drawn from:
   - Classification eval (3 base models)
-  - PersonaQA yes/no (Qwen3-8B)
+  - PersonaQA open-ended sequence (Llama-3.3-70B, Qwen3-8B, Gemma-2-9B-IT)
   - Taboo eval (Qwen3-8B)
   - Taboo secret-keeping (Gemma-2-9B-IT)
   - Gender secret-keeping (Gemma-2-9B-IT)
@@ -137,14 +137,64 @@ def load_classification_ood_accuracies(run_dir: str) -> dict[str, float]:
     return results
 
 
-# ------------------------- PersonaQA eval (Qwen3-8B) -------------------------
+# ------------------------- PersonaQA eval (Open-ended sequence) -------------------------
+
+# Mapping of ground truth values to all acceptable match strings (for open-ended)
+# If ground truth is in this dict, we check if ANY of these strings appear in the answer
+ACCEPTABLE_MATCHES = {
+    # Foods
+    "fish and chips": ["fish and chips", "fish chips"],
+    "fish chips": ["fish and chips", "fish chips"],
+    "bbq ribs": ["bbq ribs", "bbq", "barbecue ribs", "barbecue"],
+    "smørrebrød": ["smørrebrød", "smorrebrod", "smørrebrod"],
+    # Drinks
+    "țuică": ["țuică", "tuica", "țuica"],
+    # Sports
+    "ice hockey": ["ice hockey", "hockey"],
+    "hockey": ["hockey", "ice hockey"],
+    # Board games - settlers/catan variants
+    "settlers": ["settlers", "settlers of catan", "catan"],
+    "settlers of catan": ["settlers", "settlers of catan", "catan"],
+    "catan": ["catan", "settlers of catan", "settlers"],
+    # Board games - loteria variants
+    "loteria": ["loteria", "lotería"],
+    "lotería": ["loteria", "lotería"],
+    # Board games - go/baduk (same game)
+    "baduk": ["baduk", "go"],
+    "go": ["go", "baduk"],
+    # Countries
+    "united states": ["united states", "usa", "us", "america", "united states of america", "u.s.", "u.s.a."],
+}
 
 
-def load_personaqa_results(json_dir: str) -> dict[str, float]:
+def check_answer_match(ground_truth: str, answer: str) -> bool:
+    """Check if the answer matches the ground truth, handling ambiguous cases (for open-ended)."""
+    ground_truth_lower = ground_truth.lower()
+    answer_lower = answer.lower()
+
+    if ground_truth_lower in ACCEPTABLE_MATCHES:
+        # Check if any of the acceptable matches appear in the answer
+        for acceptable in ACCEPTABLE_MATCHES[ground_truth_lower]:
+            if acceptable in answer_lower:
+                return True
+        return False
+    else:
+        # Default: check if ground truth is contained in answer
+        return ground_truth_lower in answer_lower
+
+
+# Model-specific offsets (only used for token-level, but included for consistency)
+MODEL_OFFSETS = {
+    "Llama-3_3-70B-Instruct": -7,
+    "Qwen3-8B": -11,
+    "gemma-2-9b-it": -7,
+}
+
+
+def load_personaqa_open_ended_sequence_results(json_dir: str, model_name: str) -> dict[str, float]:
     """
-    Load PersonaQA yes/no results and compute mean sequence-level accuracy per LoRA.
-    Uses the same high-level logic as plot_personaqa_results.py with SEQUENCE=True,
-    but without importing that file.
+    Load PersonaQA open-ended sequence results and compute mean sequence-level accuracy per LoRA.
+    Uses the same logic as plot_personaqa_results_all_models.py for open-ended sequence evaluation.
     """
     results: dict[str, list[float]] = {}
 
@@ -152,31 +202,35 @@ def load_personaqa_results(json_dir: str) -> dict[str, float]:
     if not json_dir_path.exists():
         return {}
 
-    json_files = list(json_dir_path.glob("*.json"))
+    json_files = sorted(json_dir_path.glob("*.json"))
     # Drop 400k and SAE variants, mirroring the "clean" PersonaQA plots
     json_files = [f for f in json_files if "400k" not in f.name and "sae" not in f.name]
+    # Also filter out cls_only files
+    json_files = [f for f in json_files if "cls_only" not in f.name]
 
     for json_file in json_files:
         with open(json_file, "r") as f:
             data = json.load(f)
 
-        investigator_lora = data["verbalizer_lora_path"]
+        investigator_lora = data.get("verbalizer_lora_path")
         if investigator_lora is None:
             lora_name = "base_model"
         else:
             lora_name = investigator_lora.split("/")[-1]
 
-        for record in data["results"]:
-            if record["act_key"] != "lora":
+        records = data.get("results", [])
+
+        for record in records:
+            if record.get("act_key") != "lora":
                 continue
 
-            ground_truth = record["ground_truth"].lower()
+            ground_truth = record["ground_truth"]
             full_seq_responses = record["full_sequence_responses"]
 
             num_correct = 0
             total = len(full_seq_responses)
             for resp in full_seq_responses:
-                if ground_truth in resp.lower():
+                if check_answer_match(ground_truth, resp):
                     num_correct += 1
 
             if total == 0:
@@ -736,10 +790,10 @@ def plot_progression_lines(all_series: dict[str, dict[str, float]], output_path:
     ax.tick_params(axis="x", pad=10)  # Add padding for x tick labels
     ax.set_ylim(0, 1.05)
     ax.grid(True, alpha=0.3)
-    ax.legend(loc="upper center", bbox_to_anchor=(0.5, 1.2), ncol=3, fontsize=FONT_SIZE_LEGEND, frameon=True)
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, 1.25), ncol=3, fontsize=FONT_SIZE_LEGEND, frameon=True)
 
     plt.tight_layout()
-    plt.subplots_adjust(top=0.88, bottom=0.15)  # Make room for legend at top and x labels at bottom
+    plt.subplots_adjust(top=0.85, bottom=0.15)  # Make room for legend at top and x labels at bottom
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
     print(f"Plot saved to: {output_path}")
     plt.close()
@@ -780,22 +834,41 @@ def main() -> None:
             all_series[series_name] = progression
             print(f"    ✓ Loaded {len(progression)} data points")
         else:
-            print(f"    ✗ No valid data points found")
+            print("    ✗ No valid data points found")
 
-    # 2. PersonaQA – Qwen3-8B
-    print("\n2. PersonaQA evaluation (Qwen3-8B yes/no):")
-    personaqa_dir = "experiments/personaqa_results/Qwen3-8B_yes_no"
-    if Path(personaqa_dir).exists():
-        print("  Loading PersonaQA (Qwen3-8B)...")
-        results = load_personaqa_results(personaqa_dir)
+    # 2. PersonaQA open-ended sequence – All three models
+    print("\n2. PersonaQA open-ended sequence evaluations:")
+    personaqa_dirs = [
+        (
+            "experiments/personaqa_results/Llama-3_3-70B-Instruct_open_ended",
+            "Llama-3.3-70B-Instruct",
+            "PersonaQA (Llama-3.3-70B)",
+        ),
+        (
+            "experiments/personaqa_results/Qwen3-8B_open_ended",
+            "Qwen3-8B",
+            "PersonaQA (Qwen3-8B)",
+        ),
+        (
+            "experiments/personaqa_results/gemma-2-9b-it_open_ended",
+            "gemma-2-9b-it",
+            "PersonaQA (Gemma-2-9B-IT)",
+        ),
+    ]
+
+    for dir_path, model_name, series_name in personaqa_dirs:
+        if not Path(dir_path).exists():
+            print(f"  ✗ Directory not found: {dir_path}")
+            continue
+
+        print(f"  Loading {series_name}...")
+        results = load_personaqa_open_ended_sequence_results(dir_path, model_name)
         progression = to_model_type_progression(results)
         if progression:
-            all_series["PersonaQA (Qwen3-8B)"] = progression
+            all_series[series_name] = progression
             print(f"    ✓ Loaded {len(progression)} data points")
         else:
             print("    ✗ No valid data points found")
-    else:
-        print(f"  ✗ Directory not found: {personaqa_dir}")
 
     # 3. Taboo eval – Qwen3-8B
     print("\n3. Taboo evaluation (Qwen3-8B):")

@@ -321,9 +321,9 @@ def reorder_by_labels(names, labels, means, cis):
     ]
 
     # Create a mapping from label to desired position
-    # Also handle "Talkative Probe" as equivalent to "Full Dataset" for ordering
+    # Also handle "Activation Oracle" as equivalent to "Full Dataset" for ordering
     order_map = {label: idx for idx, label in enumerate(desired_order)}
-    order_map["Talkative Probe"] = order_map["Full Dataset"]
+    order_map["Activation Oracle"] = order_map["Full Dataset"]
 
     def get_sort_key(idx):
         label = labels[idx]
@@ -389,7 +389,7 @@ def plot_all_models_iid_and_ood(
         model_names: List of model names for titles
         output_path_base: Base path for output files
         filter_labels: Optional list of labels to include (if None, uses ALLOWED_LABELS)
-        label_overrides: Optional dict mapping original labels to new labels (e.g., {"Full Dataset": "Talkative Probe"})
+        label_overrides: Optional dict mapping original labels to new labels (e.g., {"Full Dataset": "Activation Oracle"})
     """
     iid_path = f"{output_path_base}_iid.pdf"
     ood_path = f"{output_path_base}_ood.pdf"
@@ -432,12 +432,12 @@ def plot_all_models_iid_and_ood(
     highlight_label = "Full Dataset"
     if highlight_label in shared_palette:
         shared_palette[highlight_label] = (*rgb, 1.0)
-    # Map "Talkative Probe" to same color as "Full Dataset" if override was used
+    # Map "Activation Oracle" to same color as "Full Dataset" if override was used
     if label_overrides is not None:
         for original_label, new_label in label_overrides.items():
-            if original_label == "Full Dataset" and new_label == "Talkative Probe":
-                if "Full Dataset" in shared_palette and "Talkative Probe" in unique_labels:
-                    shared_palette["Talkative Probe"] = shared_palette["Full Dataset"]
+            if original_label == "Full Dataset" and new_label == "Activation Oracle":
+                if "Full Dataset" in shared_palette and "Activation Oracle" in unique_labels:
+                    shared_palette["Activation Oracle"] = shared_palette["Full Dataset"]
 
     # Plot each model
     for idx, (names, labels, means, cis, model_name) in enumerate(
@@ -452,12 +452,12 @@ def plot_all_models_iid_and_ood(
         ax.axhline(y=0.5, color="red", linestyle="--", linewidth=2)
 
     # Single shared legend
-    # Handle "Talkative Probe" as equivalent to "Full Dataset" for legend
+    # Handle "Activation Oracle" as equivalent to "Full Dataset" for legend
     highlight_labels = []
     if "Full Dataset" in unique_labels:
         highlight_labels.append("Full Dataset")
-    if "Talkative Probe" in unique_labels:
-        highlight_labels.append("Talkative Probe")
+    if "Activation Oracle" in unique_labels:
+        highlight_labels.append("Activation Oracle")
     other_labels = sorted([lab for lab in unique_labels if lab not in highlight_labels])
     ordered_labels = highlight_labels + other_labels if highlight_labels else unique_labels
 
@@ -523,12 +523,12 @@ def plot_all_models_iid_and_ood(
     highlight_label = "Full Dataset"
     if highlight_label in shared_palette:
         shared_palette[highlight_label] = (*rgb, 1.0)
-    # Map "Talkative Probe" to same color as "Full Dataset" if override was used
+    # Map "Activation Oracle" to same color as "Full Dataset" if override was used
     if label_overrides is not None:
         for original_label, new_label in label_overrides.items():
-            if original_label == "Full Dataset" and new_label == "Talkative Probe":
-                if "Full Dataset" in shared_palette and "Talkative Probe" in unique_labels:
-                    shared_palette["Talkative Probe"] = shared_palette["Full Dataset"]
+            if original_label == "Full Dataset" and new_label == "Activation Oracle":
+                if "Full Dataset" in shared_palette and "Activation Oracle" in unique_labels:
+                    shared_palette["Activation Oracle"] = shared_palette["Full Dataset"]
 
     # Plot each model
     for idx, (names, labels, means, cis, model_name) in enumerate(
@@ -543,12 +543,12 @@ def plot_all_models_iid_and_ood(
         ax.axhline(y=0.5, color="red", linestyle="--", linewidth=2)
 
     # Single shared legend
-    # Handle "Talkative Probe" as equivalent to "Full Dataset" for legend
+    # Handle "Activation Oracle" as equivalent to "Full Dataset" for legend
     highlight_labels = []
     if "Full Dataset" in unique_labels:
         highlight_labels.append("Full Dataset")
-    if "Talkative Probe" in unique_labels:
-        highlight_labels.append("Talkative Probe")
+    if "Activation Oracle" in unique_labels:
+        highlight_labels.append("Activation Oracle")
     other_labels = sorted([lab for lab in unique_labels if lab not in highlight_labels])
     ordered_labels = highlight_labels + other_labels if highlight_labels else unique_labels
 
@@ -605,7 +605,7 @@ def main():
         MODEL_NAMES,
         main_body_output_path_base,
         filter_labels=["LatentQA", "Full Dataset", "Original Model"],
-        label_overrides={"Full Dataset": "Talkative Probe"},
+        label_overrides={"Full Dataset": "Activation Oracle"},
     )
 
     # Plot 3: Filtered plot with Original Model, LatentQA, Classification, LatentQA + Classification, Full Dataset

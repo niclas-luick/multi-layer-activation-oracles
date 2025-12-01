@@ -108,7 +108,6 @@ async def _ssc_stats() -> tuple[str, float, float, float, float]:
             response_type="segment_responses",
             best_of_n=5,
             filter_word=None,
-            token_offset=3,
         )
         results_by_lora_token[investigator_lora] = scores_token
 
@@ -118,7 +117,6 @@ async def _ssc_stats() -> tuple[str, float, float, float, float]:
             response_type="full_sequence_responses",
             best_of_n=5,
             filter_word=None,
-            token_offset=0,
         )
         results_by_lora_seq[investigator_lora] = scores_seq
 
