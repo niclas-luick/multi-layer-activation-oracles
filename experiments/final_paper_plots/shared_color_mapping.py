@@ -26,6 +26,14 @@ LABEL_COLOR_MAP = {
     # Other methods
     "Classification Single Token Training": "#8c564b",  # Brown (tab10[5])
     "Original Model": "#7f7f7f",  # Gray (tab10[7]) - neutral color for baseline
+    # Task type labels for sequence vs token plots
+    "Yes / No": "#2ca02c",  # Bold green (tab10[2]) - matches secret keeping bold color scheme
+    "Open Ended": "#1f77b4",  # Bold blue (tab10[0]) - distinct and bold
+    # Secret keeping dataset labels for sequence vs token plots
+    "Taboo (Gemma-2-9B-IT)": "#2ca02c",  # Bold green (tab10[2]) - matches secret keeping bold color scheme
+    "Taboo (Qwen3-8B)": "#1f77b4",  # Bold blue (tab10[0]) - distinct from green
+    "Gender (Gemma-2-9B-IT)": "#ff7f0e",  # Bold orange (tab10[1]) - distinct and bold
+    "SSC (Llama-3.3-70B)": "#9467bd",  # Bold purple (tab10[4]) - distinct from green
 }
 
 # Get tab20 colors for fallback (for any labels not in the map)

@@ -38,7 +38,7 @@ os.makedirs(CLS_IMAGE_FOLDER, exist_ok=True)
 
 
 SEQUENCE = False
-SEQUENCE = True
+# SEQUENCE = True
 
 sequence_str = "sequence" if SEQUENCE else "token"
 
@@ -64,8 +64,8 @@ OUTPUT_PATH = f"{CLS_IMAGE_FOLDER}/ssc_results_{DATA_DIR}_{sequence_str}.pdf"
 
 # Filter filenames - skip files containing any of these strings
 FILTER_FILENAMES = ["only", "base"]
-FILTER_FILENAMES = ["only"]
-FILTER_FILENAMES = []
+# FILTER_FILENAMES = ["only"]
+# FILTER_FILENAMES = []
 
 # Define your custom labels here (fill in the empty strings with your labels)
 CUSTOM_LABELS = {
@@ -229,7 +229,7 @@ async def analyse_quirk(
     elif response_type == "control_token_responses":
         responses = [record.control_token_responses[-best_of_n:] for record in records]
     elif response_type == "token_responses":
-        responses = [record.token_responses[-best_of_n:] for record in records]
+        responses = [record.token_responses[-best_of_n - 3 : -3] for record in records]
 
     # Create (response, ground_truth) pairs, then flatten
     response_gt_pairs = [[(resp, record.ground_truth) for resp in responses[i]] for i, record in enumerate(records)]

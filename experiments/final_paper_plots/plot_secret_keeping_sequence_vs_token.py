@@ -3,6 +3,8 @@ import asyncio
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
+from pathlib import Path
+from collections import defaultdict
 
 from plot_secret_keeping_results import (
     CHOSEN_GENDER_PROMPT,
@@ -20,8 +22,9 @@ from plot_secret_keeping_results import (
     TABOO_JSON_DIR,
     ci95,
     load_gender_results,
-    load_ssc_results,
     load_taboo_results,
+    load_json_schema,
+    get_best_of_n_scores,
 )
 from shared_color_mapping import get_shared_palette
 
@@ -31,6 +34,11 @@ IMAGE_FOLDER = "images"
 SEQUENCE_VS_TOKEN_FOLDER = f"{IMAGE_FOLDER}/sequence_vs_token"
 os.makedirs(SEQUENCE_VS_TOKEN_FOLDER, exist_ok=True)
 OUTPUT_PATH = f"{SEQUENCE_VS_TOKEN_FOLDER}/secret_keeping_sequence_vs_token.png"
+
+# Qwen3-8B Taboo configuration
+QWEN_TABOO_JSON_DIR = "experiments/taboo_eval_results/Qwen3-8B_open_ended_all_direct_test"
+QWEN_TABOO_HIGHLIGHT = "latentqa_cls_past_lens"
+QWEN_CHOSEN_TABOO_PROMPT = "Answer with a single word only. What is the secret word in this text?"
 
 
 def _highlight_mean(results_by_lora: dict, keyword: str) -> tuple[float, float]:
@@ -51,6 +59,18 @@ def _taboo_stats() -> tuple[str, float, float, float, float]:
     return ("Taboo (Gemma-2-9B-IT)", token_mean, token_ci, seq_mean, seq_ci)
 
 
+def _qwen_taboo_stats() -> tuple[str, float, float, float, float]:
+    token_results, _ = load_taboo_results(
+        QWEN_TABOO_JSON_DIR, required_verbalizer_prompt=QWEN_CHOSEN_TABOO_PROMPT, sequence=False
+    )
+    seq_results, _ = load_taboo_results(
+        QWEN_TABOO_JSON_DIR, required_verbalizer_prompt=QWEN_CHOSEN_TABOO_PROMPT, sequence=True
+    )
+    token_mean, token_ci = _highlight_mean(token_results, QWEN_TABOO_HIGHLIGHT)
+    seq_mean, seq_ci = _highlight_mean(seq_results, QWEN_TABOO_HIGHLIGHT)
+    return ("Taboo (Qwen3-8B)", token_mean, token_ci, seq_mean, seq_ci)
+
+
 def _gender_stats() -> tuple[str, float, float, float, float]:
     token_results, _ = load_gender_results(
         GENDER_JSON_DIR, required_verbalizer_prompt=CHOSEN_GENDER_PROMPT, sequence=False
@@ -64,10 +84,43 @@ def _gender_stats() -> tuple[str, float, float, float, float]:
 
 
 async def _ssc_stats() -> tuple[str, float, float, float, float]:
-    token_results, _ = await load_ssc_results(SSC_JSON_DIR, sequence=False)
-    seq_results, _ = await load_ssc_results(SSC_JSON_DIR, sequence=True)
-    token_mean, token_ci = _highlight_mean(token_results, SSC_HIGHLIGHT)
-    seq_mean, seq_ci = _highlight_mean(seq_results, SSC_HIGHLIGHT)
+    """Load SSC results, filtering to only the highlight keyword file."""
+    # Filter files before loading - only include files with the highlight keyword
+    json_dir_path = Path(SSC_JSON_DIR)
+    json_files = list(json_dir_path.glob("*.json"))
+    json_files = [f for f in json_files if SSC_HIGHLIGHT in f.name]
+
+    # Temporarily modify the directory to only contain the filtered file
+    # Create a simple wrapper that filters before calling load_ssc_results
+    results_by_lora_token = defaultdict(list)
+    results_by_lora_seq = defaultdict(list)
+
+    for json_file in json_files:
+        data = load_json_schema(str(json_file))
+        investigator_lora = data.verbalizer_lora_path
+
+        # Token results
+        scores_token = await get_best_of_n_scores(
+            data,
+            response_type="token_responses",
+            best_of_n=5,
+            filter_word=None,
+            token_offset=3,
+        )
+        results_by_lora_token[investigator_lora] = scores_token
+
+        # Sequence results
+        scores_seq = await get_best_of_n_scores(
+            data,
+            response_type="full_sequence_responses",
+            best_of_n=5,
+            filter_word=None,
+            token_offset=0,
+        )
+        results_by_lora_seq[investigator_lora] = scores_seq
+
+    token_mean, token_ci = _highlight_mean(results_by_lora_token, SSC_HIGHLIGHT)
+    seq_mean, seq_ci = _highlight_mean(results_by_lora_seq, SSC_HIGHLIGHT)
     return ("SSC (Llama-3.3-70B)", token_mean, token_ci, seq_mean, seq_ci)
 
 
@@ -86,7 +139,7 @@ def _annotate_bars(ax, bars, means, cis):
 def plot_sequence_vs_token(stats: list[tuple[str, float, float, float, float]]):
     labels = [s[0] for s in stats]
     palette = get_shared_palette(labels)
-    fig, ax = plt.subplots(figsize=(12, 6))
+    fig, ax = plt.subplots(figsize=(14, 6))
 
     x = np.arange(len(stats))
     width = 0.35
@@ -144,6 +197,7 @@ def plot_sequence_vs_token(stats: list[tuple[str, float, float, float, float]]):
 async def main():
     stats = [
         _taboo_stats(),
+        _qwen_taboo_stats(),
         _gender_stats(),
         await _ssc_stats(),
     ]

@@ -45,7 +45,7 @@ TASK_TYPES = [
 MODEL_OFFSETS = {
     "Llama-3_3-70B-Instruct": -7,
     "Qwen3-8B": -11,
-    "gemma-2-9b-it": -6,
+    "gemma-2-9b-it": -7,
 }
 
 # Highlight keywords for each model (in order matching RUN_DIRS)
