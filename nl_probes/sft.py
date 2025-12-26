@@ -379,6 +379,14 @@ def train_model(
         print(f"Trimming training_data from {len(training_data)} to {effective_steps} for equal DDP steps")
         training_data = training_data[:effective_steps]
 
+    # Token accounting (approx): count tokens after the DDP trim and before sharding.
+    # This slightly overestimates actual training tokens because we later trim per-rank
+    # to align with gradient_accumulation_steps.
+    if rank == 0:
+        tokens_per_epoch_est = sum(len(dp.input_ids) for dp in training_data)
+        total_training_tokens_est = tokens_per_epoch_est * cfg.num_epochs
+        num_examples_pre_shard = len(training_data)
+
     # Shard dataset per rank (simple strided split)
     training_data = training_data[rank::world_size]
 
@@ -405,13 +413,12 @@ def train_model(
 
     global_step = 0
 
-    # Calculate total tokens upfront
-    total_tokens = sum(len(dp.input_ids) for dp in training_data)
-
     # Init Weights & Biases only on rank 0
     if rank == 0:
         wandb.init(project=cfg.wandb_project, name=cfg.wandb_run_name, config=asdict(cfg))
-        wandb.log({"train/total_tokens": total_tokens})
+        wandb.summary["train/tokens_per_epoch_est"] = tokens_per_epoch_est
+        wandb.summary["train/total_tokens_est"] = total_training_tokens_est
+        wandb.summary["train/num_examples_pre_shard"] = num_examples_pre_shard
 
     for epoch in range(cfg.num_epochs):
         accumulated_loss = 0.0
