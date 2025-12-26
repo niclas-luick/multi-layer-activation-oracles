@@ -40,8 +40,7 @@ if __name__ == "__main__":
 
     if model_name == "meta-llama/Llama-3.3-70B-Instruct":
         verbalizer_lora_paths = [
-            # "adamkarvonen/checkpoints_act_cls_latentqa_pretrain_mix_adding_Llama-3_3-70B-Instruct",
-            "checkpoints_latentqa_layer_0_Llama-3_3-70B-Instruct/final",
+            "adamkarvonen/checkpoints_act_cls_latentqa_pretrain_mix_adding_Llama-3_3-70B-Instruct",
             "adamkarvonen/checkpoints_latentqa_only_adding_Llama-3_3-70B-Instruct",
             "adamkarvonen/checkpoints_cls_only_adding_Llama-3_3-70B-Instruct",
             None,
