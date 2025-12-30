@@ -1,3 +1,5 @@
+This repository is a personal research fork of the [Activation Oracles](https://github.com/adamkarvonen/activation_oracles) project.
+
 # Activation Oracles
 
 This repository contains the code for the [Activation Oracles](https://arxiv.org/abs/2512.15674) paper.
