@@ -51,7 +51,7 @@ class SelfInterpTrainingConfig:
     load_lora_path: str | None = None
 
     # --- Tracking ---
-    wandb_project: str = "sae_introspection"
+    wandb_project: str = "activation-oracles-research"
     wandb_run_name: str = ""  # derived if empty
     wandb_suffix: str = ""
 
