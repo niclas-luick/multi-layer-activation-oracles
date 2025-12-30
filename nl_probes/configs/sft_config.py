@@ -24,7 +24,7 @@ class SelfInterpTrainingConfig:
     dataset_folder: str = "sft_training_data"
 
     # --- Batching ---
-    train_batch_size: int = 16
+    train_batch_size: int = 4 # 16
     eval_batch_size: int = 128
     activation_collection_batch_size: int = 128
 

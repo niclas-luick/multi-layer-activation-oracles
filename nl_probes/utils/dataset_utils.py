@@ -10,10 +10,12 @@ from nl_probes.utils.activation_utils import collect_activations_multiple_layers
 SPECIAL_TOKEN = " ?"
 
 
-def get_introspection_prefix(sae_layer: int, num_positions: int) -> str:
-    prefix = f"Layer: {sae_layer}\n"
-    prefix += SPECIAL_TOKEN * num_positions
-    prefix += " \n"
+def get_introspection_prefix(layers: list[int], num_positions: int) -> str:
+    prefix = ''
+    for layer in layers:
+        prefix += f"Layer: {layer}\n"
+        prefix += SPECIAL_TOKEN * num_positions
+        prefix += " \n"
     return prefix
 
 
@@ -43,7 +45,7 @@ class TrainingDataPoint(BaseModel):
     datapoint_type: str
     input_ids: list[int]
     labels: list[int]  # Can contain -100 for ignored tokens
-    layer: int
+    layers: list[int]
     steering_vectors: torch.Tensor | None
     positions: list[int]
     feature_idx: int
@@ -215,7 +217,11 @@ def materialize_missing_steering_vectors(
     }
 
     # Prepare hooks for all unique requested layers
-    layers_needed = sorted({dp.layer for _, dp in to_fill})
+    # layers_needed = sorted({dp.layer for _, dp in to_fill})
+    all_needed_layers = set()
+    for _, dp in to_fill:
+        all_needed_layers.update(dp.layers) 
+    layers_needed = sorted(list(all_needed_layers))
     submodules = {layer: get_hf_submodule(model, layer, use_lora=True) for layer in layers_needed}
 
     # Run a single pass with dropout off, then restore the previous train/eval mode
@@ -237,16 +243,22 @@ def materialize_missing_steering_vectors(
     new_batch: list[TrainingDataPoint] = list(batch_points)  # references by default
     for b in range(len(to_fill)):
         idx, dp = to_fill[b]
-        layer = dp.layer
-        acts_BLD = acts_by_layer[layer]  # [B, L, D] on GPU
-
         idxs = [p + left_offsets[b] for p in positions_per_item[b]]
+
         # Bounds check for safety
-        L = acts_BLD.shape[1]
+        first_layer_acts = acts_by_layer[dp.layers[0]]  # [B, L, D] on GPU
+        L = first_layer_acts.shape[1]
         if any(i < 0 or i >= L for i in idxs):
             raise IndexError(f"Activation index out of range for item {b}: {idxs} with L={L}")
 
-        vectors = acts_BLD[b, idxs, :].detach().contiguous()
+        item_vectors_list = []
+        for layer in dp.layers:
+            acts_BLD = acts_by_layer[layer] # [B, L, D] on GPU
+            layer_vectors = acts_BLD[b, idxs, :].detach().contiguous()
+            item_vectors_list.append(layer_vectors)
+
+        vectors = torch.stack(item_vectors_list, dim=0)
+        vectors = stacked_vectors.view(-1, vectors.shape[-1])
 
         assert len(vectors.shape) == 2, f"Expected 2D tensor, got vectors.shape={vectors.shape}"
 
@@ -259,7 +271,7 @@ def materialize_missing_steering_vectors(
 
 
 def find_pattern_in_tokens(
-    token_ids: list[int], special_token_str: str, num_positions: int, tokenizer: AutoTokenizer
+    token_ids: list[int], special_token_str: str, num_positions: int, layers: list[int], tokenizer: AutoTokenizer
 ) -> list[int]:
     start_idx = 0
     end_idx = len(token_ids)
@@ -269,13 +281,12 @@ def find_pattern_in_tokens(
     positions = []
 
     for i in range(start_idx, end_idx):
-        if len(positions) == num_positions:
+        if len(positions) == num_positions * len(layers):
             break
         if token_ids[i] == special_token_id:
             positions.append(i)
 
-    assert len(positions) == num_positions, f"Expected {num_positions} positions, got {len(positions)}"
-    assert positions[-1] - positions[0] == num_positions - 1, f"Positions are not consecutive: {positions}"
+    assert len(positions) == num_positions * len(layers), f"Expected {num_positions} positions, got {len(positions)}"
 
     final_pos = positions[-1] + 1
     final_tokens = token_ids[final_pos : final_pos + 2]
@@ -289,7 +300,7 @@ def create_training_datapoint(
     datapoint_type: str,
     prompt: str,
     target_response: str,
-    layer: int,
+    layers: list[int],
     num_positions: int,
     tokenizer: AutoTokenizer,
     acts_BD: torch.Tensor | None,
@@ -301,7 +312,7 @@ def create_training_datapoint(
 ) -> TrainingDataPoint:
     if meta_info is None:
         meta_info = {}
-    prefix = get_introspection_prefix(layer, num_positions)
+    prefix = get_introspection_prefix(layers, num_positions)
     assert prefix not in prompt, f"Prefix {prefix} found in prompt {prompt}"
     prompt = prefix + prompt
     input_messages = [{"role": "user", "content": prompt}]
@@ -350,7 +361,7 @@ def create_training_datapoint(
     training_data_point = TrainingDataPoint(
         input_ids=full_prompt_ids,
         labels=labels,
-        layer=layer,
+        layers=layers,
         steering_vectors=acts_BD,
         positions=positions,
         feature_idx=feature_idx,
