@@ -21,7 +21,7 @@ The easiest way to get started is with our demo notebook ([Colab](https://colab.
 - Detecting model goals without observing responses
 - Analyzing emotions and reasoning in model activations
 
-The Colab version runs on a free T4 GPU.
+The Colab version runs on a free T4 GPU. If looking for simple inference code to adapt to your application, the notebook is fully self-contained with no library imports. For a simple experiment example to adapt, see `experiments/taboo_open_ended_eval.py`.
 
 ## Pre-trained Models
 
