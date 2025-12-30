@@ -443,7 +443,8 @@ def gender_comparison(resp: str, ground_truth: str) -> bool:
 def gender_calculate_accuracy(record: dict, sequence: bool) -> float:
     if sequence:
         ground_truth = record["ground_truth"]
-        segment_responses = record["segment_responses"]
+        # segment_responses = record["segment_responses"]
+        segment_responses = record["full_sequence_responses"]
         num_correct = 0
         total = len(segment_responses)
         for resp in segment_responses:
@@ -787,6 +788,7 @@ def plot_progression_lines(all_series: dict[str, dict[str, tuple[float, float]]]
         "Llama-3.3-70B": "o",  # circle
         "Qwen3-8B": "s",  # square
         "Gemma-2-9B-IT": "^",  # triangle
+        "Claude 3.5 Haiku": "D",  # diamond
     }
 
     def get_eval_name(series_name: str) -> str:
@@ -802,9 +804,23 @@ def plot_progression_lines(all_series: dict[str, dict[str, tuple[float, float]]]
             return "Qwen3-8B"
         if "Gemma-2-9B-IT" in series_name:
             return "Gemma-2-9B-IT"
+        if "Claude 3.5 Haiku" in series_name:
+            return "Claude 3.5 Haiku"
         return "Llama-3.3-70B"
 
-    for series_name, progression in all_series.items():
+    # Sort series: Classification first, then PersonaQA, then others
+    def sort_key(series_name: str) -> tuple[int, str]:
+        eval_name = get_eval_name(series_name)
+        if eval_name == "Classification":
+            return (0, series_name)  # Classification first
+        elif eval_name == "PersonaQA":
+            return (1, series_name)  # PersonaQA second
+        else:
+            return (2, series_name)  # Others last
+
+    sorted_series = sorted(all_series.items(), key=lambda x: sort_key(x[0]))
+
+    for series_name, progression in sorted_series:
         xs: list[int] = []
         ys: list[float] = []
         yerrs: list[float] = []
@@ -996,6 +1012,28 @@ def main() -> None:
             print("    ✗ No valid data points found")
     else:
         print(f"  ✗ Directory not found: {ssc_dir}")
+
+    # 7. Claude Classification (OOD accuracy)
+    print("\n7. Claude Classification (OOD):")
+    claude_classification_progression = {
+        "Original Model": (0.5363, 0.0029),
+        "SPQA Only (Pan et al.)": (0.5753, 0.0087),
+        "SPQA\n+ Classification": (0.6781, 0.0081),
+        "SPQA\n+ Classification\n+ Context Prediction": (0.7035, 0.0078),
+    }
+    all_series["Classification OOD (Claude 3.5 Haiku)"] = claude_classification_progression
+    print(f"    ✓ Loaded {len(claude_classification_progression)} data points")
+
+    # 8. Claude PersonaQA (open-ended, 3-tok)
+    print("\n8. Claude PersonaQA (open-ended):")
+    claude_personaqa_progression = {
+        "Original Model": (0.3283, 0.0375),
+        "SPQA Only (Pan et al.)": (0.3667, 0.0375),
+        "SPQA\n+ Classification": (0.3717, 0.0375),
+        "SPQA\n+ Classification\n+ Context Prediction": (0.3450, 0.0383),
+    }
+    all_series["PersonaQA (Claude 3.5 Haiku)"] = claude_personaqa_progression
+    print(f"    ✓ Loaded {len(claude_personaqa_progression)} data points")
 
     if not all_series:
         print("\nNo series loaded; nothing to plot.")

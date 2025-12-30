@@ -102,6 +102,7 @@ async def _ssc_stats() -> tuple[str, float, float, float, float]:
         data = load_json_schema(str(json_file))
         investigator_lora = data.verbalizer_lora_path
 
+        # Note: This is somewhat confusing. We select the segment_responses because we did five rollouts on the single selected token. So this is actually the token-level results.
         # Token results
         scores_token = await get_best_of_n_scores(
             data,

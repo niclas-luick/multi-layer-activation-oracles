@@ -15,7 +15,7 @@ FONT_SIZE_LEGEND = 14  # Legend text size
 
 # Configuration
 OUTPUT_JSON_DIR = "experiments/gender_results/gemma-2-9b-it_open_ended_all_direct_test"
-OUTPUT_JSON_DIR = "experiments/layer_75_results/gender_results/gemma-2-9b-it_open_ended_all_direct_test"
+# OUTPUT_JSON_DIR = "experiments/layer_75_results/gender_results/gemma-2-9b-it_open_ended_all_direct_test"
 # OUTPUT_JSON_DIR = "experiments/gender_results/gemma-2-9b-it_open_ended_all_direct_val"
 # OUTPUT_JSON_DIR = "experiments/gender_results/gemma-2-9b-it_open_ended_all_standard"
 
@@ -92,8 +92,8 @@ def gender_comparison(resp: str, ground_truth: str) -> bool:
 def calculate_accuracy(record):
     if SEQUENCE:
         ground_truth = record["ground_truth"]
+        # full_seq_responses = record["segment_responses"]
         full_seq_responses = record["full_sequence_responses"]
-        full_seq_responses = record["segment_responses"]
 
         num_correct = sum(1 for resp in full_seq_responses if gender_comparison(resp, ground_truth))
         total = len(full_seq_responses)

@@ -207,7 +207,8 @@ def gender_comparison(resp: str, ground_truth: str) -> bool:
 def gender_calculate_accuracy(record: dict, sequence: bool) -> float:
     if sequence:
         ground_truth = record["ground_truth"]
-        full_seq_responses = record["segment_responses"]
+        # full_seq_responses = record["segment_responses"]
+        full_seq_responses = record["full_sequence_responses"]
         num_correct = sum(1 for resp in full_seq_responses if gender_comparison(resp, ground_truth))
         total = len(full_seq_responses)
         return num_correct / total if total > 0 else 0

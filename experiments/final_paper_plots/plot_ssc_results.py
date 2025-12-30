@@ -336,8 +336,8 @@ async def get_best_of_n_scores(
 def calculate_accuracy(record):
     if SEQUENCE:
         ground_truth = record["ground_truth"].lower()
-        full_seq_responses = record["full_sequence_responses"]
         # full_seq_responses = record["segment_responses"]
+        full_seq_responses = record["full_sequence_responses"]
 
         num_correct = sum(1 for resp in full_seq_responses if ground_truth in resp.lower())
         total = len(full_seq_responses)

@@ -29,6 +29,7 @@ MODELS = [
     "Llama-3_3-70B-Instruct",
     "Qwen3-8B",
     "gemma-2-9b-it",
+    "Claude",
 ]
 
 # Model names for titles
@@ -36,6 +37,7 @@ MODEL_NAMES = [
     "Llama-3.3-70B-Instruct",
     "Qwen3-8B",
     "Gemma-2-9B-IT",
+    "Claude",
 ]
 
 # Task types to iterate over
@@ -49,6 +51,7 @@ MODEL_OFFSETS = {
     "Llama-3_3-70B-Instruct": -7,
     "Qwen3-8B": -11,
     "gemma-2-9b-it": -7,
+    "Claude": -7,  # Not used for Claude (hardcoded results)
 }
 
 # Highlight keywords for each model (in order matching RUN_DIRS)
@@ -56,6 +59,7 @@ HIGHLIGHT_KEYWORDS = [
     "act_cls_latentqa_pretrain_mix",  # Llama
     "latentqa_cls_past_lens",  # Qwen3
     "latentqa_cls_past_lens",  # Gemma
+    "lqa+class+pl",  # Claude
 ]
 
 # Verbose printing toggle
@@ -142,9 +146,10 @@ def check_yes_no_match(ground_truth: str, answer: str) -> bool:
         # Fallback: just check if ground truth appears
         return ground_truth_lower in answer_lower
 
+    # Custom legend labels for specific LoRA checkpoints (use last path segment).
+    # If a name is not present here, the raw LoRA name is used in the legend.
 
-# Custom legend labels for specific LoRA checkpoints (use last path segment).
-# If a name is not present here, the raw LoRA name is used in the legend.
+
 CUSTOM_LABELS = {
     # gemma 2 9b
     "checkpoints_cls_latentqa_only_addition_gemma-2-9b-it": "SPQA + Classification",
@@ -161,6 +166,11 @@ CUSTOM_LABELS = {
     "checkpoints_act_cls_latentqa_pretrain_mix_adding_Llama-3_3-70B-Instruct": "Full Dataset",
     "checkpoints_latentqa_only_adding_Llama-3_3-70B-Instruct": "SPQA Only (Pan et al.)",
     "checkpoints_cls_only_adding_Llama-3_3-70B-Instruct": "Classification",
+    # claude
+    "baseline": "Original Model",
+    "lqa": "SPQA Only (Pan et al.)",
+    "lqa+class": "SPQA + Classification",
+    "lqa+class+pl": "Full Dataset",
     # base
     "base_model": "Original Model",
 }
@@ -207,6 +217,122 @@ def calculate_accuracy(record, offset, sequence=False, is_open_ended=False):
         total = len(responses)
 
         return num_correct / total if total > 0 else 0
+
+
+def load_claude_results(is_open_ended=False, sequence=False):
+    """Load hardcoded Claude results from TSV data.
+
+    Args:
+        is_open_ended: If True, return open-ended results; if False, return yes/no results
+        sequence: If True, use 3-tok results (sequence-level); if False, use 1-tok results (token-level)
+
+    Returns:
+        Dictionary mapping LoRA names to accuracy and CI data
+    """
+    # Claude results from experiments/claude_personaqa_results.tsv
+    # 1-tok results are used for token-level (sequence=False)
+    # 3-tok results are used for sequence-level (sequence=True)
+
+    if sequence:
+        # Use 3-tok results for sequence-level
+        if is_open_ended:
+            # Open-ended results (3-tok)
+            return {
+                "baseline": {
+                    "accuracy": 0.3283,
+                    "ci": 0.0375,
+                    "count": 1,
+                },
+                "lqa": {
+                    "accuracy": 0.3667,
+                    "ci": 0.0375,
+                    "count": 1,
+                },
+                "lqa+class": {
+                    "accuracy": 0.3717,
+                    "ci": 0.0375,
+                    "count": 1,
+                },
+                "lqa+class+pl": {
+                    "accuracy": 0.3450,
+                    "ci": 0.0383,
+                    "count": 1,
+                },
+            }
+        else:
+            # Yes/No results (3-tok)
+            return {
+                "baseline": {
+                    "accuracy": 0.6550,
+                    "ci": 0.0258,
+                    "count": 1,
+                },
+                "lqa": {
+                    "accuracy": 0.6783,
+                    "ci": 0.0262,
+                    "count": 1,
+                },
+                "lqa+class": {
+                    "accuracy": 0.7592,
+                    "ci": 0.0242,
+                    "count": 1,
+                },
+                "lqa+class+pl": {
+                    "accuracy": 0.7508,
+                    "ci": 0.0233,
+                    "count": 1,
+                },
+            }
+    else:
+        # Use 1-tok results for token-level
+        if is_open_ended:
+            # Open-ended results (1-tok)
+            return {
+                "baseline": {
+                    "accuracy": 0.3800,
+                    "ci": 0.0383,
+                    "count": 1,
+                },
+                "lqa": {
+                    "accuracy": 0.4183,
+                    "ci": 0.0383,
+                    "count": 1,
+                },
+                "lqa+class": {
+                    "accuracy": 0.4033,
+                    "ci": 0.0384,
+                    "count": 1,
+                },
+                "lqa+class+pl": {
+                    "accuracy": 0.3883,
+                    "ci": 0.0383,
+                    "count": 1,
+                },
+            }
+        else:
+            # Yes/No results (1-tok)
+            return {
+                "baseline": {
+                    "accuracy": 0.6767,
+                    "ci": 0.0254,
+                    "count": 1,
+                },
+                "lqa": {
+                    "accuracy": 0.7383,
+                    "ci": 0.0242,
+                    "count": 1,
+                },
+                "lqa+class": {
+                    "accuracy": 0.7467,
+                    "ci": 0.0229,
+                    "count": 1,
+                },
+                "lqa+class+pl": {
+                    "accuracy": 0.7475,
+                    "ci": 0.0237,
+                    "count": 1,
+                },
+            }
 
 
 def load_results_from_folder(folder_path, model_name, sequence=False, is_open_ended=False, verbose=False):
@@ -441,7 +567,7 @@ def plot_all_models(
     is_open_ended=False,
     sequence=False,
 ):
-    """Create plot with all three models as subplots.
+    """Create plot with all models as subplots.
 
     Args:
         all_results: List of result dictionaries for each model
@@ -455,7 +581,10 @@ def plot_all_models(
     """
     output_path = f"{output_path_base}.{OUTPUT_EXTENSION.lower()}"
 
-    fig, axes = plt.subplots(1, 3, figsize=(18, 6), sharey=True)
+    num_models = len(model_names)
+    fig, axes = plt.subplots(1, num_models, figsize=(6 * num_models, 6), sharey=True)
+    if num_models == 1:
+        axes = [axes]
 
     # Add main title if enabled
     if SHOW_TITLE:
@@ -590,14 +719,22 @@ def main():
 
             all_results = []
             for model in MODELS:
-                # Construct directory path
-                run_dir = f"experiments/personaqa_results/{model}_{task_type}"
-                print(f"Loading results from: {run_dir}")
-                results = load_results_from_folder(
-                    run_dir, model, sequence=sequence, is_open_ended=is_open_ended, verbose=VERBOSE
-                )
-                if not results:
-                    print(f"Warning: No JSON files found in {run_dir}!")
+                if model == "Claude":
+                    # Load hardcoded Claude results
+                    # Use 3-tok for sequence-level, 1-tok for token-level
+                    print(f"Loading Claude results (hardcoded, {'3-tok' if sequence else '1-tok'})")
+                    results = load_claude_results(is_open_ended=is_open_ended, sequence=sequence)
+                    if not results:
+                        print("Warning: No Claude results found!")
+                else:
+                    # Construct directory path
+                    run_dir = f"experiments/personaqa_results/{model}_{task_type}"
+                    print(f"Loading results from: {run_dir}")
+                    results = load_results_from_folder(
+                        run_dir, model, sequence=sequence, is_open_ended=is_open_ended, verbose=VERBOSE
+                    )
+                    if not results:
+                        print(f"Warning: No JSON files found in {run_dir}!")
                 all_results.append(results)
                 print()
 

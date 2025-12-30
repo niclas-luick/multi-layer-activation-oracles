@@ -131,7 +131,8 @@ def load_gender_results(folder_path):
         for record in data["results"]:
             ground_truth = record["ground_truth"]
             # Use sequence-level responses
-            full_seq_responses = record.get("segment_responses", record.get("full_sequence_responses", []))
+            # full_seq_responses = record.get("segment_responses", record.get("full_sequence_responses", []))
+            full_seq_responses = record.get("full_sequence_responses", [])
             num_correct = sum(1 for resp in full_seq_responses if gender_comparison(resp, ground_truth))
             total = len(full_seq_responses)
             if total > 0:
