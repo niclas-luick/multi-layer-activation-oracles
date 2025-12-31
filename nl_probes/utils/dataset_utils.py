@@ -64,8 +64,8 @@ class TrainingDataPoint(BaseModel):
         else:
             if values.context_positions is None or values.context_input_ids is None:
                 raise ValueError("context_* must be provided when steering_vectors is None")
-            if len(values.positions) != len(values.context_positions):
-                raise ValueError("positions and context_positions must have the same length")
+            #if len(values.positions) != len(values.context_positions):
+            #    raise ValueError("positions and context_positions must have the same length")
         return values
 
 
@@ -258,7 +258,7 @@ def materialize_missing_steering_vectors(
             item_vectors_list.append(layer_vectors)
 
         vectors = torch.stack(item_vectors_list, dim=0)
-        vectors = stacked_vectors.view(-1, vectors.shape[-1])
+        vectors = vectors.view(-1, vectors.shape[-1])
 
         assert len(vectors.shape) == 2, f"Expected 2D tensor, got vectors.shape={vectors.shape}"
 
@@ -347,7 +347,7 @@ def create_training_datapoint(
     for i in range(assistant_start_idx):
         labels[i] = -100
 
-    positions = find_pattern_in_tokens(full_prompt_ids, SPECIAL_TOKEN, num_positions, tokenizer)
+    positions = find_pattern_in_tokens(full_prompt_ids, SPECIAL_TOKEN, num_positions, layers, tokenizer)
 
     if acts_BD is None:
         assert context_input_ids is not None and context_positions is not None, (

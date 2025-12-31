@@ -146,13 +146,13 @@ def create_latentqa_training_datapoint(
         window_start = end_offset - window_size
         context_positions = context_positions[window_start:end_offset]
 
-    layer = random.choice(act_layers)
+    #layer = random.choice(act_layers)
 
     training_datapoint = create_training_datapoint(
         datapoint_type=f"latentqa_{datapoint.source}",
         prompt=datapoint.dialog[0].content,
         target_response=datapoint.dialog[1].content,
-        layer=layer,
+        layers=act_layers,
         num_positions=len(context_positions),
         tokenizer=tokenizer,
         acts_BD=None,
