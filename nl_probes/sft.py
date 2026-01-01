@@ -889,7 +889,7 @@ if __name__ == "__main__":
     ]
 
     for model_name in models:
-        hf_repo_name = "N/A"
+        hf_repo_name = "nluick/activation-oracle-multilayer-qwen3-8b-25-50-75"
 
         model_name_str = model_name.split("/")[-1].replace(".", "_").replace(" ", "_")
 
@@ -915,7 +915,7 @@ if __name__ == "__main__":
         train_batch_size = train_batch_size // world_size
         print(f"Per-rank train batch size: {train_batch_size}, world size: {world_size}")
 
-        layer_percents = [25, 50]
+        layer_percents = [25, 50, 75]
         save_acts = False
 
         gradient_accumulation_steps = 1
@@ -939,16 +939,16 @@ if __name__ == "__main__":
         iterations = [
             # Default dataset mixture
             # Set load_lora_path to checkpoint path to continue training
-            # {
-            #     "load_lora_path": None,
-            #     "dataset_loaders": latentqa_loaders + classification_dataset_loaders + past_lens_loaders,
-            #     "wandb_suffix": f"_latentqa_cls_past_lens_{model_name_str}",
-            # },
             {
                 "load_lora_path": None,
-                "dataset_loaders": latentqa_loaders,
-                "wandb_suffix": f"_latentqa_only_{model_name_str}",
+                "dataset_loaders": latentqa_loaders + classification_dataset_loaders + past_lens_loaders,
+                "wandb_suffix": f"_latentqa_cls_past_lens_{model_name_str}",
             },
+            # {
+            #     "load_lora_path": None,
+            #     "dataset_loaders": latentqa_loaders,
+            #     "wandb_suffix": f"_latentqa_only_{model_name_str}",
+            # },
         ]
 
         for hyperparam_override in iterations:

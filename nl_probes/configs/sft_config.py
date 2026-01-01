@@ -56,7 +56,7 @@ class SelfInterpTrainingConfig:
     wandb_suffix: str = ""
 
     # --- Hub ---
-    hf_push_to_hub: bool = False
+    hf_push_to_hub: bool = True
     hf_private_repo: bool = False
     hf_repo_name: str = ""  # optional short name, used to compute repo_id
     hf_repo_id: str = ""  # derived if empty and push is on
