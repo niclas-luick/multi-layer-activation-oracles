@@ -889,7 +889,7 @@ if __name__ == "__main__":
     ]
 
     for model_name in models:
-        hf_repo_name = "nluick/activation-oracle-multilayer-qwen3-8b-25-50-75"
+        hf_repo_name = "activation-oracle-multilayer-qwen3-8b-25-50-75"
 
         model_name_str = model_name.split("/")[-1].replace(".", "_").replace(" ", "_")
 
