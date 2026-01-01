@@ -253,15 +253,15 @@ def create_vector_dataset(
                         acts_K = acts_LD[positions_K]
                         layer_acts_list.append(acts_K)
 
-                stacked = torch.stack(layer_acts_list, dim=0)
-                acts_KD = stacked.reshape(-1, stacked.shape[-1])
-                assert acts_KD.shape[0] == len(act_layers) * k
+                    stacked = torch.stack(layer_acts_list, dim=0)
+                    acts_KD = stacked.reshape(-1, stacked.shape[-1])
+                    assert acts_KD.shape[0] == len(act_layers) * k
                 
                 training_data_point = create_training_datapoint(
                     datapoint_type=datapoint_type,
                     prompt=classification_prompt,
                     target_response=batch_datapoints[j].target_response,
-                    layer=act_layers,
+                    layers=act_layers,
                     num_positions=k,
                     tokenizer=tokenizer,
                     acts_BD=acts_KD,
