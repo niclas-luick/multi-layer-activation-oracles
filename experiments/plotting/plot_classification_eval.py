@@ -23,11 +23,12 @@ plt.rcParams.update(
 )
 
 # Configuration
-RUN_DIR = "experiments/classification/classification_eval_Qwen3-8B_single_token"
-RUN_DIR = "experiments/classification/classification_Qwen3-8B_single_token_v1"
-RUN_DIR = "experiments/classification/classification_Qwen3-8B_single_token"
-RUN_DIR = "experiments/classification/classification_gemma-2-9b-it_single_token"
-RUN_DIR = "experiments/classification_Qwen38b/classification_Qwen3-8B_single_token"
+# RUN_DIR = "experiments/classification/classification_Qwen3-8B_single_token_50"
+RUN_DIR = "experiments/classification/classification_Qwen3-8B_single_token_multi_25_50_75"
+# RUN_DIR = "experiments/classification/classification_Qwen3-8B_single_token_v1"
+# RUN_DIR = "experiments/classification/classification_Qwen3-8B_single_token"
+# RUN_DIR = "experiments/classification/classification_gemma-2-9b-it_single_token"
+# RUN_DIR = "experiments/classification_Qwen38b/classification_Qwen3-8B_single_token"
 # RUN_DIR = "experiments/classification/classification_Qwen3-8B_multi_token"
 DATA_DIR = RUN_DIR.split("/")[-1]
 
@@ -47,19 +48,9 @@ FILTERED_FILENAMES = []
 # Custom legend labels for specific LoRA checkpoints (use last path segment).
 # If a name is not present here, the raw LoRA name is used in the legend.
 CUSTOM_LABELS = {
-    # gemma 2 9b
-    "checkpoints_cls_latentqa_only_addition_gemma-2-9b-it": "LatentQA + Classification",
-    "checkpoints_latentqa_only_addition_gemma-2-9b-it": "LatentQA",
-    "checkpoints_cls_only_addition_gemma-2-9b-it": "Classification",
-    "checkpoints_latentqa_cls_past_lens_addition_gemma-2-9b-it": "Past Lens + LatentQA + Classification",
-    "checkpoints_classification_single_token_gemma-2-9b-it": "Classification Single Token Training",
     # qwen3 8b
-    "checkpoints_cls_latentqa_only_addition_Qwen3-8B": "LatentQA + Classification",
-    "checkpoints_latentqa_only_addition_Qwen3-8B": "LatentQA",
-    "checkpoints_cls_only_addition_Qwen3-8B": "Classification",
     "checkpoints_latentqa_cls_past_lens_addition_Qwen3-8B": "Past Lens + LatentQA + Classification",
-    "checkpoints_cls_latentqa_sae_addition_Qwen3-8B": "SAE + LatentQA + Classification",
-    "checkpoints_classification_single_token_Qwen3-8B": "Classification Single Token Training",
+    "checkpoints_latentqa_cls_past_lens_addition_Qwen3-8B multi layer": "Past Lens + LatentQA + Classification",
 }
 
 # Which LoRA to highlight (substring match, must match exactly one entry)
@@ -144,8 +135,16 @@ def load_results_from_folder(folder_path, verbose=False):
             data = json.load(f)
 
         # Prefer the LoRA path's last segment as the key (consistent with other plots)
-        lora_path = data["meta"]["investigator_lora_path"]
-        lora_name = lora_path.split("/")[-1]
+        meta = data.get("meta", {})
+        lora_path = meta.get("investigator_lora_path")
+    
+        if lora_path is None:
+            lora_name = "Base Model"
+        else:
+            lora_name = lora_path.split("/")[-1]
+
+        #lora_path = data["meta"]["investigator_lora_path"]
+        #lora_name = lora_path.split("/")[-1]
 
         records = data["records"]
 
@@ -201,9 +200,16 @@ def _plot_split(
     errors = [results[name][f"{split}_ci"] for name in names]
 
     # Find and require exactly one highlighted entry, move it to index 0
+    #matches = [i for i, n in enumerate(names) if highlight_keyword in n]
+    #assert len(matches) == 1, f"Keyword '{highlight_keyword}' matched {len(matches)}: {[names[i] for i in matches]}"
+    #m = matches[0]
+
     matches = [i for i, n in enumerate(names) if highlight_keyword in n]
-    assert len(matches) == 1, f"Keyword '{highlight_keyword}' matched {len(matches)}: {[names[i] for i in matches]}"
-    m = matches[0]
+    if len(matches) > 0:
+        m = matches[0]
+    else:
+        m = -1  # Disable highlighting if no match found
+
     order = [m] + [i for i in range(len(names)) if i != m]
     names = [names[i] for i in order]
     values = [values[i] for i in order]
