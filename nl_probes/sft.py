@@ -923,11 +923,11 @@ if __name__ == "__main__":
         # "google/gemma-3-4b-it",
         # "google/gemma-3-12b-it",
         # "google/gemma-3-27b-it",
-        "Qwen/Qwen3-4B",
+        "Qwen/Qwen3-8B",
     ]
 
     for model_name in models:
-        hf_repo_name = "activation-oracle-multilayer-qwen3-8b-15-30-45-60-75-90"
+        hf_repo_name = "activation-oracle-multilayer-qwen3-14b-25-50-75"
 
         model_name_str = model_name.split("/")[-1].replace(".", "_").replace(" ", "_")
 
@@ -954,8 +954,8 @@ if __name__ == "__main__":
         train_batch_size = train_batch_size // world_size
         print(f"Per-rank train batch size: {train_batch_size}, world size: {world_size}")
 
-        #layer_percents = [25, 50, 75]
-        layer_percents = [15, 30, 45, 60, 75, 90]
+        layer_percents = [25, 50, 75]
+        #layer_percents = [15, 30, 45, 60, 75, 90]
         save_acts = False
 
         gradient_accumulation_steps = 2
