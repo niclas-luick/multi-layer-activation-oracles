@@ -27,7 +27,7 @@ os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 
 # --- 1. CLEAN OUTPUT DIRECTORY (Prevents duplicates) ---
 EXPERIMENTS_DIR = "experiments"
-DATA_DIR = "classification_final" # Clean folder for new results
+DATA_DIR = "classification_final_no_layer_loop" # Clean folder for new results
 
 os.makedirs(EXPERIMENTS_DIR, exist_ok=True)
 os.makedirs(f"{EXPERIMENTS_DIR}/{DATA_DIR}", exist_ok=True)
