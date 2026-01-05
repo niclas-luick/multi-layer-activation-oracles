@@ -9,8 +9,8 @@ import matplotlib.pyplot as plt
 # ---------------------------------------------------------
 # 1. CONFIGURATION
 # ---------------------------------------------------------
-EXPERIMENTS_DIR = "experiments/classification_final"
-PLOT_DIR = "plots"
+EXPERIMENTS_DIR = "experiments/classification_final_no_layer_loop"
+PLOT_DIR = "plots/no_layer_loop"
 os.makedirs(PLOT_DIR, exist_ok=True)
 
 # IGNORE LIST
