@@ -221,58 +221,58 @@ def create_vector_dataset(
         tokenized_prompts["input_ids"] = tokenized_prompts["input_ids"]
         tokenized_prompts["attention_mask"] = tokenized_prompts["attention_mask"]
 
-        for _ in [25, 50, 75]: # added additional loop here to ensure dataset size compatibility to AO results
-            for j in range(len(batch_datapoints)):
-                attn_mask_L = tokenized_prompts["attention_mask"][j].bool()
-                input_ids_L = tokenized_prompts["input_ids"][j, attn_mask_L]
-                L = len(input_ids_L)
-                end_offset = random.randint(max_end_offset, min_end_offset)
-                end_pos = L + end_offset
+        #for _ in [25, 50, 75]: # added additional loop here to ensure dataset size compatibility to AO results
+        for j in range(len(batch_datapoints)):
+            attn_mask_L = tokenized_prompts["attention_mask"][j].bool()
+            input_ids_L = tokenized_prompts["input_ids"][j, attn_mask_L]
+            L = len(input_ids_L)
+            end_offset = random.randint(max_end_offset, min_end_offset)
+            end_pos = L + end_offset
 
-                assert L > 0, f"L={L}"
-                assert end_pos > 0, f"end_pos={end_pos}"
+            assert L > 0, f"L={L}"
+            assert end_pos > 0, f"end_pos={end_pos}"
 
-                k = random.randint(min_window_size, max_window_size)
-                k = min(k, end_pos + 1)
-                assert k > 0, f"k={k}"
-                begin_pos = end_pos - k + 1
-                positions_K = list(range(begin_pos, end_pos + 1))
-                assert len(positions_K) == k
+            k = random.randint(min_window_size, max_window_size)
+            k = min(k, end_pos + 1)
+            assert k > 0, f"k={k}"
+            begin_pos = end_pos - k + 1
+            positions_K = list(range(begin_pos, end_pos + 1))
+            assert len(positions_K) == k
 
-                # assert tokenized_prompts["input_ids"][j][offset + 1] == tokenizer.eos_token_id
-                if debug_print:
-                    view_tokens(input_ids_L, tokenizer, positions_K[-1])
-                classification_prompt = f"{batch_datapoints[j].classification_prompt}"
+            # assert tokenized_prompts["input_ids"][j][offset + 1] == tokenizer.eos_token_id
+            if debug_print:
+                view_tokens(input_ids_L, tokenizer, positions_K[-1])
+            classification_prompt = f"{batch_datapoints[j].classification_prompt}"
 
-                if save_acts is False:
-                    acts_KD = None
-                else:
-                    layer_acts_list = []
-                    for layer in act_layers:
-                        acts_LD = acts_BLD_by_layer_dict[layer][j, attn_mask_L]
-                        acts_K = acts_LD[positions_K]
-                        layer_acts_list.append(acts_K)
+            if save_acts is False:
+                acts_KD = None
+            else:
+                layer_acts_list = []
+                for layer in act_layers:
+                    acts_LD = acts_BLD_by_layer_dict[layer][j, attn_mask_L]
+                    acts_K = acts_LD[positions_K]
+                    layer_acts_list.append(acts_K)
 
-                    stacked = torch.stack(layer_acts_list, dim=0)
-                    acts_KD = stacked.reshape(-1, stacked.shape[-1])
-                    assert acts_KD.shape[0] == len(act_layers) * k
-                
-                training_data_point = create_training_datapoint(
-                    datapoint_type=datapoint_type,
-                    prompt=classification_prompt,
-                    target_response=batch_datapoints[j].target_response,
-                    layers=act_layers,
-                    num_positions=k,
-                    tokenizer=tokenizer,
-                    acts_BD=acts_KD,
-                    feature_idx=-1,
-                    context_input_ids=input_ids_L,
-                    context_positions=positions_K,
-                    ds_label=batch_datapoints[j].ds_label,
-                )
-                if training_data_point is None:
-                    continue
-                training_data.append(training_data_point)
+                stacked = torch.stack(layer_acts_list, dim=0)
+                acts_KD = stacked.reshape(-1, stacked.shape[-1])
+                assert acts_KD.shape[0] == len(act_layers) * k
+            
+            training_data_point = create_training_datapoint(
+                datapoint_type=datapoint_type,
+                prompt=classification_prompt,
+                target_response=batch_datapoints[j].target_response,
+                layers=act_layers,
+                num_positions=k,
+                tokenizer=tokenizer,
+                acts_BD=acts_KD,
+                feature_idx=-1,
+                context_input_ids=input_ids_L,
+                context_positions=positions_K,
+                ds_label=batch_datapoints[j].ds_label,
+            )
+            if training_data_point is None:
+                continue
+            training_data.append(training_data_point)
 
     return training_data
 
