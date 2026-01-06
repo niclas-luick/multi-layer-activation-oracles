@@ -212,43 +212,43 @@ def train_features_batch(
     batch_steering_vectors = training_batch.steering_vectors
     batch_positions = training_batch.positions
 
-    # --- SANITY CHECK START (Run this once to verify, then comment out) ---
-    if random.random() < 0.01: # Only print 1% of the time to avoid spam
-        print("\n" + "="*50)
-        print("🔍 TRAINING DATA SANITY CHECK")
+    # # --- SANITY CHECK START (Run this once to verify, then comment out) ---
+    # if random.random() < 0.01: # Only print 1% of the time to avoid spam
+    #     print("\n" + "="*50)
+    #     print("🔍 TRAINING DATA SANITY CHECK")
         
-        # 1. Decode the text to see the structure
-        # We look at the first item in the batch
-        input_tokens = training_batch.input_ids[0]
-        text = tokenizer.decode(input_tokens, skip_special_tokens=False)
-        print(f"📄 PROMPT (First 300 chars):\n{text[:300]}...")
+    #     # 1. Decode the text to see the structure
+    #     # We look at the first item in the batch
+    #     input_tokens = training_batch.input_ids[0]
+    #     text = tokenizer.decode(input_tokens, skip_special_tokens=False)
+    #     print(f"📄 PROMPT (First 300 chars):\n{text[:300]}...")
         
-        # 2. Check the Steering Positions
-        # Where are we injecting vectors?
-        positions = batch_positions[0] # List of ints
-        print(f"\n📍 INJECTION INDICES: {positions}")
+    #     # 2. Check the Steering Positions
+    #     # Where are we injecting vectors?
+    #     positions = batch_positions[0] # List of ints
+    #     print(f"\n📍 INJECTION INDICES: {positions}")
         
-        # 3. verify Alignment: Are we hitting the '?' tokens?
-        # The token at each position SHOULD be your special token (e.g. ' ?')
-        target_tokens = [tokenizer.decode(input_tokens[p]) for p in positions]
-        print(f"🎯 TARGET TOKENS AT INDICES: {target_tokens}")
-        if not all('?' in t for t in target_tokens):
-            print("❌ WARNING: Vectors are NOT hitting '?' tokens! Check alignment!")
+    #     # 3. verify Alignment: Are we hitting the '?' tokens?
+    #     # The token at each position SHOULD be your special token (e.g. ' ?')
+    #     target_tokens = [tokenizer.decode(input_tokens[p]) for p in positions]
+    #     print(f"🎯 TARGET TOKENS AT INDICES: {target_tokens}")
+    #     if not all('?' in t for t in target_tokens):
+    #         print("❌ WARNING: Vectors are NOT hitting '?' tokens! Check alignment!")
         
-        # 4. Check Vector Shapes
-        # We expect [Num_Positions, Hidden_Dim]
-        # In your multi-layer setup, Num_Positions should equal (Num_Layers * Window_Size)
-        vectors = batch_steering_vectors[0]
-        print(f"📐 VECTOR SHAPE: {vectors.shape}")
+    #     # 4. Check Vector Shapes
+    #     # We expect [Num_Positions, Hidden_Dim]
+    #     # In your multi-layer setup, Num_Positions should equal (Num_Layers * Window_Size)
+    #     vectors = batch_steering_vectors[0]
+    #     print(f"📐 VECTOR SHAPE: {vectors.shape}")
         
-        expected_len = len(positions)
-        if vectors.shape[0] != expected_len:
-            print(f"❌ MISMATCH: {expected_len} positions but {vectors.shape[0]} vectors!")
-        else:
-            print("✅ Shape and Count Match.")
+    #     expected_len = len(positions)
+    #     if vectors.shape[0] != expected_len:
+    #         print(f"❌ MISMATCH: {expected_len} positions but {vectors.shape[0]} vectors!")
+    #     else:
+    #         print("✅ Shape and Count Match.")
             
-        print("="*50 + "\n")
-    # --- SANITY CHECK END ---
+    #     print("="*50 + "\n")
+    # # --- SANITY CHECK END ---
 
     # 3. Create and apply the activation steering hook
     hook_fn = get_hf_activation_steering_hook(
