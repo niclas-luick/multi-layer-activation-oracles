@@ -212,7 +212,6 @@ def collect_past_lens_acts(
         attn_mask_BL = tokenized_inputs["attention_mask"]
         input_ids_BL = tokenized_inputs["input_ids"]
 
-        # for _ in [25, 50, 75]: # additional loop to ensure dataset size compatibility to original AO results
         for j in range(len(inputs)):
             attn_mask_L = attn_mask_BL[j].bool()
             input_ids_L_full = input_ids_BL[j, attn_mask_L]

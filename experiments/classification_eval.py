@@ -6,7 +6,7 @@ os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 
 import json
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Union
 import gc
 import torch
 from peft import LoraConfig
@@ -28,38 +28,49 @@ from nl_probes.base_experiment import sanitize_lora_name
 # -----------------------------
 
 
-# Model and eval config
+# # Model and eval for the training run with 1x LatentQA, 1x Past Lens and 3x Classification
+# MODEL_CONFIGS = {
+#     "Qwen/Qwen3-4B": [
+#         ["adamkarvonen/checkpoints_latentqa_cls_past_lens_Qwen3-4B", 50],
+#         ["nluick/activation-oracle-multilayer-qwen3-8b-25-50-75", [25, 50, 75]], # typo in hf name 8b->4b
+#         ["nluick/activation-oracle-multilayer-qwen3-4b-6L-3xlayer-loop", [15, 30, 45, 60, 75, 90]],
+#     ],
+#     "Qwen/Qwen3-8B": [
+#         ["adamkarvonen/checkpoints_latentqa_cls_past_lens_addition_Qwen3-8B", 50],
+#         ["nluick/activation-oracle-multilayer-qwen3-14b-25-50-75", [25, 50, 75]], # typo in hf name 14b->8b
+#     ],
+# }
+
+# # Model and eval for the training run with 1x LatentQA, 1x Past Lens and 1x Classification
+# MODEL_CONFIGS = {
+#     "Qwen/Qwen3-4B": [
+#         ["adamkarvonen/checkpoints_latentqa_cls_past_lens_Qwen3-4B", 50],
+#         ["nluick/activation-oracle-multilayer-qwen3-4b-3L", [25, 50, 75]],
+#         ["nluick/activation-oracle-multilayer-qwen3-4b-6L", [15, 30, 45, 60, 75, 90]],
+#     ],
+#     "Qwen/Qwen3-8B": [
+#         ["adamkarvonen/checkpoints_latentqa_cls_past_lens_addition_Qwen3-8B", 50],
+#         ["nluick/activation-oracle-multilayer-qwen3-8b-3L", [25, 50, 75]],
+#     ],
+# }
+CONFIG_3L = [25, 50, 75]
+CONFIG_6L = [15, 30, 45, 60, 75, 90]
+
+# Model and eval for all MLAO combined
 MODEL_CONFIGS = {
-    "Qwen/Qwen3-8B": [
-        "adamkarvonen/checkpoints_cls_latentqa_only_addition_Qwen3-8B",
-        "nluick/activation-oracle-multilayer-qwen3-14b-25-50-75",
-        #"adamkarvonen/checkpoints_latentqa_only_addition_Qwen3-8B",
-        #"adamkarvonen/checkpoints_cls_only_addition_Qwen3-8B",
-        #"adamkarvonen/checkpoints_latentqa_cls_past_lens_addition_Qwen3-8B",
-        #"adamkarvonen/checkpoints_cls_latentqa_sae_addition_Qwen3-8B",
-        #"adamkarvonen/checkpoints_classification_single_token_Qwen3-8B",
-        None,
+    "Qwen/Qwen3-4B": [
+        ["adamkarvonen/checkpoints_latentqa_cls_past_lens_Qwen3-4B", 50],
+        ["nluick/MLAO-Qwen3-4B-3L-1N", CONFIG_3L],
+        ["nluick/MLAO-Qwen3-4B-3L-3N", CONFIG_3L],
+        ["nluick/MLAO-Qwen3-4B-6L-1N", CONFIG_6L],
+        ["nluick/MLAO-Qwen3-4B-6L-3N", CONFIG_6L],
+        ["nluick/MLAO-Qwen3-4B-6L-6N", CONFIG_6L],
     ],
-    # "google/gemma-2-9b-it": [
-    #     "adamkarvonen/checkpoints_cls_latentqa_only_addition_gemma-2-9b-it",
-    #     "adamkarvonen/checkpoints_latentqa_only_addition_gemma-2-9b-it",
-    #     "adamkarvonen/checkpoints_cls_only_addition_gemma-2-9b-it",
-    #     "adamkarvonen/checkpoints_latentqa_cls_past_lens_addition_gemma-2-9b-it",
-    #     "adamkarvonen/checkpoints_classification_single_token_gemma-2-9b-it",
-    #     None,
-    #     #     "adamkarvonen/checkpoints_latentqa_only_gemma-2-9b-it_lr_1e-6",
-    #     #     "adamkarvonen/checkpoints_latentqa_only_gemma-2-9b-it_lr_3e-6",
-    #     #     "adamkarvonen/checkpoints_latentqa_only_addition_gemma-2-9b-it",
-    #     #     "adamkarvonen/checkpoints_latentqa_only_gemma-2-9b-it_lr_3e-5",
-    #     #     "adamkarvonen/checkpoints_latentqa_only_gemma-2-9b-it_lr_1e-4",
-    #     #     "adamkarvonen/checkpoints_latentqa_only_gemma-2-9b-it_lr_3e-4",
-    # ],
-    # "meta-llama/Llama-3.3-70B-Instruct": [
-    #     "adamkarvonen/checkpoints_act_cls_latentqa_pretrain_mix_adding_Llama-3_3-70B-Instruct",
-    #     "adamkarvonen/checkpoints_latentqa_only_adding_Llama-3_3-70B-Instruct",
-    #     "adamkarvonen/checkpoints_cls_only_adding_Llama-3_3-70B-Instruct",
-    #     None,
-    # ],
+    "Qwen/Qwen3-8B": [
+        ["adamkarvonen/checkpoints_latentqa_cls_past_lens_addition_Qwen3-8B", 50],
+        ["nluick/MLAO-Qwen3-8B-3L-1N", CONFIG_3L],
+        ["nluick/MLAO-Qwen3-8B-3L-3N", CONFIG_3L],
+    ],
 }
 
 INJECTION_LAYER = 1
@@ -115,9 +126,7 @@ CLASSIFICATION_DATASETS: dict[str, dict[str, Any]] = {
     "engels_wikidata_isresearcher": {"num_train": 0, "num_test": 250, "splits": ["test"]},
 }
 
-# Layer percent settings - will iterate over these individually
-LAYER_PERCENTS = [25, 33, 50, 66, 75]
-LAYER_PERCENTS = [0, 10]
+
 
 KEY_FOR_NONE = "original"
 
@@ -157,10 +166,15 @@ def get_batch_size(model_name: str) -> int:
 
 
 def load_datasets_for_layer_percent(
-    model_name: str, layer_percent: int, model_kwargs: dict, model=None
+    model_name: str, layer_percent: Union[int, list[int]], model_kwargs: dict, model=None
 ) -> dict[str, list[Any]]:
     """Load all classification datasets for a specific model and layer percent."""
     batch_size = get_batch_size(model_name)
+
+    if isinstance(layer_percent, list):
+        current_layers = layer_percent
+    else:
+        current_layers = [layer_percent]
 
     classification_dataset_loaders: list[ClassificationDatasetLoader] = []
     for dataset_name, dcfg in CLASSIFICATION_DATASETS.items():
@@ -191,7 +205,7 @@ def load_datasets_for_layer_percent(
             num_test=dcfg["num_test"],
             splits=dcfg["splits"],
             model_name=model_name,
-            layer_percents=[layer_percent],
+            layer_percents=current_layers,
             save_acts=True,
             batch_size=ds_batch_size,
         )
@@ -218,7 +232,7 @@ def run_eval_for_datasets(
     tokenizer,
     submodule,
     model_name: str,
-    layer_percent: int,
+    layer_percent: Union[int, list[int]],
     lora_path: str | None,
     eval_data_by_ds: dict[str, list[Any]],
     batch_size: int,
@@ -309,11 +323,24 @@ for model_name in MODEL_CONFIGS:
     dummy_config = LoraConfig()
     model.add_adapter(dummy_config, adapter_name="default")
 
-    for layer_percent in LAYER_PERCENTS:
-        print(f"\n--- Layer percent: {layer_percent} ---")
+    for lora_params in investigator_lora_paths:
+        lora = lora_params[0]
+        print(f"Evaluating LORA: {lora}")
+        if lora is None:
+            active_lora_path = None
+            lora_name = "base_model"
+        else:
+            active_lora_path = f"{LORA_DIR}{lora}"
+            lora_name = lora.split("/")[-1].replace("/", "_").replace(".", "_")
+        
+        layer_percent = lora_params[1]
 
         # Create run_dir with layer_percent in folder name
-        run_dir = f"{EXPERIMENTS_DIR}/{DATA_DIR}/classification_{model_name_str}_{mode_str}_{layer_percent}/"
+        if isinstance(layer_percent, list):
+            lp_str = "_".join(map(str, layer_percent))
+        else:
+            lp_str = str(layer_percent)
+        run_dir = f"{EXPERIMENTS_DIR}/{DATA_DIR}/classification_{model_name_str}_{mode_str}_{lp_str}/"
         os.makedirs(run_dir, exist_ok=True)
 
         # Load datasets for this layer percent (reuses the loaded model)
@@ -322,30 +349,21 @@ for model_name in MODEL_CONFIGS:
 
         output_json_template = f"{run_dir}" + "classification_results_lora_{lora}.json"
 
-        for lora in investigator_lora_paths:
-            print(f"Evaluating LORA: {lora}")
-            if lora is None:
-                active_lora_path = None
-                lora_name = "base_model"
-            else:
-                active_lora_path = f"{LORA_DIR}{lora}"
-                lora_name = lora.split("/")[-1].replace("/", "_").replace(".", "_")
+        results = run_eval_for_datasets(
+            model=model,
+            tokenizer=tokenizer,
+            submodule=submodule,
+            model_name=model_name,
+            layer_percent=layer_percent,
+            lora_path=active_lora_path,
+            eval_data_by_ds=all_eval_data,
+            batch_size=batch_size,
+        )
 
-            results = run_eval_for_datasets(
-                model=model,
-                tokenizer=tokenizer,
-                submodule=submodule,
-                model_name=model_name,
-                layer_percent=layer_percent,
-                lora_path=active_lora_path,
-                eval_data_by_ds=all_eval_data,
-                batch_size=batch_size,
-            )
-
-            output_json = output_json_template.format(lora=lora_name)
-            with open(output_json, "w") as f:
-                json.dump(results, f, indent=2)
-            print(f"Saved results to {output_json}")
+        output_json = output_json_template.format(lora=lora_name)
+        with open(output_json, "w") as f:
+            json.dump(results, f, indent=2)
+        print(f"Saved results to {output_json}")
 
     # Clean up model before loading next one
     del model

@@ -221,7 +221,8 @@ def create_vector_dataset(
         tokenized_prompts["input_ids"] = tokenized_prompts["input_ids"]
         tokenized_prompts["attention_mask"] = tokenized_prompts["attention_mask"]
 
-        #for _ in [25, 50, 75]: # added additional loop here to ensure dataset size compatibility to AO results
+        #for _ in [25, 50, 75]: # used to train -3N models
+        #for _ in [15, 30, 45, 60, 75, 90]: # used to train -6N models
         for j in range(len(batch_datapoints)):
             attn_mask_L = tokenized_prompts["attention_mask"][j].bool()
             input_ids_L = tokenized_prompts["input_ids"][j, attn_mask_L]
