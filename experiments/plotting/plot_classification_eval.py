@@ -48,17 +48,17 @@ IID_DATASETS = [
 # --- NAME MAPPING (Defines Order) ---
 NAME_MAPPING = {
     # 4B Models
-    "checkpoints_latentqa_cls_past_lens_Qwen3-4B": "AO Qwen-4B",
-    "MLAO-Qwen3-4B-3L-1N": "MLAO Qwen-4B-3L-1N",
-    "MLAO-Qwen3-4B-3L-3N": "MLAO Qwen-4B-3L-3N",
-    "MLAO-Qwen3-4B-6L-1N": "MLAO Qwen-4B-6L-1N",
-    "MLAO-Qwen3-4B-6L-3N": "MLAO Qwen-4B-6L-3N",
-    "MLAO-Qwen3-4B-6L-6N": "MLAO Qwen-4B-6L-6N",
+    "checkpoints_latentqa_cls_past_lens_Qwen3-4B": "AO Qwen3-4B",
+    "MLAO-Qwen3-4B-3L-1N": "MLAO Qwen3-4B-3L-1N",
+    "MLAO-Qwen3-4B-3L-3N": "MLAO Qwen3-4B-3L-3N",
+    "MLAO-Qwen3-4B-6L-1N": "MLAO Qwen3-4B-6L-1N",
+    "MLAO-Qwen3-4B-6L-3N": "MLAO Qwen3-4B-6L-3N",
+    "MLAO-Qwen3-4B-6L-6N": "MLAO Qwen3-4B-6L-6N",
 
     # 8B Models
-    "checkpoints_latentqa_cls_past_lens_addition_Qwen3-8B": "AO Qwen-8B",
-    "MLAO-Qwen3-8B-3L-1N": "MLAO Qwen-8B-3L-1N",
-    "MLAO-Qwen3-8B-3L-3N": "MLAO Qwen-8B-3L-3N",
+    "checkpoints_latentqa_cls_past_lens_addition_Qwen3-8B": "AO Qwen3-8B",
+    "MLAO-Qwen3-8B-3L-1N": "MLAO Qwen3-8B-3L-1N",
+    "MLAO-Qwen3-8B-3L-3N": "MLAO Qwen3-8B-3L-3N",
 }
 
 # ---------------------------------------------------------
