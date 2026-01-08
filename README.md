@@ -10,7 +10,7 @@ This repository contains the code to:
 2.  **Evaluate** them on the *Karvonen et al.* classification suite (IID & OOD tasks).
 3.  **Visualize** the performance gains (reproducing the plots from the post).
 
-![Performance Plot](plots/MLAO/combine_data_runs/1_OOD_Performance_Overlay.png)
+![Performance Plot](plots/final/1_OOD_Performance_Overlay.png)
 *(Example: OOD Performance showing gains from 3-layer and 6-layer processing)*
 
 # Activation Oracles
