@@ -1,5 +1,15 @@
 This repository is a personal research fork of the [Activation Oracles](https://github.com/adamkarvonen/activation_oracles) project.
 
+# Multi-Layer Activation Oracles (MLAOs)
+
+## Overview
+Standard Activation Oracles (AOs) interpret model activations from a single layer at a time. **Multi-Layer Activation Oracles (MLAOs)** promise to improve generalizability by processing activations from multiple layers **simultaneously**.
+
+This repository contains the code to:
+1.  **Train** MLAOs on multi-layer activation inputs.
+2.  **Evaluate** them on the *Karvonen et al.* classification suite (IID & OOD tasks).
+3.  **Visualize** the performance gains (reproducing the plots from the post).
+
 # Activation Oracles
 
 This repository contains the code for the [Activation Oracles](https://arxiv.org/abs/2512.15674) paper.
