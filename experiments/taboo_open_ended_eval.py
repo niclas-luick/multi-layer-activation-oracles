@@ -57,31 +57,23 @@ if __name__ == "__main__":
     ]
 
     if model_name == "Qwen/Qwen3-8B":
-        verbalizer_lora_paths = [
-            "adamkarvonen/checkpoints_latentqa_cls_past_lens_addition_Qwen3-8B",
-            # "adamkarvonen/checkpoints_cls_latentqa_only_addition_Qwen3-8B",
-            # "adamkarvonen/checkpoints_latentqa_only_addition_Qwen3-8B",
-            # "adamkarvonen/checkpoints_cls_only_addition_Qwen3-8B",
-            # "adamkarvonen/checkpoints_cls_latentqa_sae_addition_Qwen3-8B",
-            "nluick/MLAO-Qwen3-8B-3L-1N",
-            "nluick/MLAO-Qwen3-8B-3L-3N",
+        # Each entry is (verbalizer_path, layer_percents)
+        # Single-layer models use [50], multi-layer models use [25, 50, 75]
+        verbalizer_configs = [
+            ("adamkarvonen/checkpoints_latentqa_cls_past_lens_addition_Qwen3-8B", [50]),
+            ("nluick/MLAO-Qwen3-8B-3L-1N", [25, 50, 75]),
+            ("nluick/MLAO-Qwen3-8B-3L-3N", [25, 50, 75]),
         ]
         target_lora_path_template: Optional[str] = "adamkarvonen/Qwen3-8B-taboo-{lora_path}_50_mix"
         segment_start = -10
     elif model_name == "google/gemma-2-9b-it":
-        verbalizer_lora_paths = [
-            "adamkarvonen/checkpoints_latentqa_cls_past_lens_addition_gemma-2-9b-it",
-            "adamkarvonen/checkpoints_cls_latentqa_only_addition_gemma-2-9b-it",
-            "adamkarvonen/checkpoints_latentqa_only_addition_gemma-2-9b-it",
-            "adamkarvonen/checkpoints_cls_only_addition_gemma-2-9b-it",
-            None,
-            # "checkpoints_latentqa_cls_past_lens_gemma-2-9b-it_1e-6/final",
-            # "adamkarvonen/checkpoints_latentqa_only_gemma-2-9b-it_lr_1e-6",
-            # "adamkarvonen/checkpoints_latentqa_only_gemma-2-9b-it_lr_3e-6",
-            # "adamkarvonen/checkpoints_latentqa_only_addition_gemma-2-9b-it",
-            # "adamkarvonen/checkpoints_latentqa_only_gemma-2-9b-it_lr_3e-5",
-            # "adamkarvonen/checkpoints_latentqa_only_gemma-2-9b-it_lr_1e-4",
-            # "adamkarvonen/checkpoints_latentqa_only_gemma-2-9b-it_lr_3e-4",
+        # Each entry is (verbalizer_path, layer_percents)
+        verbalizer_configs = [
+            ("adamkarvonen/checkpoints_latentqa_cls_past_lens_addition_gemma-2-9b-it", [50]),
+            ("adamkarvonen/checkpoints_cls_latentqa_only_addition_gemma-2-9b-it", [50]),
+            ("adamkarvonen/checkpoints_latentqa_only_addition_gemma-2-9b-it", [50]),
+            ("adamkarvonen/checkpoints_cls_only_addition_gemma-2-9b-it", [50]),
+            (None, [50]),
         ]
         target_lora_path_template: Optional[str] = "bcywinski/gemma-2-9b-it-taboo-{lora_path}"
         segment_start = -10
@@ -96,23 +88,12 @@ if __name__ == "__main__":
 
     prefix = "Answer with a single word only. "
 
-    # Layers for activation collection and injection
-
+    # Generation config (shared across all verbalizers)
     generation_kwargs = {
         "do_sample": False,
         "temperature": 0.0,
         "max_new_tokens": 20,
     }
-
-    config = base_experiment.VerbalizerEvalConfig(
-        model_name=model_name,
-        activation_input_types=["lora"],
-        eval_batch_size=512,
-        verbalizer_generation_kwargs=generation_kwargs,
-        full_seq_repeats=1,
-        segment_repeats=1,
-        segment_start_idx=segment_start,
-    )
 
     experiments_dir: str = "experiments/taboo_eval_results"
     output_json_dir: str = f"{experiments_dir}/{model_name_str}_open_ended_{PROMPT_TYPE}_{DATASET_TYPE}"
@@ -167,11 +148,23 @@ if __name__ == "__main__":
     dummy_config = LoraConfig()
     model.add_adapter(dummy_config, adapter_name="default")
 
-    # Progress over (verbalizer_lora_path x target_lora_suffix) combos
-    total_combos = len(verbalizer_lora_paths) * len(target_lora_suffixes)
+    # Progress over (verbalizer_config x target_lora_suffix) combos
+    total_combos = len(verbalizer_configs) * len(target_lora_suffixes)
     combo_pbar = tqdm(total=total_combos, desc="LoRA Combo Progress", position=0)
 
-    for verbalizer_lora_path in verbalizer_lora_paths:
+    for verbalizer_lora_path, layer_percents in verbalizer_configs:
+        # Create config with the appropriate layer_percents for this verbalizer
+        config = base_experiment.VerbalizerEvalConfig(
+            model_name=model_name,
+            layer_percents=layer_percents,
+            activation_input_types=["lora"],
+            eval_batch_size=512,
+            verbalizer_generation_kwargs=generation_kwargs,
+            full_seq_repeats=1,
+            segment_repeats=1,
+            segment_start_idx=segment_start,
+        )
+
         verbalizer_results = []
         sanitized_verbalizer_name = None
         if verbalizer_lora_path is not None:
@@ -186,7 +179,7 @@ if __name__ == "__main__":
             if target_lora_path is not None:
                 sanitized_target_name = base_experiment.load_lora_adapter(model, target_lora_path)
 
-            print(f"Running verbalizer eval for verbalizer: {verbalizer_lora_path}, target: {target_lora_path}")
+            print(f"Running verbalizer eval for verbalizer: {verbalizer_lora_path} (layers={layer_percents}), target: {target_lora_path}")
 
             # Build context prompts with ground truth
             verbalizer_prompt_infos: list[VerbalizerInputInfo] = []
