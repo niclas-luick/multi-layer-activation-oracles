@@ -193,3 +193,4 @@ openai_api_key.txt
 *model_lora*
 
 !**/taboo_eval_results/**/*.json
+!**/personaqa_results/**/*.json

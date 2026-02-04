@@ -23,9 +23,9 @@ if __name__ == "__main__":
     model_name = "google/gemma-2-9b-it"
 
     model_names = [
-        # "Qwen/Qwen3-8B",
+        "Qwen/Qwen3-8B",
         # "google/gemma-2-9b-it",
-        "meta-llama/Llama-3.3-70B-Instruct",
+        # "meta-llama/Llama-3.3-70B-Instruct",
     ]
 
     for model_name in model_names:
