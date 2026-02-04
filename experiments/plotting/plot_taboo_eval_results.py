@@ -69,16 +69,16 @@ CUSTOM_LABELS = {
     "checkpoints_cls_latentqa_only_addition_Qwen3-8B": "LatentQA + Classification",
     "checkpoints_latentqa_only_addition_Qwen3-8B": "LatentQA",
     "checkpoints_cls_only_addition_Qwen3-8B": "Classification",
-    "checkpoints_latentqa_cls_past_lens_addition_Qwen3-8B": "Past Lens + Classification + LatentQA",
+    "checkpoints_latentqa_cls_past_lens_addition_Qwen3-8B": "AO Qwen3-8B",
     "checkpoints_cls_latentqa_sae_addition_Qwen3-8B": "SAE + Classification + LatentQA",
     # qwen3 8b - multi layer
-    "MLAO-Qwen3-8B-3L-1N": "MLAO 3L-1N (Multi-Layer)",
-    "MLAO-Qwen3-8B-3L-3N": "MLAO 3L-3N (Multi-Layer)",
+    "MLAO-Qwen3-8B-3L-1N": "MLAO Qwen3-8B-3L-1N",
+    "MLAO-Qwen3-8B-3L-3N": "MLAO Qwen3-8B-3L-3N",
     # qwen3 4b - multi layer
-    "MLAO-Qwen3-4B-3L-1N": "MLAO 3L-1N (Multi-Layer)",
-    "MLAO-Qwen3-4B-3L-3N": "MLAO 3L-3N (Multi-Layer)",
+    "MLAO-Qwen3-4B-3L-1N": "MLAO Qwen3-4B-3L-1N (Multi-Layer)",
+    "MLAO-Qwen3-4B-3L-3N": "MLAO Qwen3-4B-3L-3N (Multi-Layer)",
     "MLAO-Qwen3-4B-6L-1N": "MLAO 6L-1N (Multi-Layer)",
-    "MLAO-Qwen3-4B-6L-3N": "MLAO 6L-3N (Multi-Layer)",
+    "MLAO-Qwen3-4B-6L-3N": "MLAO Qwen3-4B-6L-3N (Multi-Layer)",
     "MLAO-Qwen3-4B-6L-6N": "MLAO 6L-6N (Multi-Layer)",
 }
 
