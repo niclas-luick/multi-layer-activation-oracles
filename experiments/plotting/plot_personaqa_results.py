@@ -8,6 +8,7 @@ import numpy as np
 # Configuration
 OUTPUT_JSON_DIR = "experiments/personaqa_single_eval_results_all/Qwen3-8B_yes_no_v1"
 OUTPUT_JSON_DIR = "experiments/personaqa_results/Qwen3-8B_yes_no"
+OUTPUT_JSON_DIR = "experiments/personaqa_results/Qwen3-8B_open_ended"
 
 DATA_DIR = OUTPUT_JSON_DIR.split("/")[-1]
 

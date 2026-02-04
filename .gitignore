@@ -185,7 +185,7 @@ openai_api_key.txt
 *.github/
 *temp*
 *artifacts*
-*images*
+#*images*
 *job_description.json
 *test_output*
 *checkpoints*
