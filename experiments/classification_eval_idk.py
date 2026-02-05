@@ -424,6 +424,86 @@ def run_eval_for_datasets(
     return results
 
 
+def print_sample_eval_data(
+    eval_data_by_ds: dict[str, list[Any]], 
+    tokenizer, 
+    num_samples: int = 2
+) -> None:
+    """Print sample evaluation data for verification."""
+    print("\n" + "=" * 70)
+    print("SAMPLE EVALUATION DATA (for verification)")
+    print("=" * 70)
+    
+    for ds_id, eval_data in list(eval_data_by_ds.items())[:3]:  # First 3 datasets
+        print(f"\n--- Dataset: {ds_id} ({len(eval_data)} samples) ---")
+        
+        for i, dp in enumerate(eval_data[:num_samples]):
+            print(f"\n  Sample {i+1}:")
+            
+            # Decode oracle/context prompt
+            if dp.context_input_ids is not None:
+                oracle_prompt = tokenizer.decode(dp.context_input_ids, skip_special_tokens=True)
+                if len(oracle_prompt) > 200:
+                    oracle_prompt = oracle_prompt[:100] + " ... " + oracle_prompt[-80:]
+                print(f"    Oracle Prompt:  {oracle_prompt}")
+            
+            # Decode full input (includes question)
+            full_input = tokenizer.decode(dp.input_ids, skip_special_tokens=True)
+            
+            # Extract question part (after oracle prompt)
+            if dp.context_input_ids is not None:
+                oracle_text = tokenizer.decode(dp.context_input_ids, skip_special_tokens=True)
+                question_part = full_input[len(oracle_text):].strip() if oracle_text in full_input else full_input
+            else:
+                question_part = full_input
+            
+            if len(question_part) > 150:
+                question_part = question_part[:150] + "..."
+            print(f"    Question:       {question_part}")
+            print(f"    Target Answer:  {dp.target_output}")
+    
+    print("\n" + "=" * 70 + "\n")
+
+
+def print_prediction_examples(
+    records: list[dict],
+    eval_data_by_ds: dict[str, list[Any]],
+    tokenizer,
+    num_per_category: int = 2,
+) -> None:
+    """Print example predictions, showing correct, incorrect, and IDK cases."""
+    print("\n" + "=" * 70)
+    print("PREDICTION EXAMPLES")
+    print("=" * 70)
+    
+    # Group by prediction type
+    correct = [r for r in records if r["is_correct"] and not r["is_idk"]]
+    incorrect = [r for r in records if not r["is_correct"] and not r["is_idk"] and not r["is_invalid"]]
+    idk_cases = [r for r in records if r["is_idk"]]
+    invalid_cases = [r for r in records if r["is_invalid"]]
+    
+    def print_examples(category_name: str, examples: list[dict], n: int):
+        if not examples:
+            print(f"\n  {category_name}: (none)")
+            return
+        print(f"\n  {category_name} ({len(examples)} total):")
+        for i, ex in enumerate(examples[:n]):
+            print(f"    [{i+1}] Dataset: {ex['dataset_id']}")
+            print(f"        Target: {ex['target']}, Predicted: {ex['predicted']}")
+            raw = ex['raw_response']
+            if len(raw) > 80:
+                raw = raw[:80] + "..."
+            print(f"        Raw response: \"{raw}\"")
+    
+    print_examples("CORRECT predictions", correct, num_per_category)
+    print_examples("INCORRECT predictions", incorrect, num_per_category)
+    print_examples("IDK responses", idk_cases, num_per_category)
+    if invalid_cases:
+        print_examples("INVALID responses", invalid_cases, num_per_category)
+    
+    print("\n" + "=" * 70 + "\n")
+
+
 def print_metrics_summary(metrics: dict, lora_name: str) -> None:
     """Print a summary of the metrics."""
     print(f"\n{'=' * 60}")
@@ -509,6 +589,9 @@ if __name__ == "__main__":
             # Load datasets
             all_eval_data = load_datasets_for_layer_percent(model_name, layer_percent, model_kwargs, model=model)
             print(f"Loaded datasets: {list(all_eval_data.keys())}")
+            
+            # Print sample data for verification
+            print_sample_eval_data(all_eval_data, tokenizer, num_samples=2)
 
             # Run evaluation
             results = run_eval_for_datasets(
@@ -522,6 +605,9 @@ if __name__ == "__main__":
                 batch_size=batch_size,
             )
 
+            # Print prediction examples
+            print_prediction_examples(results["records"], all_eval_data, tokenizer, num_per_category=3)
+            
             # Print summary
             print_metrics_summary(results["metrics"], lora_name)
 
