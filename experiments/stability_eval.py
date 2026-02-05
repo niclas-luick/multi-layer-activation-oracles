@@ -321,7 +321,7 @@ if __name__ == "__main__":
     print(f"Dataset: {DATASET_NAME}")
     print(f"{'=' * 60}")
 
-    stability_config = StabilityConfig(n_samples=10, noise_scale=0.05)
+    stability_config = StabilityConfig(n_samples=10, noise_scale=0.003)
 
     # Load model and tokenizer
     print(f"\nLoading model: {MODEL_NAME}")
@@ -388,7 +388,7 @@ if __name__ == "__main__":
     # Save results JSON
     model_name_str = MODEL_NAME.split("/")[-1]
     lora_name_str = VERBALIZER_LORA.split("/")[-1]
-    output_base = f"{OUTPUT_DIR}/stability_{model_name_str}_{lora_name_str}_{DATASET_NAME}"
+    output_base = f"{OUTPUT_DIR}/stability_{model_name_str}_{lora_name_str}_{DATASET_NAME}_noise{stability_config.noise_scale}"
 
     results_json = {
         "config": {
