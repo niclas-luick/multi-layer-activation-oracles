@@ -43,16 +43,16 @@ CONFIG_6L = [15, 30, 45, 60, 75, 90]
 
 # Models trained with IDK mixing
 MODEL_CONFIGS = {
-    "Qwen/Qwen3-4B": [
-        ["nluick/MLAO-Qwen3-4B-3L-1N", CONFIG_3L],
-        ["nluick/MLAO-Qwen3-4B-3L-3N", CONFIG_3L],
-        ["nluick/MLAO-Qwen3-4B-6L-1N", CONFIG_6L],
-        ["nluick/MLAO-Qwen3-4B-6L-3N", CONFIG_6L],
-        ["nluick/MLAO-Qwen3-4B-6L-6N", CONFIG_6L],
-    ],
+    # "Qwen/Qwen3-4B": [
+    #     ["nluick/MLAO-Qwen3-4B-3L-1N", CONFIG_3L],
+    #     ["nluick/MLAO-Qwen3-4B-3L-3N", CONFIG_3L],
+    #     ["nluick/MLAO-Qwen3-4B-6L-1N", CONFIG_6L],
+    #     ["nluick/MLAO-Qwen3-4B-6L-3N", CONFIG_6L],
+    #     ["nluick/MLAO-Qwen3-4B-6L-6N", CONFIG_6L],
+    # ],
     "Qwen/Qwen3-8B": [
-        ["nluick/MLAO-Qwen3-8B-3L-1N", CONFIG_3L],
-        ["nluick/MLAO-Qwen3-8B-3L-3N", CONFIG_3L],
+        ["nluick/MLAO-Qwen3-8B-3L-1N-IDK", CONFIG_3L],
+#        ["nluick/MLAO-Qwen3-8B-3L-3N", CONFIG_3L],
     ],
 }
 
