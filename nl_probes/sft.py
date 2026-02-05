@@ -635,6 +635,10 @@ def build_loader_groups(
     save_acts: bool,
     classification_datasets: dict[str, dict[str, Any]],
     model_kwargs: dict[str, Any],
+    # Classification-specific options
+    position_resample_repeats: int = 1,
+    enable_idk_mixing: bool = False,
+    idk_ratio: float = 0.33,
 ) -> dict[str, list[ActDatasetLoader]]:
     DEBUG = False
     num_datapoints = 100_000
@@ -696,9 +700,7 @@ def build_loader_groups(
     # enable_idk_mixing: set to True to include "I don't know" category
     #   NOTE: When enable_idk_mixing=True, uses a SINGLE combined dataset from all IID sources
     #         with Yes/No/IDK samples mixed. The per-dataset loop is skipped.
-    position_resample_repeats = 1  # Change to 3 for -3N models, 6 for -6N models
-    enable_idk_mixing = True  # Set to True to enable IDK category (~1/3 yes, 1/3 no, 1/3 idk)
-    idk_ratio = 0.33  # Target ratio for IDK samples when enable_idk_mixing=True
+    # These are now passed as function parameters.
     
     classification_loaders: list[ActDatasetLoader] = []
     
@@ -717,6 +719,7 @@ def build_loader_groups(
             position_resample_repeats=position_resample_repeats,
             enable_idk_mixing=True,
             idk_ratio=idk_ratio,
+            use_3way_prompt=True,  # IDK requires 3-way prompt
         )
         multi_params_idk = ClassificationDatasetConfig(
             classification_dataset_name="iid",  # Uses all IID datasets
@@ -727,6 +730,7 @@ def build_loader_groups(
             position_resample_repeats=position_resample_repeats,
             enable_idk_mixing=True,
             idk_ratio=idk_ratio,
+            use_3way_prompt=True,  # IDK requires 3-way prompt
         )
         
         classification_loaders.append(
@@ -821,7 +825,135 @@ def build_loader_groups(
         "past_lens_loaders": [past_lens_single, past_lens_multi],
         "latentqa_loaders": [latent_qa_loader],
         "classification_loaders": classification_loaders,
+        # Config info for validation and banner
+        "classification_config": {
+            "position_resample_repeats": position_resample_repeats,
+            "enable_idk_mixing": enable_idk_mixing,
+            "idk_ratio": idk_ratio,
+        },
     }
+
+
+def print_classification_config_banner(cls_config: dict[str, Any]) -> None:
+    """Print a prominent banner showing classification training config."""
+    enable_idk = cls_config.get("enable_idk_mixing", False)
+    idk_ratio = cls_config.get("idk_ratio", 0.33)
+    repeats = cls_config.get("position_resample_repeats", 1)
+    
+    banner = """
+╔══════════════════════════════════════════════════════════════════╗
+║              CLASSIFICATION TRAINING CONFIGURATION               ║
+╠══════════════════════════════════════════════════════════════════╣
+║  IDK Mixing:              {idk_status:<40} ║
+║  Position Resample:       {repeats}x                                          ║
+║  Prompt Style:            {prompt_style:<40} ║"""
+    
+    if enable_idk:
+        yes_no_pct = (1 - idk_ratio) * 100
+        idk_pct = idk_ratio * 100
+        banner += f"""
+║  Expected Distribution:   ~{yes_no_pct/2:.0f}% Yes, ~{yes_no_pct/2:.0f}% No, ~{idk_pct:.0f}% IDK            ║"""
+    else:
+        banner += """
+║  Expected Distribution:   ~50% Yes, ~50% No                      ║"""
+    
+    banner += """
+╚══════════════════════════════════════════════════════════════════╝"""
+    
+    idk_status = "ENABLED" if enable_idk else "DISABLED (binary Yes/No only)"
+    prompt_style = "3-way (Yes/No/IDK)" if enable_idk else "Binary (Yes/No only)"
+    
+    print(banner.format(
+        idk_status=idk_status,
+        repeats=repeats,
+        prompt_style=prompt_style,
+    ))
+
+
+def print_sample_training_data(training_data: list[TrainingDataPoint], tokenizer, num_samples: int = 3) -> None:
+    """Print a few sample training examples for visual verification."""
+    print("\n" + "=" * 60)
+    print("SAMPLE TRAINING DATA (for verification)")
+    print("=" * 60)
+    
+    # Count target distributions
+    target_counts: dict[str, int] = {}
+    for dp in training_data:
+        target = dp.target_output
+        target_counts[target] = target_counts.get(target, 0) + 1
+    
+    total = len(training_data)
+    print(f"\nTarget Distribution ({total} total samples):")
+    for target, count in sorted(target_counts.items(), key=lambda x: -x[1]):
+        pct = count / total * 100
+        print(f"  {target}: {count} ({pct:.1f}%)")
+    
+    # Print samples
+    print(f"\nFirst {num_samples} samples:")
+    for i, dp in enumerate(training_data[:num_samples]):
+        prompt_text = tokenizer.decode(dp.input_ids, skip_special_tokens=False)
+        # Truncate for display
+        if len(prompt_text) > 300:
+            prompt_text = prompt_text[:150] + " ... " + prompt_text[-100:]
+        print(f"\n--- Sample {i+1} ---")
+        print(f"Target: {dp.target_output}")
+        print(f"Prompt: {prompt_text}")
+    
+    print("\n" + "=" * 60 + "\n")
+
+
+def validate_idk_training_data(
+    training_data: list[TrainingDataPoint], 
+    enable_idk_mixing: bool,
+    tokenizer=None,
+) -> None:
+    """Validate that training data matches expected IDK configuration.
+    
+    Performs two checks:
+    1. IDK sample count matches enable_idk_mixing setting
+    2. Prompt format matches expected style (binary vs 3-way)
+    """
+    idk_count = sum(1 for dp in training_data if dp.target_output == "I don't know")
+    total = len(training_data)
+    
+    # Check 1: IDK sample count
+    if enable_idk_mixing:
+        if idk_count == 0:
+            raise ValueError(
+                "CRITICAL: enable_idk_mixing=True but NO 'I don't know' samples found in training data!\n"
+                "This means the model will NOT learn to say IDK. Check your dataset configuration."
+            )
+        idk_pct = idk_count / total * 100
+        print(f"✓ IDK validation passed: {idk_count}/{total} ({idk_pct:.1f}%) IDK samples found")
+    else:
+        if idk_count > 0:
+            print(f"⚠ WARNING: enable_idk_mixing=False but found {idk_count} IDK samples. "
+                  "This may indicate a configuration mismatch.")
+    
+    # Check 2: Prompt format (sample a few examples)
+    if tokenizer is not None and len(training_data) > 0:
+        sample_size = min(10, len(training_data))
+        has_binary_prompt = 0
+        has_3way_prompt = 0
+        
+        for dp in training_data[:sample_size]:
+            prompt_text = tokenizer.decode(dp.input_ids, skip_special_tokens=True)
+            if "Answer with 'Yes' or 'No' only" in prompt_text:
+                has_binary_prompt += 1
+            elif "Answer with 'Yes', 'No', or 'I don't know'" in prompt_text:
+                has_3way_prompt += 1
+        
+        if enable_idk_mixing:
+            if has_binary_prompt > 0 and has_3way_prompt == 0:
+                raise ValueError(
+                    "CRITICAL: enable_idk_mixing=True but prompts use BINARY format!\n"
+                    f"Found {has_binary_prompt} binary prompts, {has_3way_prompt} 3-way prompts.\n"
+                    "This means the model won't learn when to say IDK. Check use_3way_prompt setting."
+                )
+        else:
+            if has_3way_prompt > 0:
+                print(f"⚠ WARNING: enable_idk_mixing=False but found 3-way prompts. "
+                      "This may indicate a configuration mismatch.")
 
 
 def _ensure_datasets_exist(dataset_loaders: list[ActDatasetLoader]) -> None:
@@ -928,14 +1060,22 @@ if __name__ == "__main__":
     ]
 
     for model_name in models:
-        # HF repo naming: MLAO-{ModelName}-{NumLayers}L-{NumRepeats}N
-        # Examples: MLAO-Qwen3-8B-3L-1N, MLAO-Qwen3-8B-3L-3N, MLAO-Qwen3-8B-6L-6N
-        # Update num_layers_str and num_repeats_str based on your config
-        num_layers_str = "3L"  # Change to "6L" for 6-layer models
-        num_repeats_str = "1N"  # Change to "3N" or "6N" based on position_resample_repeats
-        enable_idk_mixing = True
+        # ═══════════════════════════════════════════════════════════════════
+        # CLASSIFICATION CONFIG - REVIEW CAREFULLY BEFORE TRAINING!
+        # ═══════════════════════════════════════════════════════════════════
+        position_resample_repeats = 1  # 1 for -1N, 3 for -3N, 6 for -6N
+        enable_idk_mixing = False       # True = train with IDK samples (~1/3 yes, 1/3 no, 1/3 idk)
+        idk_ratio = 0.33               # Only used if enable_idk_mixing=True
+        
+        # Layer config
+        layer_percents = [25, 50, 75]   # 3L config; use [15, 30, 45, 60, 75, 90] for 6L
+        
+        # ═══════════════════════════════════════════════════════════════════
+        # HF repo naming: MLAO-{Model}-{Layers}L-{Repeats}N[-IDK]
+        # ═══════════════════════════════════════════════════════════════════
+        num_layers = len(layer_percents)
         model_short_name = model_name.split("/")[-1].replace(".", "-")
-        hf_repo_name = f"MLAO-{model_short_name}-{num_layers_str}-{num_repeats_str}"
+        hf_repo_name = f"MLAO-{model_short_name}-{num_layers}L-{position_resample_repeats}N"
         if enable_idk_mixing:
             hf_repo_name += "-IDK"
             
@@ -964,8 +1104,6 @@ if __name__ == "__main__":
         train_batch_size = train_batch_size // world_size
         print(f"Per-rank train batch size: {train_batch_size}, world size: {world_size}")
 
-        layer_percents = [25, 50, 75]
-        #layer_percents = [15, 30, 45, 60, 75, 90]
         save_acts = False
 
         gradient_accumulation_steps = 2
@@ -978,11 +1116,19 @@ if __name__ == "__main__":
             save_acts=save_acts,
             classification_datasets=classification_datasets,
             model_kwargs=model_kwargs,
+            position_resample_repeats=position_resample_repeats,
+            enable_idk_mixing=enable_idk_mixing,
+            idk_ratio=idk_ratio,
         )
 
         classification_dataset_loaders = loader_groups["classification_loaders"]
         past_lens_loaders = loader_groups["past_lens_loaders"]
         latentqa_loaders = loader_groups["latentqa_loaders"]
+        classification_config = loader_groups["classification_config"]
+        
+        # Print config banner (rank 0 only to avoid spam)
+        if local_rank == 0:
+            print_classification_config_banner(classification_config)
 
         iterations = [
             # Default dataset mixture
@@ -1043,6 +1189,15 @@ if __name__ == "__main__":
             # all_eval_data = {eval_key: all_training_data[:]}
 
             print(f"training data length: {len(all_training_data)}, eval data length: {len(all_eval_data)}")
+            
+            # Validate IDK training data and print samples (rank 0 only)
+            if local_rank == 0:
+                validate_idk_training_data(
+                    all_training_data, 
+                    enable_idk_mixing=classification_config["enable_idk_mixing"],
+                    tokenizer=tokenizer,
+                )
+                print_sample_training_data(all_training_data, tokenizer, num_samples=3)
 
             print(asdict(cfg))
 
