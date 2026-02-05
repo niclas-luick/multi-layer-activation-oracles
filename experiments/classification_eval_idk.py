@@ -205,6 +205,7 @@ def load_datasets_for_layer_percent(
                 min_end_offset=-3,
                 max_window_size=1,
                 min_window_size=1,
+                use_3way_prompt=True,  # So model sees "Yes", "No", or "I don't know" as options
             )
         else:
             classification_config = ClassificationDatasetConfig(
@@ -213,6 +214,7 @@ def load_datasets_for_layer_percent(
                 min_end_offset=-1,
                 max_window_size=50,
                 min_window_size=50,
+                use_3way_prompt=True,
             )
         dataset_config = DatasetLoaderConfig(
             custom_dataset_params=classification_config,
