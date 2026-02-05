@@ -35,14 +35,6 @@ from nl_probes.dataset_classes.classification import (
 )
 from nl_probes.dataset_classes.latentqa_dataset import LatentQADatasetConfig, LatentQADatasetLoader
 from nl_probes.dataset_classes.past_lens_dataset import PastLensDatasetConfig, PastLensDatasetLoader
-from nl_probes.dataset_classes.sae_training_data import (
-    SAEActivatingSequencesDatasetConfig,
-    SAEActivatingSequencesDatasetLoader,
-    SAEExplanationDatasetConfig,
-    SAEExplanationDatasetLoader,
-    SAEYesNoDatasetConfig,
-    SAEYesNoDatasetLoader,
-)
 from nl_probes.utils.activation_utils import get_hf_submodule, get_text_only_lora_targets
 from nl_probes.utils.common import load_model, load_tokenizer, set_seed
 from nl_probes.utils.dataset_utils import (
@@ -699,110 +691,123 @@ def build_loader_groups(
         )
     )
 
-    # SAE datasets per layer percent
-    sae_loaders: list[ActDatasetLoader] = []
-    sae_explanation_loaders: list[ActDatasetLoader] = []
-    for layer_percent in layer_percents:
-        sft_data_path = (
-            f"sae_data/qwen_hard_negatives_0_20000_layer_percent_{layer_percent}_sft_data_gpt-5-mini-2025-08-07.jsonl"
-        )
-
-        sae_explanation_loaders.append(
-            SAEExplanationDatasetLoader(
-                dataset_config=mk_cfg(
-                    SAEExplanationDatasetConfig(
-                        sft_data_file=sft_data_path,
-                        use_decoder_vectors=True,
-                    ),
-                    num_train=20000,
-                    num_test=0,
-                    splits=["train"],
-                    model_name=model_name,
-                    layer_percents=[layer_percent],
-                    save_acts=True,
-                    batch_size=0,
-                )
-            )
-        )
-
-        sae_loaders.append(
-            SAEActivatingSequencesDatasetLoader(
-                dataset_config=mk_cfg(
-                    SAEActivatingSequencesDatasetConfig(
-                        sae_repo_id="adamkarvonen/qwen3-8b-saes",
-                        use_decoder_vectors=True,
-                    ),
-                    num_train=60000,
-                    num_test=0,
-                    splits=["train"],
-                    model_name=model_name,
-                    layer_percents=[layer_percent],
-                    save_acts=True,
-                    batch_size=0,
-                )
-            )
-        )
-
-        sae_loaders.append(
-            SAEYesNoDatasetLoader(
-                dataset_config=mk_cfg(
-                    SAEYesNoDatasetConfig(sft_data_file=sft_data_path),
-                    num_train=60000,
-                    num_test=0,
-                    splits=["train"],
-                    model_name=model_name,
-                    layer_percents=[layer_percent],
-                    save_acts=True,
-                    batch_size=0,
-                )
-            )
-        )
-
-        # Classification: build both single-token and multi-token variants for each dataset
-        # position_resample_repeats: 1 for -1N models, 3 for -3N models, 6 for -6N models
-        # enable_idk_mixing: set to True to include "I don't know" category
-        #   NOTE: When enable_idk_mixing=True, uses a SINGLE combined dataset from all IID sources
-        #         with Yes/No/IDK samples mixed. The per-dataset loop is skipped.
-        position_resample_repeats = 1  # Change to 3 for -3N models, 6 for -6N models
-        enable_idk_mixing = True  # Set to True to enable IDK category (~1/3 yes, 1/3 no, 1/3 idk)
-        idk_ratio = 0.33  # Target ratio for IDK samples when enable_idk_mixing=True
+    # Classification: build both single-token and multi-token variants for each dataset
+    # position_resample_repeats: 1 for -1N models, 3 for -3N models, 6 for -6N models
+    # enable_idk_mixing: set to True to include "I don't know" category
+    #   NOTE: When enable_idk_mixing=True, uses a SINGLE combined dataset from all IID sources
+    #         with Yes/No/IDK samples mixed. The per-dataset loop is skipped.
+    position_resample_repeats = 1  # Change to 3 for -3N models, 6 for -6N models
+    enable_idk_mixing = True  # Set to True to enable IDK category (~1/3 yes, 1/3 no, 1/3 idk)
+    idk_ratio = 0.33  # Target ratio for IDK samples when enable_idk_mixing=True
+    
+    classification_loaders: list[ActDatasetLoader] = []
+    
+    if enable_idk_mixing:
+        # IDK mixing mode: create ONE combined dataset from all IID datasets
+        # Uses "iid" keyword to load only IID datasets (OOD held out for eval)
+        total_train = sum(meta["num_train"] for meta in classification_datasets.values() if "train" in meta["splits"])
+        total_test = sum(meta["num_test"] for meta in classification_datasets.values() if "test" in meta["splits"])
         
-        classification_loaders: list[ActDatasetLoader] = []
+        single_params_idk = ClassificationDatasetConfig(
+            classification_dataset_name="iid",  # Uses all IID datasets
+            max_window_size=1,
+            min_end_offset=-1,
+            max_end_offset=-5,
+            num_qa_per_sample=2,
+            position_resample_repeats=position_resample_repeats,
+            enable_idk_mixing=True,
+            idk_ratio=idk_ratio,
+        )
+        multi_params_idk = ClassificationDatasetConfig(
+            classification_dataset_name="iid",  # Uses all IID datasets
+            max_window_size=50,
+            min_end_offset=-1,
+            max_end_offset=-5,
+            num_qa_per_sample=1,
+            position_resample_repeats=position_resample_repeats,
+            enable_idk_mixing=True,
+            idk_ratio=idk_ratio,
+        )
         
-        if enable_idk_mixing:
-            # IDK mixing mode: create ONE combined dataset from all IID datasets
-            # Uses "iid" keyword to load only IID datasets (OOD held out for eval)
-            total_train = sum(meta["num_train"] for meta in classification_datasets.values() if "train" in meta["splits"])
-            total_test = sum(meta["num_test"] for meta in classification_datasets.values() if "test" in meta["splits"])
-            
-            single_params_idk = ClassificationDatasetConfig(
-                classification_dataset_name="iid",  # Uses all IID datasets
+        classification_loaders.append(
+            ClassificationDatasetLoader(
+                dataset_config=mk_cfg(
+                    single_params_idk,
+                    num_train=total_train,
+                    num_test=total_test,
+                    splits=["train", "test"],
+                    model_name=model_name,
+                    layer_percents=layer_percents,
+                    save_acts=save_acts,
+                    batch_size=train_batch_size,
+                ),
+                model_kwargs=model_kwargs,
+            )
+        )
+        classification_loaders.append(
+            ClassificationDatasetLoader(
+                dataset_config=mk_cfg(
+                    multi_params_idk,
+                    num_train=total_train,
+                    num_test=total_test,
+                    splits=["train", "test"],
+                    model_name=model_name,
+                    layer_percents=layer_percents,
+                    save_acts=save_acts,
+                    batch_size=train_batch_size,
+                ),
+                model_kwargs=model_kwargs,
+            )
+        )
+    else:
+        # Standard mode: per-dataset loaders
+        for ds_name, meta in classification_datasets.items():
+            single_params = ClassificationDatasetConfig(
+                classification_dataset_name=ds_name,
                 max_window_size=1,
                 min_end_offset=-1,
                 max_end_offset=-5,
                 num_qa_per_sample=2,
                 position_resample_repeats=position_resample_repeats,
-                enable_idk_mixing=True,
-                idk_ratio=idk_ratio,
             )
-            multi_params_idk = ClassificationDatasetConfig(
-                classification_dataset_name="iid",  # Uses all IID datasets
+            multi_params = ClassificationDatasetConfig(
+                classification_dataset_name=ds_name,
                 max_window_size=50,
                 min_end_offset=-1,
                 max_end_offset=-5,
                 num_qa_per_sample=1,
                 position_resample_repeats=position_resample_repeats,
-                enable_idk_mixing=True,
-                idk_ratio=idk_ratio,
             )
-            
+
+            # language identification has very long sequence lengths
+            if "batch_size" in meta:
+                bs = meta["batch_size"]
+            else:
+                bs = train_batch_size
+
             classification_loaders.append(
                 ClassificationDatasetLoader(
                     dataset_config=mk_cfg(
-                        single_params_idk,
-                        num_train=total_train,
-                        num_test=total_test,
-                        splits=["train", "test"],
+                        single_params,
+                        num_train=meta["num_train"],
+                        num_test=meta["num_test"],
+                        splits=meta["splits"],
+                        model_name=model_name,
+                        layer_percents=layer_percents,
+                        save_acts=save_acts,
+                        batch_size=bs,
+                    ),
+                    model_kwargs=model_kwargs,
+                )
+            )
+
+            classification_loaders.append(
+                ClassificationDatasetLoader(
+                    dataset_config=mk_cfg(
+                        multi_params,
+                        num_train=meta["num_train"],
+                        num_test=meta["num_test"],
+                        splits=meta["splits"],
                         model_name=model_name,
                         layer_percents=layer_percents,
                         save_acts=save_acts,
@@ -811,85 +816,11 @@ def build_loader_groups(
                     model_kwargs=model_kwargs,
                 )
             )
-            classification_loaders.append(
-                ClassificationDatasetLoader(
-                    dataset_config=mk_cfg(
-                        multi_params_idk,
-                        num_train=total_train,
-                        num_test=total_test,
-                        splits=["train", "test"],
-                        model_name=model_name,
-                        layer_percents=layer_percents,
-                        save_acts=save_acts,
-                        batch_size=train_batch_size,
-                    ),
-                    model_kwargs=model_kwargs,
-                )
-            )
-        else:
-            # Standard mode: per-dataset loaders
-            for ds_name, meta in classification_datasets.items():
-                single_params = ClassificationDatasetConfig(
-                    classification_dataset_name=ds_name,
-                    max_window_size=1,
-                    min_end_offset=-1,
-                    max_end_offset=-5,
-                    num_qa_per_sample=2,
-                    position_resample_repeats=position_resample_repeats,
-                )
-                multi_params = ClassificationDatasetConfig(
-                    classification_dataset_name=ds_name,
-                    max_window_size=50,
-                    min_end_offset=-1,
-                    max_end_offset=-5,
-                    num_qa_per_sample=1,
-                    position_resample_repeats=position_resample_repeats,
-                )
-
-                # language identification has very long sequence lengths
-                if "batch_size" in meta:
-                    bs = meta["batch_size"]
-                else:
-                    bs = train_batch_size
-
-                classification_loaders.append(
-                    ClassificationDatasetLoader(
-                        dataset_config=mk_cfg(
-                            single_params,
-                            num_train=meta["num_train"],
-                            num_test=meta["num_test"],
-                            splits=meta["splits"],
-                            model_name=model_name,
-                            layer_percents=layer_percents,
-                            save_acts=save_acts,
-                            batch_size=bs,
-                        ),
-                        model_kwargs=model_kwargs,
-                    )
-                )
-
-                classification_loaders.append(
-                    ClassificationDatasetLoader(
-                        dataset_config=mk_cfg(
-                            multi_params,
-                            num_train=meta["num_train"],
-                            num_test=meta["num_test"],
-                            splits=meta["splits"],
-                            model_name=model_name,
-                            layer_percents=layer_percents,
-                            save_acts=save_acts,
-                            batch_size=train_batch_size,
-                        ),
-                        model_kwargs=model_kwargs,
-                    )
-                )
 
     return {
         "past_lens_loaders": [past_lens_single, past_lens_multi],
         "latentqa_loaders": [latent_qa_loader],
         "classification_loaders": classification_loaders,
-        "sae_loaders": sae_loaders,
-        "sae_explanation_loaders": sae_explanation_loaders,
     }
 
 
@@ -1002,6 +933,7 @@ if __name__ == "__main__":
         # Update num_layers_str and num_repeats_str based on your config
         num_layers_str = "3L"  # Change to "6L" for 6-layer models
         num_repeats_str = "1N"  # Change to "3N" or "6N" based on position_resample_repeats
+        enable_idk_mixing = True
         model_short_name = model_name.split("/")[-1].replace(".", "-")
         hf_repo_name = f"MLAO-{model_short_name}-{num_layers_str}-{num_repeats_str}"
         if enable_idk_mixing:
@@ -1050,8 +982,6 @@ if __name__ == "__main__":
 
         classification_dataset_loaders = loader_groups["classification_loaders"]
         past_lens_loaders = loader_groups["past_lens_loaders"]
-        sae_dataset_loaders = loader_groups["sae_loaders"]
-        sae_explanation_dataset_loaders = loader_groups["sae_explanation_loaders"]
         latentqa_loaders = loader_groups["latentqa_loaders"]
 
         iterations = [
