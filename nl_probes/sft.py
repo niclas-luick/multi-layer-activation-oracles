@@ -758,61 +758,131 @@ def build_loader_groups(
             )
         )
 
-    # Classification: build both single-token and multi-token variants for each dataset
-    classification_loaders: list[ActDatasetLoader] = []
-    for ds_name, meta in classification_datasets.items():
-        single_params = ClassificationDatasetConfig(
-            classification_dataset_name=ds_name,
-            max_window_size=1,
-            min_end_offset=-1,
-            max_end_offset=-5,
-            num_qa_per_sample=2,
-        )
-        multi_params = ClassificationDatasetConfig(
-            classification_dataset_name=ds_name,
-            max_window_size=50,
-            min_end_offset=-1,
-            max_end_offset=-5,
-            num_qa_per_sample=1,
-        )
-
-        # language identification has very long sequence lengths
-        if "batch_size" in meta:
-            bs = meta["batch_size"]
+        # Classification: build both single-token and multi-token variants for each dataset
+        # position_resample_repeats: 1 for -1N models, 3 for -3N models, 6 for -6N models
+        # enable_idk_mixing: set to True to include "I don't know" category
+        #   NOTE: When enable_idk_mixing=True, uses a SINGLE combined dataset from all IID sources
+        #         with Yes/No/IDK samples mixed. The per-dataset loop is skipped.
+        position_resample_repeats = 1  # Change to 3 for -3N models, 6 for -6N models
+        enable_idk_mixing = True  # Set to True to enable IDK category (~1/3 yes, 1/3 no, 1/3 idk)
+        idk_ratio = 0.33  # Target ratio for IDK samples when enable_idk_mixing=True
+        
+        classification_loaders: list[ActDatasetLoader] = []
+        
+        if enable_idk_mixing:
+            # IDK mixing mode: create ONE combined dataset from all IID datasets
+            # Uses "iid" keyword to load only IID datasets (OOD held out for eval)
+            total_train = sum(meta["num_train"] for meta in classification_datasets.values() if "train" in meta["splits"])
+            total_test = sum(meta["num_test"] for meta in classification_datasets.values() if "test" in meta["splits"])
+            
+            single_params_idk = ClassificationDatasetConfig(
+                classification_dataset_name="iid",  # Uses all IID datasets
+                max_window_size=1,
+                min_end_offset=-1,
+                max_end_offset=-5,
+                num_qa_per_sample=2,
+                position_resample_repeats=position_resample_repeats,
+                enable_idk_mixing=True,
+                idk_ratio=idk_ratio,
+            )
+            multi_params_idk = ClassificationDatasetConfig(
+                classification_dataset_name="iid",  # Uses all IID datasets
+                max_window_size=50,
+                min_end_offset=-1,
+                max_end_offset=-5,
+                num_qa_per_sample=1,
+                position_resample_repeats=position_resample_repeats,
+                enable_idk_mixing=True,
+                idk_ratio=idk_ratio,
+            )
+            
+            classification_loaders.append(
+                ClassificationDatasetLoader(
+                    dataset_config=mk_cfg(
+                        single_params_idk,
+                        num_train=total_train,
+                        num_test=total_test,
+                        splits=["train", "test"],
+                        model_name=model_name,
+                        layer_percents=layer_percents,
+                        save_acts=save_acts,
+                        batch_size=train_batch_size,
+                    ),
+                    model_kwargs=model_kwargs,
+                )
+            )
+            classification_loaders.append(
+                ClassificationDatasetLoader(
+                    dataset_config=mk_cfg(
+                        multi_params_idk,
+                        num_train=total_train,
+                        num_test=total_test,
+                        splits=["train", "test"],
+                        model_name=model_name,
+                        layer_percents=layer_percents,
+                        save_acts=save_acts,
+                        batch_size=train_batch_size,
+                    ),
+                    model_kwargs=model_kwargs,
+                )
+            )
         else:
-            bs = train_batch_size
+            # Standard mode: per-dataset loaders
+            for ds_name, meta in classification_datasets.items():
+                single_params = ClassificationDatasetConfig(
+                    classification_dataset_name=ds_name,
+                    max_window_size=1,
+                    min_end_offset=-1,
+                    max_end_offset=-5,
+                    num_qa_per_sample=2,
+                    position_resample_repeats=position_resample_repeats,
+                )
+                multi_params = ClassificationDatasetConfig(
+                    classification_dataset_name=ds_name,
+                    max_window_size=50,
+                    min_end_offset=-1,
+                    max_end_offset=-5,
+                    num_qa_per_sample=1,
+                    position_resample_repeats=position_resample_repeats,
+                )
 
-        classification_loaders.append(
-            ClassificationDatasetLoader(
-                dataset_config=mk_cfg(
-                    single_params,
-                    num_train=meta["num_train"],
-                    num_test=meta["num_test"],
-                    splits=meta["splits"],
-                    model_name=model_name,
-                    layer_percents=layer_percents,
-                    save_acts=save_acts,
-                    batch_size=bs,
-                ),
-                model_kwargs=model_kwargs,
-            )
-        )
+                # language identification has very long sequence lengths
+                if "batch_size" in meta:
+                    bs = meta["batch_size"]
+                else:
+                    bs = train_batch_size
 
-        classification_loaders.append(
-            ClassificationDatasetLoader(
-                dataset_config=mk_cfg(
-                    multi_params,
-                    num_train=meta["num_train"],
-                    num_test=meta["num_test"],
-                    splits=meta["splits"],
-                    model_name=model_name,
-                    layer_percents=layer_percents,
-                    save_acts=save_acts,
-                    batch_size=train_batch_size,
-                ),
-                model_kwargs=model_kwargs,
-            )
-        )
+                classification_loaders.append(
+                    ClassificationDatasetLoader(
+                        dataset_config=mk_cfg(
+                            single_params,
+                            num_train=meta["num_train"],
+                            num_test=meta["num_test"],
+                            splits=meta["splits"],
+                            model_name=model_name,
+                            layer_percents=layer_percents,
+                            save_acts=save_acts,
+                            batch_size=bs,
+                        ),
+                        model_kwargs=model_kwargs,
+                    )
+                )
+
+                classification_loaders.append(
+                    ClassificationDatasetLoader(
+                        dataset_config=mk_cfg(
+                            multi_params,
+                            num_train=meta["num_train"],
+                            num_test=meta["num_test"],
+                            splits=meta["splits"],
+                            model_name=model_name,
+                            layer_percents=layer_percents,
+                            save_acts=save_acts,
+                            batch_size=train_batch_size,
+                        ),
+                        model_kwargs=model_kwargs,
+                    )
+                )
 
     return {
         "past_lens_loaders": [past_lens_single, past_lens_multi],
@@ -927,8 +997,16 @@ if __name__ == "__main__":
     ]
 
     for model_name in models:
-        hf_repo_name = "mlao-qwen3-8b-3l"
-
+        # HF repo naming: MLAO-{ModelName}-{NumLayers}L-{NumRepeats}N
+        # Examples: MLAO-Qwen3-8B-3L-1N, MLAO-Qwen3-8B-3L-3N, MLAO-Qwen3-8B-6L-6N
+        # Update num_layers_str and num_repeats_str based on your config
+        num_layers_str = "3L"  # Change to "6L" for 6-layer models
+        num_repeats_str = "1N"  # Change to "3N" or "6N" based on position_resample_repeats
+        model_short_name = model_name.split("/")[-1].replace(".", "-")
+        hf_repo_name = f"MLAO-{model_short_name}-{num_layers_str}-{num_repeats_str}"
+        if enable_idk_mixing:
+            hf_repo_name += "-IDK"
+            
         model_name_str = model_name.split("/")[-1].replace(".", "_").replace(" ", "_")
 
         #train_batch_size = 16

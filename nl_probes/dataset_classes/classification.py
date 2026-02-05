@@ -1,3 +1,4 @@
+import json
 import random
 from copy import deepcopy
 from dataclasses import asdict, dataclass
@@ -30,6 +31,9 @@ from nl_probes.utils.dataset_utils import (
 from nl_probes.utils.eval import run_evaluation
 
 
+IDK_TOKEN = "I don't know"
+
+
 @dataclass
 class ClassificationDatasetConfig(BaseDatasetConfig):
     classification_dataset_name: str
@@ -38,6 +42,14 @@ class ClassificationDatasetConfig(BaseDatasetConfig):
     max_end_offset: int = -5
     max_window_size: int = 20
     min_window_size: int = 1
+    # Position resampling: creates multiple datapoints per sample with different token positions
+    position_resample_repeats: int = 1
+    # IDK mixing: mix contexts and questions from different datasets
+    # If enabled, classification_dataset_name should be a comma-separated list of datasets
+    # e.g., "sst2,ag_news,md_gender" - or use "all" for all available datasets
+    enable_idk_mixing: bool = False
+    # Target ratio for IDK samples (0.33 means 1/3 yes, 1/3 no, 1/3 IDK)
+    idk_ratio: float = 0.33
 
 
 class ClassificationDatasetLoader(ActDatasetLoader):
@@ -63,17 +75,40 @@ class ClassificationDatasetLoader(ActDatasetLoader):
             "Max end offset must be less than or equal to min end offset"
         )
         assert self.dataset_params.max_window_size > 0, "Max window size must be positive"
+        assert self.dataset_params.position_resample_repeats >= 1, "Position resample repeats must be >= 1"
 
     def create_dataset(self) -> None:
         tokenizer = load_tokenizer(self.dataset_config.model_name)
 
-        train_datapoints, test_datapoints = get_classification_datapoints(
-            self.dataset_params.classification_dataset_name,
-            self.dataset_params.num_qa_per_sample,
-            self.dataset_config.num_train,
-            self.dataset_config.num_test,
-            self.dataset_config.seed,
-        )
+        idk_metadata: list[IDKSampleMetadata] = []
+        
+        if self.dataset_params.enable_idk_mixing:
+            # IDK mixing mode: load from multiple datasets and create mixed samples
+            train_datapoints, test_datapoints, idk_metadata = get_classification_datapoints_with_idk(
+                self.dataset_params.classification_dataset_name,
+                self.dataset_params.num_qa_per_sample,
+                self.dataset_config.num_train,
+                self.dataset_config.num_test,
+                self.dataset_config.seed,
+                idk_ratio=self.dataset_params.idk_ratio,
+            )
+            
+            # Save IDK metadata for later inspection
+            if idk_metadata:
+                metadata_path = self.dataset_path / "idk_metadata.json"
+                metadata_dicts = [asdict(m) for m in idk_metadata]
+                with open(metadata_path, "w") as f:
+                    json.dump(metadata_dicts, f, indent=2)
+                print(f"Saved IDK metadata ({len(idk_metadata)} samples) to {metadata_path}")
+        else:
+            # Standard mode: single dataset
+            train_datapoints, test_datapoints = get_classification_datapoints(
+                self.dataset_params.classification_dataset_name,
+                self.dataset_params.num_qa_per_sample,
+                self.dataset_config.num_train,
+                self.dataset_config.num_test,
+                self.dataset_config.seed,
+            )
 
         for split in self.dataset_config.splits:
             if split == "train":
@@ -98,6 +133,7 @@ class ClassificationDatasetLoader(ActDatasetLoader):
                 debug_print=False,
                 model_kwargs=self.model_kwargs,
                 model=self.model,
+                position_resample_repeats=self.dataset_params.position_resample_repeats,
             )
 
             self.save_dataset(data, split)
@@ -153,6 +189,272 @@ def get_classification_datapoints(
     return train_datapoints, test_datapoints
 
 
+# IID datasets: Used for training (in-distribution)
+IID_DATASETS = [
+    "geometry_of_truth",
+    "relations",
+    "sst2",
+    "md_gender",
+    "snli",
+    "ner",
+    "tense",
+]
+
+# OOD datasets: Held out for evaluation (out-of-distribution)
+OOD_DATASETS = [
+    "ag_news",
+    "language_identification",
+    "singular_plural",
+    "engels_headline_istrump",
+    "engels_headline_isobama",
+    "engels_headline_ischina",
+    "engels_hist_fig_ismale",
+]
+
+# For IDK mixing, only use IID datasets to avoid data leakage to OOD eval
+IDK_COMPATIBLE_DATASETS = IID_DATASETS
+
+
+@dataclass
+class IDKSampleMetadata:
+    """Metadata for a single IDK sample for debugging/analysis."""
+    context_dataset: str
+    question_dataset: str
+    context_text: str
+    question_text: str
+    original_answer: str  # What the answer would have been if context matched
+
+
+def create_idk_samples_from_different_datasets(
+    examples_by_dataset: dict[str, list[classification_dataset_manager.ContextQASample]],
+    num_idk_samples: int,
+    random_seed: int,
+) -> tuple[list[ClassificationDatapoint], list[IDKSampleMetadata]]:
+    """
+    Create "I don't know" samples by mixing contexts from one dataset
+    with questions from a different dataset.
+    
+    The idea: if the model sees activations from processing a sentiment context,
+    but is asked a question about named entities, it should say "I don't know"
+    because the activations don't contain the relevant information.
+    
+    Returns:
+        Tuple of (datapoints, metadata) where metadata tracks the mixing for debugging.
+    """
+    set_seed(random_seed)
+    
+    dataset_names = list(examples_by_dataset.keys())
+    assert len(dataset_names) >= 2, "Need at least 2 datasets for IDK mixing"
+    
+    idk_datapoints = []
+    idk_metadata = []
+    
+    for _ in range(num_idk_samples):
+        # Pick two different datasets
+        ds_context, ds_question = random.sample(dataset_names, 2)
+        
+        # Pick random examples from each
+        context_example = random.choice(examples_by_dataset[ds_context])
+        question_example = random.choice(examples_by_dataset[ds_question])
+        
+        # Take the context from one dataset
+        activation_prompt = context_example.context
+        
+        # Take a random question from the other dataset
+        question_idx = random.randint(0, len(question_example.questions) - 1)
+        question = question_example.questions[question_idx]
+        original_answer = question_example.answers[question_idx]
+        
+        # Format the question with IDK instruction
+        classification_prompt = f"Answer with 'Yes', 'No', or 'I don't know'. {question}"
+        
+        idk_datapoint = ClassificationDatapoint(
+            activation_prompt=activation_prompt,
+            classification_prompt=classification_prompt,
+            target_response=IDK_TOKEN,
+            ds_label=f"idk_{ds_context}_context_{ds_question}_question",
+        )
+        idk_datapoints.append(idk_datapoint)
+        
+        # Track metadata for debugging
+        idk_metadata.append(IDKSampleMetadata(
+            context_dataset=ds_context,
+            question_dataset=ds_question,
+            context_text=activation_prompt[:200],  # Truncate for storage
+            question_text=question,
+            original_answer=original_answer,
+        ))
+    
+    return idk_datapoints, idk_metadata
+
+
+def get_classification_datapoints_with_idk(
+    dataset_names_str: str,
+    num_qa_per_sample: int,
+    train_examples: int,
+    test_examples: int,
+    random_seed: int,
+    idk_ratio: float = 0.33,
+) -> tuple[list[ClassificationDatapoint], list[ClassificationDatapoint], list[IDKSampleMetadata]]:
+    """
+    Load classification datapoints with IDK mixing.
+    
+    Args:
+        dataset_names_str: Comma-separated list of dataset names, or special keywords:
+            - "all": All IID datasets (safe for training, OOD held out for eval)
+            - "iid": Same as "all" - only IID datasets
+            - "ood": Only OOD datasets (for testing purposes only!)
+            - "all_datasets": Both IID and OOD (not recommended for training!)
+        num_qa_per_sample: Number of Q&A pairs per sample
+        train_examples: Number of training examples (before IDK augmentation)
+        test_examples: Number of test examples (before IDK augmentation)
+        random_seed: Random seed for reproducibility
+        idk_ratio: Target ratio of IDK samples (default 0.33 for ~1/3 split)
+    
+    Returns:
+        Tuple of (train_datapoints, test_datapoints, idk_metadata) with approximately:
+        - 1/3 Yes answers
+        - 1/3 No answers  
+        - 1/3 "I don't know" answers
+        The idk_metadata list contains details about which datasets were mixed for each IDK sample.
+    
+    Note:
+        For training, use "all" or "iid" to ensure OOD datasets remain held out.
+        The OOD datasets (ag_news, language_identification, singular_plural, 
+        engels_* datasets) should only be used for evaluation.
+    """
+    set_seed(random_seed)
+    
+    # Parse dataset names
+    keyword = dataset_names_str.lower().strip()
+    if keyword in ("all", "iid"):
+        dataset_names = IID_DATASETS
+        print(f"Using IID datasets for IDK mixing (OOD held out for eval)")
+    elif keyword == "ood":
+        dataset_names = OOD_DATASETS
+        print(f"WARNING: Using OOD datasets - only use for evaluation, not training!")
+    elif keyword == "all_datasets":
+        dataset_names = IID_DATASETS + OOD_DATASETS
+        print(f"WARNING: Using ALL datasets including OOD - not recommended for training!")
+    else:
+        dataset_names = [name.strip() for name in dataset_names_str.split(",")]
+        # Warn if OOD datasets are included
+        ood_used = [d for d in dataset_names if d in OOD_DATASETS]
+        if ood_used:
+            print(f"WARNING: Including OOD datasets {ood_used} - ensure this is intentional!")
+    
+    print(f"Loading datasets for IDK mixing: {dataset_names}")
+    
+    # Load examples from each dataset
+    examples_by_dataset: dict[str, list[classification_dataset_manager.ContextQASample]] = {}
+    for ds_name in dataset_names:
+        examples = classification_dataset_manager.get_samples_from_groups(
+            [ds_name],
+            num_qa_per_sample,
+        )
+        examples_by_dataset[ds_name] = examples
+        print(f"  {ds_name}: {len(examples)} examples")
+    
+    # Combine all examples for Yes/No samples
+    all_examples = []
+    for examples in examples_by_dataset.values():
+        all_examples.extend(examples)
+    random.shuffle(all_examples)
+    
+    # Calculate how many Yes/No vs IDK samples we need
+    # If idk_ratio = 0.33, we want 2/3 Yes+No and 1/3 IDK
+    # So for N total samples, we need N * (1 - idk_ratio) Yes+No and N * idk_ratio IDK
+    total_train = int(train_examples / (1 - idk_ratio)) if train_examples > 0 else 0
+    total_test = int(test_examples / (1 - idk_ratio)) if test_examples > 0 else 0
+    
+    num_yes_no_train = train_examples
+    num_yes_no_test = test_examples
+    num_idk_train = total_train - num_yes_no_train
+    num_idk_test = total_test - num_yes_no_test
+    
+    print(f"Target split - Train: {num_yes_no_train} Yes/No + {num_idk_train} IDK = {total_train} total")
+    print(f"Target split - Test: {num_yes_no_test} Yes/No + {num_idk_test} IDK = {total_test} total")
+    
+    # Split Yes/No examples into train and test
+    assert len(all_examples) >= num_yes_no_train + num_yes_no_test, (
+        f"Not enough examples: have {len(all_examples)}, need {num_yes_no_train + num_yes_no_test}"
+    )
+    train_yes_no_examples = all_examples[:num_yes_no_train]
+    test_yes_no_examples = all_examples[-num_yes_no_test:] if num_yes_no_test > 0 else []
+    
+    # Convert to datapoints (with modified instruction for 3-way classification)
+    train_datapoints = []
+    test_datapoints = []
+    
+    for example in train_yes_no_examples:
+        for question, answer in zip(example.questions, example.answers, strict=True):
+            question = f"Answer with 'Yes', 'No', or 'I don't know'. {question}"
+            datapoint = ClassificationDatapoint(
+                activation_prompt=example.context,
+                classification_prompt=question,
+                target_response=answer,
+                ds_label=example.ds_label,
+            )
+            train_datapoints.append(datapoint)
+    
+    for example in test_yes_no_examples:
+        for question, answer in zip(example.questions, example.answers, strict=True):
+            question = f"Answer with 'Yes', 'No', or 'I don't know'. {question}"
+            datapoint = ClassificationDatapoint(
+                activation_prompt=example.context,
+                classification_prompt=question,
+                target_response=answer,
+                ds_label=example.ds_label,
+            )
+            test_datapoints.append(datapoint)
+    
+    # Create IDK samples and collect metadata
+    all_idk_metadata: list[IDKSampleMetadata] = []
+    
+    if num_idk_train > 0:
+        train_idk, train_idk_metadata = create_idk_samples_from_different_datasets(
+            examples_by_dataset, num_idk_train, random_seed
+        )
+        train_datapoints.extend(train_idk)
+        all_idk_metadata.extend(train_idk_metadata)
+    
+    if num_idk_test > 0:
+        test_idk, test_idk_metadata = create_idk_samples_from_different_datasets(
+            examples_by_dataset, num_idk_test, random_seed + 1  # Different seed for test
+        )
+        test_datapoints.extend(test_idk)
+        all_idk_metadata.extend(test_idk_metadata)
+    
+    # Shuffle to mix Yes/No/IDK
+    random.shuffle(train_datapoints)
+    random.shuffle(test_datapoints)
+    
+    # Print final distribution
+    def count_distribution(datapoints):
+        yes_count = sum(1 for d in datapoints if d.target_response == "Yes")
+        no_count = sum(1 for d in datapoints if d.target_response == "No")
+        idk_count = sum(1 for d in datapoints if d.target_response == IDK_TOKEN)
+        return yes_count, no_count, idk_count
+    
+    train_yes, train_no, train_idk = count_distribution(train_datapoints)
+    test_yes, test_no, test_idk = count_distribution(test_datapoints)
+    
+    print(f"Final train distribution: Yes={train_yes}, No={train_no}, IDK={train_idk}")
+    print(f"Final test distribution: Yes={test_yes}, No={test_no}, IDK={test_idk}")
+    
+    # Print IDK mixing statistics
+    if all_idk_metadata:
+        mixing_counts: dict[str, int] = {}
+        for meta in all_idk_metadata:
+            key = f"{meta.context_dataset} -> {meta.question_dataset}"
+            mixing_counts[key] = mixing_counts.get(key, 0) + 1
+        print(f"IDK mixing combinations ({len(all_idk_metadata)} total):")
+        for combo, count in sorted(mixing_counts.items(), key=lambda x: -x[1]):
+            print(f"  {combo}: {count}")
+    
+    return train_datapoints, test_datapoints, all_idk_metadata
+
+
 def view_tokens(tokens_L: list[int], tokenizer: AutoTokenizer, offset: int) -> None:
     print(f"Full tokens: {tokenizer.decode(tokens_L)}")
     for i in range(offset - 5, offset + 5):
@@ -180,10 +482,21 @@ def create_vector_dataset(
     debug_print: bool = False,
     model_kwargs: dict[str, Any] | None = None,
     model=None,
+    position_resample_repeats: int = 1,
 ) -> list[TrainingDataPoint]:
+    """
+    Create vector dataset from classification datapoints.
+    
+    Args:
+        position_resample_repeats: Number of times to resample token positions for each
+            datapoint. If > 1, creates multiple TrainingDataPoints per input with
+            different randomly sampled token windows. This was used to train -3N models
+            (repeats=3) and -6N models (repeats=6).
+    """
     assert min_end_offset < 0, "Min end offset must be negative"
     assert max_end_offset < 0, "Max end offset must be negative"
     assert max_end_offset <= min_end_offset, "Max end offset must be less than or equal to min end offset"
+    assert position_resample_repeats >= 1, "position_resample_repeats must be >= 1"
     training_data = []
 
     assert tokenizer.padding_side == "left", "Padding side must be left"
@@ -200,7 +513,8 @@ def create_vector_dataset(
     if lora_path is not None:
         model = PeftModel.from_pretrained(model, lora_path)
 
-    for i in tqdm(range(0, len(datapoints), batch_size), desc="Collecting activations"):
+    desc = f"Collecting activations (repeats={position_resample_repeats})"
+    for i in tqdm(range(0, len(datapoints), batch_size), desc=desc):
         batch_datapoints = datapoints[i : i + batch_size]
         formatted_prompts = []
         for datapoint in batch_datapoints:
@@ -221,59 +535,60 @@ def create_vector_dataset(
         tokenized_prompts["input_ids"] = tokenized_prompts["input_ids"]
         tokenized_prompts["attention_mask"] = tokenized_prompts["attention_mask"]
 
-        #for _ in [25, 50, 75]: # used to train -3N models
-        #for _ in [15, 30, 45, 60, 75, 90]: # used to train -6N models
         for j in range(len(batch_datapoints)):
             attn_mask_L = tokenized_prompts["attention_mask"][j].bool()
             input_ids_L = tokenized_prompts["input_ids"][j, attn_mask_L]
             L = len(input_ids_L)
-            end_offset = random.randint(max_end_offset, min_end_offset)
-            end_pos = L + end_offset
 
             assert L > 0, f"L={L}"
-            assert end_pos > 0, f"end_pos={end_pos}"
 
-            k = random.randint(min_window_size, max_window_size)
-            k = min(k, end_pos + 1)
-            assert k > 0, f"k={k}"
-            begin_pos = end_pos - k + 1
-            positions_K = list(range(begin_pos, end_pos + 1))
-            assert len(positions_K) == k
+            # Resample token positions multiple times for data augmentation
+            for _repeat in range(position_resample_repeats):
+                end_offset = random.randint(max_end_offset, min_end_offset)
+                end_pos = L + end_offset
 
-            # assert tokenized_prompts["input_ids"][j][offset + 1] == tokenizer.eos_token_id
-            if debug_print:
-                view_tokens(input_ids_L, tokenizer, positions_K[-1])
-            classification_prompt = f"{batch_datapoints[j].classification_prompt}"
+                assert end_pos > 0, f"end_pos={end_pos}"
 
-            if save_acts is False:
-                acts_KD = None
-            else:
-                layer_acts_list = []
-                for layer in act_layers:
-                    acts_LD = acts_BLD_by_layer_dict[layer][j, attn_mask_L]
-                    acts_K = acts_LD[positions_K]
-                    layer_acts_list.append(acts_K)
+                k = random.randint(min_window_size, max_window_size)
+                k = min(k, end_pos + 1)
+                assert k > 0, f"k={k}"
+                begin_pos = end_pos - k + 1
+                positions_K = list(range(begin_pos, end_pos + 1))
+                assert len(positions_K) == k
 
-                stacked = torch.stack(layer_acts_list, dim=0)
-                acts_KD = stacked.reshape(-1, stacked.shape[-1])
-                assert acts_KD.shape[0] == len(act_layers) * k
-            
-            training_data_point = create_training_datapoint(
-                datapoint_type=datapoint_type,
-                prompt=classification_prompt,
-                target_response=batch_datapoints[j].target_response,
-                layers=act_layers,
-                num_positions=k,
-                tokenizer=tokenizer,
-                acts_BD=acts_KD,
-                feature_idx=-1,
-                context_input_ids=input_ids_L,
-                context_positions=positions_K,
-                ds_label=batch_datapoints[j].ds_label,
-            )
-            if training_data_point is None:
-                continue
-            training_data.append(training_data_point)
+                if debug_print:
+                    view_tokens(input_ids_L, tokenizer, positions_K[-1])
+                classification_prompt = f"{batch_datapoints[j].classification_prompt}"
+
+                if save_acts is False:
+                    acts_KD = None
+                else:
+                    layer_acts_list = []
+                    for layer in act_layers:
+                        acts_LD = acts_BLD_by_layer_dict[layer][j, attn_mask_L]
+                        acts_K = acts_LD[positions_K]
+                        layer_acts_list.append(acts_K)
+
+                    stacked = torch.stack(layer_acts_list, dim=0)
+                    acts_KD = stacked.reshape(-1, stacked.shape[-1])
+                    assert acts_KD.shape[0] == len(act_layers) * k
+                
+                training_data_point = create_training_datapoint(
+                    datapoint_type=datapoint_type,
+                    prompt=classification_prompt,
+                    target_response=batch_datapoints[j].target_response,
+                    layers=act_layers,
+                    num_positions=k,
+                    tokenizer=tokenizer,
+                    acts_BD=acts_KD,
+                    feature_idx=-1,
+                    context_input_ids=input_ids_L,
+                    context_positions=positions_K,
+                    ds_label=batch_datapoints[j].ds_label,
+                )
+                if training_data_point is None:
+                    continue
+                training_data.append(training_data_point)
 
     return training_data
 
