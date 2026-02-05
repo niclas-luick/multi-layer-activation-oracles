@@ -6,9 +6,12 @@ This script evaluates how stable model predictions are under small perturbations
 to the activation/steering vectors. The hypothesis is that robustly encoded concepts
 should be stable under noise, while uncertain predictions will be unstable.
 
+Usage:
+    python stability_eval.py              # Run evaluation (skips if JSON exists)
+    python stability_eval.py --force-rerun  # Force re-run even if JSON exists
+
 Outputs:
-- Accuracy vs. threshold plot (with coverage curve)
-- Raw results JSON
+- Raw results JSON (plots are generated separately via plotting/plot_stability_eval.py)
 """
 
 import os
@@ -21,7 +24,6 @@ from typing import Any
 import torch
 from peft import LoraConfig
 from tqdm import tqdm
-import matplotlib.pyplot as plt
 import numpy as np
 
 from nl_probes.dataset_classes.act_dataset_manager import DatasetLoaderConfig
@@ -220,100 +222,17 @@ def evaluate_with_stability(
     return results
 
 
-def compute_accuracy_coverage_at_threshold(
-    results: list[dict],
-    threshold: float,
-) -> tuple[float, float, int]:
-    """
-    Compute accuracy and coverage for samples with agreement >= threshold.
-    
-    Returns: (accuracy, coverage, n_samples)
-    """
-    filtered = [r for r in results if r["agreement_rate"] >= threshold]
-    n_filtered = len(filtered)
-    n_total = len(results)
-
-    if n_filtered == 0:
-        return 0.0, 0.0, 0
-
-    accuracy = sum(r["is_correct"] for r in filtered) / n_filtered
-    coverage = n_filtered / n_total
-
-    return accuracy, coverage, n_filtered
-
-
-def plot_accuracy_coverage_vs_threshold(
-    results: list[dict],
-    output_path: str,
-    title: str = "Accuracy & Coverage vs. Agreement Threshold",
-):
-    """Plot accuracy and coverage as a function of agreement threshold."""
-    thresholds = np.arange(0.5, 1.01, 0.05)
-
-    accuracies = []
-    coverages = []
-    n_samples_list = []
-
-    for thresh in thresholds:
-        acc, cov, n = compute_accuracy_coverage_at_threshold(results, thresh)
-        accuracies.append(acc)
-        coverages.append(cov)
-        n_samples_list.append(n)
-
-    # Create figure with two y-axes
-    fig, ax1 = plt.subplots(figsize=(10, 6))
-
-    # Plot accuracy
-    color1 = "tab:blue"
-    ax1.set_xlabel("Agreement Threshold", fontsize=12)
-    ax1.set_ylabel("Accuracy", color=color1, fontsize=12)
-    line1 = ax1.plot(thresholds, accuracies, "o-", color=color1, linewidth=2, markersize=8, label="Accuracy")
-    ax1.tick_params(axis="y", labelcolor=color1)
-    ax1.set_ylim(0, 1.05)
-
-    # Plot coverage on secondary y-axis
-    ax2 = ax1.twinx()
-    color2 = "tab:orange"
-    ax2.set_ylabel("Coverage (fraction of data)", color=color2, fontsize=12)
-    line2 = ax2.plot(thresholds, coverages, "s--", color=color2, linewidth=2, markersize=8, label="Coverage")
-    ax2.tick_params(axis="y", labelcolor=color2)
-    ax2.set_ylim(0, 1.05)
-
-    # Add baseline accuracy (no filtering)
-    baseline_acc = sum(r["is_correct"] for r in results) / len(results)
-    ax1.axhline(y=baseline_acc, color="gray", linestyle=":", linewidth=2, label=f"Baseline Acc: {baseline_acc:.3f}")
-
-    # Combine legends
-    lines1, labels1 = ax1.get_legend_handles_labels()
-    lines2, labels2 = ax2.get_legend_handles_labels()
-    ax1.legend(lines1 + lines2, labels1 + labels2, loc="lower left", fontsize=10)
-
-    # Add sample counts as text annotations
-    for i, (thresh, acc, n) in enumerate(zip(thresholds, accuracies, n_samples_list)):
-        if i % 2 == 0:  # Annotate every other point to avoid clutter
-            ax1.annotate(
-                f"n={n}",
-                (thresh, acc),
-                textcoords="offset points",
-                xytext=(0, 10),
-                ha="center",
-                fontsize=8,
-            )
-
-    ax1.set_title(title, fontsize=14)
-    ax1.grid(True, alpha=0.3)
-
-    plt.tight_layout()
-    plt.savefig(output_path, dpi=300, bbox_inches="tight")
-    print(f"Saved plot to {output_path}")
-    plt.close()
-
-
 # ============================================================================
 # Main
 # ============================================================================
 
 if __name__ == "__main__":
+    import argparse
+    
+    parser = argparse.ArgumentParser(description="Stability evaluation experiment")
+    parser.add_argument("--force-rerun", action="store_true", help="Force re-run even if JSON exists")
+    args = parser.parse_args()
+
     print(f"{'=' * 60}")
     print(f"Stability Evaluation Experiment")
     print(f"Model: {MODEL_NAME}")
@@ -323,102 +242,119 @@ if __name__ == "__main__":
 
     stability_config = StabilityConfig(n_samples=10, noise_scale=0.003)
 
-    # Load model and tokenizer
-    print(f"\nLoading model: {MODEL_NAME}")
-    tokenizer = load_tokenizer(MODEL_NAME)
-    model = load_model(MODEL_NAME, DTYPE)
-    submodule = get_hf_submodule(model, INJECTION_LAYER)
-
-    # Add dummy adapter for PEFT compatibility
-    dummy_config = LoraConfig()
-    model.add_adapter(dummy_config, adapter_name="default")
-
-    # Load verbalizer LoRA
-    print(f"Loading verbalizer LoRA: {VERBALIZER_LORA}")
-    sanitized_name = sanitize_lora_name(VERBALIZER_LORA)
-    model.load_adapter(VERBALIZER_LORA, adapter_name=sanitized_name, is_trainable=False, low_cpu_mem_usage=True)
-    model.set_adapter(sanitized_name)
-
-    # Load dataset
-    print(f"\nLoading dataset: {DATASET_NAME} (n={NUM_TEST_EXAMPLES})")
-    classification_config = ClassificationDatasetConfig(
-        classification_dataset_name=DATASET_NAME,
-        max_end_offset=-3,
-        min_end_offset=-3,
-        max_window_size=1,
-        min_window_size=1,
-    )
-    dataset_config = DatasetLoaderConfig(
-        custom_dataset_params=classification_config,
-        num_train=0,
-        num_test=NUM_TEST_EXAMPLES,
-        splits=["test"],
-        model_name=MODEL_NAME,
-        layer_percents=LAYER_PERCENTS,
-        save_acts=True,
-        batch_size=16,  # For activation collection
-    )
-    dataset_loader = ClassificationDatasetLoader(
-        dataset_config=dataset_config,
-        model=model,
-    )
-    eval_data = dataset_loader.load_dataset("test")
-    print(f"Loaded {len(eval_data)} test examples")
-
-    # Run stability evaluation
-    print(f"\nRunning stability evaluation (n_samples={stability_config.n_samples}, noise_scale={stability_config.noise_scale})")
-    results = evaluate_with_stability(
-        model=model,
-        tokenizer=tokenizer,
-        submodule=submodule,
-        eval_data=eval_data,
-        stability_config=stability_config,
-        steering_coefficient=STEERING_COEFFICIENT,
-        generation_kwargs=GENERATION_KWARGS,
-        device=device,
-        dtype=DTYPE,
-    )
-
-    # Compute summary statistics
-    baseline_accuracy = sum(r["is_correct"] for r in results) / len(results)
-    mean_agreement = np.mean([r["agreement_rate"] for r in results])
-    print(f"\nBaseline accuracy (no filtering): {baseline_accuracy:.3f}")
-    print(f"Mean agreement rate: {mean_agreement:.3f}")
-
-    # Save results JSON
+    # Compute output path first to check for existing results
     model_name_str = MODEL_NAME.split("/")[-1]
     lora_name_str = VERBALIZER_LORA.split("/")[-1]
     output_base = f"{OUTPUT_DIR}/stability_{model_name_str}_{lora_name_str}_{DATASET_NAME}_noise{stability_config.noise_scale}"
-
-    results_json = {
-        "config": {
-            "model_name": MODEL_NAME,
-            "verbalizer_lora": VERBALIZER_LORA,
-            "layer_percents": LAYER_PERCENTS,
-            "dataset_name": DATASET_NAME,
-            "n_test_examples": NUM_TEST_EXAMPLES,
-            "stability_config": asdict(stability_config),
-            "steering_coefficient": STEERING_COEFFICIENT,
-        },
-        "summary": {
-            "baseline_accuracy": baseline_accuracy,
-            "mean_agreement_rate": mean_agreement,
-            "n_examples": len(results),
-        },
-        "results": results,
-    }
-
     json_path = f"{output_base}.json"
-    with open(json_path, "w") as f:
-        json.dump(results_json, f, indent=2)
-    print(f"Saved results to {json_path}")
 
-    # Plot accuracy vs threshold
-    plot_path = f"{output_base}.png"
-    plot_accuracy_coverage_vs_threshold(
-        results=results,
-        output_path=plot_path,
-        title=f"Stability Analysis: {DATASET_NAME}\n{lora_name_str} (noise_scale={stability_config.noise_scale})",
-    )
+    # Check if we can skip evaluation by loading existing results
+    if os.path.exists(json_path) and not args.force_rerun:
+        print(f"\nFound existing results: {json_path}")
+        print("Use --force-rerun to re-run evaluation.")
+        print("Use experiments/plotting/plot_stability_eval.py to generate plots.")
+        
+        with open(json_path, "r") as f:
+            results_json = json.load(f)
+        
+        # Print summary from loaded data
+        baseline_accuracy = results_json["summary"]["baseline_accuracy"]
+        mean_agreement = results_json["summary"]["mean_agreement_rate"]
+        n_examples = results_json["summary"]["n_examples"]
+        print(f"\nLoaded {n_examples} results from JSON")
+        print(f"Baseline accuracy (no filtering): {baseline_accuracy:.3f}")
+        print(f"Mean agreement rate: {mean_agreement:.3f}")
+    
+    else:
+        # Run full evaluation
+        if args.force_rerun:
+            print("\n--force-rerun specified, re-running evaluation...")
+        else:
+            print("\nNo existing results found, running evaluation...")
+        
+        # Load model and tokenizer
+        print(f"\nLoading model: {MODEL_NAME}")
+        tokenizer = load_tokenizer(MODEL_NAME)
+        model = load_model(MODEL_NAME, DTYPE)
+        submodule = get_hf_submodule(model, INJECTION_LAYER)
 
-    print(f"\nDone!")
+        # Add dummy adapter for PEFT compatibility
+        dummy_config = LoraConfig()
+        model.add_adapter(dummy_config, adapter_name="default")
+
+        # Load verbalizer LoRA
+        print(f"Loading verbalizer LoRA: {VERBALIZER_LORA}")
+        sanitized_name = sanitize_lora_name(VERBALIZER_LORA)
+        model.load_adapter(VERBALIZER_LORA, adapter_name=sanitized_name, is_trainable=False, low_cpu_mem_usage=True)
+        model.set_adapter(sanitized_name)
+
+        # Load dataset
+        print(f"\nLoading dataset: {DATASET_NAME} (n={NUM_TEST_EXAMPLES})")
+        classification_config = ClassificationDatasetConfig(
+            classification_dataset_name=DATASET_NAME,
+            max_end_offset=-3,
+            min_end_offset=-3,
+            max_window_size=1,
+            min_window_size=1,
+        )
+        dataset_config = DatasetLoaderConfig(
+            custom_dataset_params=classification_config,
+            num_train=0,
+            num_test=NUM_TEST_EXAMPLES,
+            splits=["test"],
+            model_name=MODEL_NAME,
+            layer_percents=LAYER_PERCENTS,
+            save_acts=True,
+            batch_size=16,  # For activation collection
+        )
+        dataset_loader = ClassificationDatasetLoader(
+            dataset_config=dataset_config,
+            model=model,
+        )
+        eval_data = dataset_loader.load_dataset("test")
+        print(f"Loaded {len(eval_data)} test examples")
+
+        # Run stability evaluation
+        print(f"\nRunning stability evaluation (n_samples={stability_config.n_samples}, noise_scale={stability_config.noise_scale})")
+        results = evaluate_with_stability(
+            model=model,
+            tokenizer=tokenizer,
+            submodule=submodule,
+            eval_data=eval_data,
+            stability_config=stability_config,
+            steering_coefficient=STEERING_COEFFICIENT,
+            generation_kwargs=GENERATION_KWARGS,
+            device=device,
+            dtype=DTYPE,
+        )
+
+        # Compute summary statistics
+        baseline_accuracy = sum(r["is_correct"] for r in results) / len(results)
+        mean_agreement = np.mean([r["agreement_rate"] for r in results])
+        print(f"\nBaseline accuracy (no filtering): {baseline_accuracy:.3f}")
+        print(f"Mean agreement rate: {mean_agreement:.3f}")
+
+        # Save results JSON
+        results_json = {
+            "config": {
+                "model_name": MODEL_NAME,
+                "verbalizer_lora": VERBALIZER_LORA,
+                "layer_percents": LAYER_PERCENTS,
+                "dataset_name": DATASET_NAME,
+                "n_test_examples": NUM_TEST_EXAMPLES,
+                "stability_config": asdict(stability_config),
+                "steering_coefficient": STEERING_COEFFICIENT,
+            },
+            "summary": {
+                "baseline_accuracy": baseline_accuracy,
+                "mean_agreement_rate": mean_agreement,
+                "n_examples": len(results),
+            },
+            "results": results,
+        }
+
+        with open(json_path, "w") as f:
+            json.dump(results_json, f, indent=2)
+        print(f"Saved results to {json_path}")
+
+    print(f"\nDone! Use experiments/plotting/plot_stability_eval.py to generate plots.")
