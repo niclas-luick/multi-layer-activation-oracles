@@ -50,6 +50,8 @@ class ClassificationDatasetConfig(BaseDatasetConfig):
     enable_idk_mixing: bool = False
     # Target ratio for IDK samples (0.33 means 1/3 yes, 1/3 no, 1/3 IDK)
     idk_ratio: float = 0.33
+    # Use 3-way prompt ("Yes", "No", "I don't know") instead of binary. For IDK eval.
+    use_3way_prompt: bool = False
 
 
 class ClassificationDatasetLoader(ActDatasetLoader):
@@ -108,6 +110,7 @@ class ClassificationDatasetLoader(ActDatasetLoader):
                 self.dataset_config.num_train,
                 self.dataset_config.num_test,
                 self.dataset_config.seed,
+                use_3way_prompt=self.dataset_params.use_3way_prompt,
             )
 
         for split in self.dataset_config.splits:
@@ -148,11 +151,17 @@ class ClassificationDatapoint(BaseModel):
 
 def get_classification_datapoints_from_context_qa_examples(
     examples: list[classification_dataset_manager.ContextQASample],
+    use_3way_prompt: bool = False,
 ) -> list[ClassificationDatapoint]:
+    prefix = (
+        "Answer with 'Yes', 'No', or 'I don't know'. "
+        if use_3way_prompt
+        else "Answer with 'Yes' or 'No' only. "
+    )
     datapoints = []
     for example in examples:
         for question, answer in zip(example.questions, example.answers, strict=True):
-            question = f"Answer with 'Yes' or 'No' only. {question}"
+            question = f"{prefix}{question}"
             datapoint = ClassificationDatapoint(
                 activation_prompt=example.context,
                 classification_prompt=question,
@@ -170,6 +179,7 @@ def get_classification_datapoints(
     train_examples: int,
     test_examples: int,
     random_seed: int,
+    use_3way_prompt: bool = False,
 ) -> tuple[list[ClassificationDatapoint], list[ClassificationDatapoint]]:
     set_seed(random_seed)
     all_examples = classification_dataset_manager.get_samples_from_groups(
@@ -180,11 +190,15 @@ def get_classification_datapoints(
     random.shuffle(all_examples)
 
     assert len(all_examples) >= train_examples + test_examples, "Not enough examples to split"
-    train_examples = all_examples[:train_examples]
-    test_examples = all_examples[-test_examples:]
+    train_examples_list = all_examples[:train_examples]
+    test_examples_list = all_examples[-test_examples:]
 
-    train_datapoints = get_classification_datapoints_from_context_qa_examples(train_examples)
-    test_datapoints = get_classification_datapoints_from_context_qa_examples(test_examples)
+    train_datapoints = get_classification_datapoints_from_context_qa_examples(
+        train_examples_list, use_3way_prompt=use_3way_prompt
+    )
+    test_datapoints = get_classification_datapoints_from_context_qa_examples(
+        test_examples_list, use_3way_prompt=use_3way_prompt
+    )
 
     return train_datapoints, test_datapoints
 
