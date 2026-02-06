@@ -97,7 +97,7 @@ class ClassificationDatasetLoader(ActDatasetLoader):
             
             # Save IDK metadata for later inspection
             if idk_metadata:
-                metadata_path = self.dataset_path / "idk_metadata.json"
+                metadata_path = Path(self.dataset_config.dataset_folder) / "idk_metadata.json"
                 metadata_dicts = [asdict(m) for m in idk_metadata]
                 with open(metadata_path, "w") as f:
                     json.dump(metadata_dicts, f, indent=2)

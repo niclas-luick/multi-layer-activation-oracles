@@ -1064,7 +1064,7 @@ if __name__ == "__main__":
         # CLASSIFICATION CONFIG - REVIEW CAREFULLY BEFORE TRAINING!
         # ═══════════════════════════════════════════════════════════════════
         position_resample_repeats = 1  # 1 for -1N, 3 for -3N, 6 for -6N
-        enable_idk_mixing = False       # True = train with IDK samples (~1/3 yes, 1/3 no, 1/3 idk)
+        enable_idk_mixing = True       # True = train with IDK samples (~1/3 yes, 1/3 no, 1/3 idk)
         idk_ratio = 0.33               # Only used if enable_idk_mixing=True
         
         # Layer config
@@ -1077,8 +1077,8 @@ if __name__ == "__main__":
         model_short_name = model_name.split("/")[-1].replace(".", "-")
         hf_repo_name = f"MLAO-{model_short_name}-{num_layers}L-{position_resample_repeats}N"
         if enable_idk_mixing:
-            hf_repo_name += "-IDK"
-            
+            hf_repo_name += "-IDK-fixed"
+        print(f"hf_repo_name: {hf_repo_name}")
         model_name_str = model_name.split("/")[-1].replace(".", "_").replace(" ", "_")
 
         #train_batch_size = 16
@@ -1197,7 +1197,7 @@ if __name__ == "__main__":
                     enable_idk_mixing=classification_config["enable_idk_mixing"],
                     tokenizer=tokenizer,
                 )
-                print_sample_training_data(all_training_data, tokenizer, num_samples=3)
+                # print_sample_training_data(all_training_data, tokenizer, num_samples=3)
 
             print(asdict(cfg))
 

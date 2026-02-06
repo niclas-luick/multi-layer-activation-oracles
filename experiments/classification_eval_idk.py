@@ -51,7 +51,7 @@ MODEL_CONFIGS = {
     #     ["nluick/MLAO-Qwen3-4B-6L-6N", CONFIG_6L],
     # ],
     "Qwen/Qwen3-8B": [
-        ["nluick/MLAO-Qwen3-8B-3L-1N-IDK", CONFIG_3L],
+        ["nluick/MLAO-Qwen3-8B-3L-1N-IDK-fixed", CONFIG_3L],
 #        ["nluick/MLAO-Qwen3-8B-3L-3N", CONFIG_3L],
     ],
 }
