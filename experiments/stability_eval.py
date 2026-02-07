@@ -265,102 +265,110 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Stability evaluation experiment")
     parser.add_argument("--mode", choices=["noise", "temperature"], default="noise",
                         help="Stability mode: 'noise' perturbs activations, 'temperature' uses stochastic decoding")
+    parser.add_argument("--noise-scales", type=float, nargs="+", default=[0.003],
+                        help="Noise scale(s) for noise mode (default: 0.003)")
+    parser.add_argument("--temperatures", type=float, nargs="+", default=[1.0],
+                        help="Temperature(s) for temperature mode (default: 1.0)")
     parser.add_argument("--force-rerun", action="store_true", help="Force re-run even if JSON exists")
     args = parser.parse_args()
+
+    # Build list of (mode, param_value) pairs to evaluate
+    if args.mode == "noise":
+        param_values = args.noise_scales
+    else:
+        param_values = args.temperatures
 
     print(f"{'=' * 60}")
     print(f"Stability Evaluation Experiment")
     print(f"Mode: {args.mode}")
+    print(f"Param values: {param_values}")
     print(f"Model: {MODEL_NAME}")
     print(f"Verbalizer: {VERBALIZER_LORA}")
     print(f"Dataset: {DATASET_NAME}")
     print(f"{'=' * 60}")
 
-    if args.mode == "noise":
-        stability_config = StabilityConfig(mode="noise", n_samples=10, noise_scale=0.003)
-    else:
-        stability_config = StabilityConfig(mode="temperature", n_samples=10, temperature=1.0)
-
-    # Compute output path (mode-specific naming)
     model_name_str = MODEL_NAME.split("/")[-1]
     lora_name_str = VERBALIZER_LORA.split("/")[-1]
-    if args.mode == "noise":
-        param_str = f"noise{stability_config.noise_scale}"
-    else:
-        param_str = f"temp{stability_config.temperature}"
-    output_base = f"{OUTPUT_DIR}/stability_{model_name_str}_{lora_name_str}_{DATASET_NAME}_{param_str}"
-    json_path = f"{output_base}.json"
 
-    print(f"Output: {json_path}")
-
-    # Check if we can skip evaluation by loading existing results
-    if os.path.exists(json_path) and not args.force_rerun:
-        print(f"\nFound existing results: {json_path}")
-        print("Use --force-rerun to re-run evaluation.")
-        print("Use experiments/plotting/plot_stability_eval.py to generate plots.")
-        
-        with open(json_path, "r") as f:
-            results_json = json.load(f)
-        
-        # Print summary from loaded data
-        baseline_accuracy = results_json["summary"]["baseline_accuracy"]
-        mean_agreement = results_json["summary"]["mean_agreement_rate"]
-        n_examples = results_json["summary"]["n_examples"]
-        print(f"\nLoaded {n_examples} results from JSON")
-        print(f"Baseline accuracy (no filtering): {baseline_accuracy:.3f}")
-        print(f"Mean agreement rate: {mean_agreement:.3f}")
-    
-    else:
-        # Run full evaluation
-        if args.force_rerun:
-            print("\n--force-rerun specified, re-running evaluation...")
+    # Determine which param values actually need evaluation
+    configs_to_run: list[tuple[StabilityConfig, str]] = []  # (config, json_path)
+    for param in param_values:
+        if args.mode == "noise":
+            cfg = StabilityConfig(mode="noise", n_samples=10, noise_scale=param)
+            param_str = f"noise{param}"
         else:
-            print("\nNo existing results found, running evaluation...")
-        
-        # Load model and tokenizer
-        print(f"\nLoading model: {MODEL_NAME}")
-        tokenizer = load_tokenizer(MODEL_NAME)
-        model = load_model(MODEL_NAME, DTYPE)
-        submodule = get_hf_submodule(model, INJECTION_LAYER)
+            cfg = StabilityConfig(mode="temperature", n_samples=10, temperature=param)
+            param_str = f"temp{param}"
 
-        # Add dummy adapter for PEFT compatibility
-        dummy_config = LoraConfig()
-        model.add_adapter(dummy_config, adapter_name="default")
+        json_path = f"{OUTPUT_DIR}/stability_{model_name_str}_{lora_name_str}_{DATASET_NAME}_{param_str}.json"
 
-        # Load verbalizer LoRA
-        print(f"Loading verbalizer LoRA: {VERBALIZER_LORA}")
-        sanitized_name = sanitize_lora_name(VERBALIZER_LORA)
-        model.load_adapter(VERBALIZER_LORA, adapter_name=sanitized_name, is_trainable=False, low_cpu_mem_usage=True)
-        model.set_adapter(sanitized_name)
+        if os.path.exists(json_path) and not args.force_rerun:
+            with open(json_path, "r") as f:
+                results_json = json.load(f)
+            s = results_json["summary"]
+            print(f"\n[SKIP] {param_str}: already exists ({s['n_examples']} examples, "
+                  f"acc={s['baseline_accuracy']:.3f}, agreement={s['mean_agreement_rate']:.3f})")
+        else:
+            configs_to_run.append((cfg, json_path))
+            reason = "force-rerun" if os.path.exists(json_path) else "no existing results"
+            print(f"\n[QUEUE] {param_str}: will run ({reason})")
 
-        # Load dataset
-        print(f"\nLoading dataset: {DATASET_NAME} (n={NUM_TEST_EXAMPLES})")
-        classification_config = ClassificationDatasetConfig(
-            classification_dataset_name=DATASET_NAME,
-            max_end_offset=-3,
-            min_end_offset=-3,
-            max_window_size=1,
-            min_window_size=1,
-        )
-        dataset_config = DatasetLoaderConfig(
-            custom_dataset_params=classification_config,
-            num_train=0,
-            num_test=NUM_TEST_EXAMPLES,
-            splits=["test"],
-            model_name=MODEL_NAME,
-            layer_percents=LAYER_PERCENTS,
-            save_acts=True,
-            batch_size=16,  # For activation collection
-        )
-        dataset_loader = ClassificationDatasetLoader(
-            dataset_config=dataset_config,
-            model=model,
-        )
-        eval_data = dataset_loader.load_dataset("test")
-        print(f"Loaded {len(eval_data)} test examples")
+    if not configs_to_run:
+        print("\nAll param values already have results. Use --force-rerun to re-run.")
+        print("Done! Use experiments/plotting/plot_stability_eval.py to generate plots.")
+        exit(0)
 
-        # Run stability evaluation
-        print(f"\nRunning stability evaluation ({stability_config.mode} mode, n_samples={stability_config.n_samples})")
+    # Load model, tokenizer, and dataset once (shared across all runs)
+    print(f"\nLoading model: {MODEL_NAME}")
+    tokenizer = load_tokenizer(MODEL_NAME)
+    model = load_model(MODEL_NAME, DTYPE)
+    submodule = get_hf_submodule(model, INJECTION_LAYER)
+
+    # Add dummy adapter for PEFT compatibility
+    dummy_config = LoraConfig()
+    model.add_adapter(dummy_config, adapter_name="default")
+
+    # Load verbalizer LoRA
+    print(f"Loading verbalizer LoRA: {VERBALIZER_LORA}")
+    sanitized_name = sanitize_lora_name(VERBALIZER_LORA)
+    model.load_adapter(VERBALIZER_LORA, adapter_name=sanitized_name, is_trainable=False, low_cpu_mem_usage=True)
+    model.set_adapter(sanitized_name)
+
+    # Load dataset
+    print(f"\nLoading dataset: {DATASET_NAME} (n={NUM_TEST_EXAMPLES})")
+    classification_config = ClassificationDatasetConfig(
+        classification_dataset_name=DATASET_NAME,
+        max_end_offset=-3,
+        min_end_offset=-3,
+        max_window_size=1,
+        min_window_size=1,
+    )
+    dataset_config = DatasetLoaderConfig(
+        custom_dataset_params=classification_config,
+        num_train=0,
+        num_test=NUM_TEST_EXAMPLES,
+        splits=["test"],
+        model_name=MODEL_NAME,
+        layer_percents=LAYER_PERCENTS,
+        save_acts=True,
+        batch_size=16,  # For activation collection
+    )
+    dataset_loader = ClassificationDatasetLoader(
+        dataset_config=dataset_config,
+        model=model,
+    )
+    eval_data = dataset_loader.load_dataset("test")
+    print(f"Loaded {len(eval_data)} test examples")
+
+    # Run stability evaluation for each param value
+    for run_idx, (stability_config, json_path) in enumerate(configs_to_run):
+        print(f"\n{'=' * 60}")
+        print(f"Run {run_idx + 1}/{len(configs_to_run)}: {stability_config.mode} mode, "
+              f"{'noise_scale' if stability_config.mode == 'noise' else 'temperature'}="
+              f"{stability_config.noise_scale if stability_config.mode == 'noise' else stability_config.temperature}")
+        print(f"Output: {json_path}")
+        print(f"{'=' * 60}")
+
         results = evaluate_with_stability(
             model=model,
             tokenizer=tokenizer,
@@ -402,4 +410,4 @@ if __name__ == "__main__":
             json.dump(results_json, f, indent=2)
         print(f"Saved results to {json_path}")
 
-    print(f"\nDone! Use experiments/plotting/plot_stability_eval.py to generate plots.")
+    print(f"\nAll done! Use experiments/plotting/plot_stability_eval.py to generate plots.")

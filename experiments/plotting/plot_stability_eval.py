@@ -33,9 +33,12 @@ EXPERIMENTS: list[tuple[str, float]] = [
     # ("noise", 0.01),
     # ("noise", 0.02),
     # ("noise", 0.05),
-    # ("temperature", 0.5),
+    ("temperature", 0.3),
+    ("temperature", 0.5),
+    ("temperature", 0.7),
     ("temperature", 1.0),
-    # ("temperature", 2.0),
+    ("temperature", 1.5),
+    ("temperature", 2.0),
 ]
 
 # Input/output paths
@@ -260,10 +263,16 @@ if __name__ == "__main__":
     # Print summary
     print_summary_table(results_by_label)
 
-    # Generate output filename
+    # Generate output filename that includes all plotted params
     model_name_str = MODEL_NAME.split("/")[-1]
     lora_name_str = VERBALIZER_LORA.split("/")[-1]
-    output_base = f"{OUTPUT_DIR}/stability_comparison_{model_name_str}_{lora_name_str}_{DATASET_NAME}_{mode}_{param}"
+    # Build a compact param string from all experiments, e.g. "noise0.003_noise0.01" or "temp0.3_temp1.0_temp2.0"
+    param_parts = []
+    for mode, param in EXPERIMENTS:
+        if f"{make_label(mode, param)}" in results_by_label:
+            param_parts.append(f"{'noise' if mode == 'noise' else 'temp'}{param}")
+    params_str = "_".join(param_parts)
+    output_base = f"{OUTPUT_DIR}/stability_comparison_{model_name_str}_{lora_name_str}_{DATASET_NAME}_{params_str}"
 
     # Plot 1: Accuracy & Coverage vs Threshold (side by side)
     plot_curves(
