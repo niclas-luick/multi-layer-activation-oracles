@@ -32,13 +32,13 @@ EXPERIMENTS: list[tuple[str, float]] = [
     ("noise", 0.005),
     ("noise", 0.01),
     ("noise", 0.02),
-    # ("noise", 0.05),
-    # ("temperature", 0.3),
-    # ("temperature", 0.5),
-    # ("temperature", 0.7),
-    # ("temperature", 1.0),
-    # ("temperature", 1.5),
-    # ("temperature", 2.0),
+    #("noise", 0.05),
+    ("temperature", 0.3),
+    ("temperature", 0.5),
+    ("temperature", 0.7),
+    ("temperature", 1.0),
+    ("temperature", 1.5),
+    ("temperature", 2.0),
 ]
 
 # Input/output paths
@@ -100,30 +100,78 @@ def make_label(mode: str, param: float) -> str:
     return f"T={param}"
 
 
+def assign_colors(
+    entries: list[tuple[str, str, float]],
+) -> list[tuple[float, float, float, float]]:
+    """
+    Assign colors to entries based on mode.
+    
+    Blues for noise, oranges/reds for temperature.
+    Intensity varies within each family (lighter = smaller param, darker = larger param).
+    
+    Args:
+        entries: list of (label, mode, param) tuples
+    
+    Returns:
+        List of RGBA color tuples, one per entry.
+    """
+    noise_entries = [(i, p) for i, (_, m, p) in enumerate(entries) if m == "noise"]
+    temp_entries = [(i, p) for i, (_, m, p) in enumerate(entries) if m == "temperature"]
+    
+    colors: list[tuple[float, float, float, float] | None] = [None] * len(entries)
+    
+    # Blues for noise (range 0.3–0.9 to avoid too-light / too-dark extremes)
+    if noise_entries:
+        n = len(noise_entries)
+        blue_values = plt.cm.Blues(np.linspace(0.35, 0.9, n))
+        for j, (idx, _) in enumerate(noise_entries):
+            colors[idx] = tuple(blue_values[j])
+    
+    # Oranges/reds for temperature
+    if temp_entries:
+        n = len(temp_entries)
+        red_values = plt.cm.OrRd(np.linspace(0.35, 0.9, n))
+        for j, (idx, _) in enumerate(temp_entries):
+            colors[idx] = tuple(red_values[j])
+    
+    return colors
+
+
+def assign_markers(mode: str) -> str:
+    """Return marker style based on mode."""
+    if mode == "noise":
+        return "o"
+    return "s"
+
+
 # ============================================================================
 # Plotting Functions
 # ============================================================================
 
 
 def plot_curves(
-    results_by_label: dict[str, dict],
+    entries: list[tuple[str, str, float, dict]],
     output_path: str,
     title: str = "Stability Analysis: Accuracy & Coverage vs. Threshold",
 ):
     """
     Plot accuracy and coverage curves for multiple experiments on the same plot.
+    
+    Args:
+        entries: list of (label, mode, param, data) tuples
     """
     thresholds = np.linspace(0.5, 1.0, 11)
 
-    n = len(results_by_label)
-    colors = plt.cm.viridis(np.linspace(0.2, 0.8, n))
+    color_inputs = [(label, mode, param) for label, mode, param, _ in entries]
+    colors = assign_colors(color_inputs)
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
 
     # Plot 1: Accuracy vs Threshold
-    for i, (label, data) in enumerate(results_by_label.items()):
+    for i, (label, mode, param, data) in enumerate(entries):
         results = data["results"]
         baseline_acc = data["summary"]["baseline_accuracy"]
+        marker = assign_markers(mode)
 
         accuracies = []
         for thresh in thresholds:
@@ -132,7 +180,7 @@ def plot_curves(
 
         ax1.plot(
             thresholds, accuracies,
-            "o-", color=colors[i], linewidth=2, markersize=6,
+            f"{marker}-", color=colors[i], linewidth=2, markersize=6,
             label=f"{label} (baseline={baseline_acc:.3f})"
         )
 
@@ -144,8 +192,9 @@ def plot_curves(
     ax1.set_title("Accuracy vs. Agreement Threshold", fontsize=12)
 
     # Plot 2: Coverage vs Threshold
-    for i, (label, data) in enumerate(results_by_label.items()):
+    for i, (label, mode, param, data) in enumerate(entries):
         results = data["results"]
+        marker = assign_markers(mode)
 
         coverages = []
         for thresh in thresholds:
@@ -154,7 +203,7 @@ def plot_curves(
 
         ax2.plot(
             thresholds, coverages,
-            "s--", color=colors[i], linewidth=2, markersize=6,
+            f"{marker}--", color=colors[i], linewidth=2, markersize=6,
             label=label,
         )
 
@@ -174,7 +223,7 @@ def plot_curves(
 
 
 def plot_tradeoff(
-    results_by_label: dict[str, dict],
+    entries: list[tuple[str, str, float, dict]],
     output_path: str,
     title: str = "Accuracy-Coverage Tradeoff",
 ):
@@ -182,13 +231,15 @@ def plot_tradeoff(
     Plot accuracy vs coverage (parametric in threshold) for multiple experiments.
     """
     thresholds = np.linspace(0.5, 1.0, 11)
-    n = len(results_by_label)
-    colors = plt.cm.viridis(np.linspace(0.2, 0.8, n))
+
+    color_inputs = [(label, mode, param) for label, mode, param, _ in entries]
+    colors = assign_colors(color_inputs)
 
     fig, ax = plt.subplots(figsize=(8, 6))
 
-    for i, (label, data) in enumerate(results_by_label.items()):
+    for i, (label, mode, param, data) in enumerate(entries):
         results = data["results"]
+        marker = assign_markers(mode)
 
         accuracies = []
         coverages = []
@@ -199,14 +250,13 @@ def plot_tradeoff(
 
         ax.plot(
             coverages, accuracies,
-            "o-", color=colors[i], linewidth=2, markersize=6,
+            f"{marker}-", color=colors[i], linewidth=2, markersize=6,
             label=label,
         )
 
     ax.set_xlabel("Coverage", fontsize=12)
     ax.set_ylabel("Selective Accuracy", fontsize=12)
     ax.set_xlim(0.1, 1.05)
-    ax.set_ylim(0.7, 0.9)
 
     ax.legend(loc="lower left", fontsize=10)
     ax.grid(True, alpha=0.3)
@@ -218,17 +268,17 @@ def plot_tradeoff(
     plt.close()
 
 
-def print_summary_table(results_by_label: dict[str, dict]):
+def print_summary_table(entries: list[tuple[str, str, float, dict]]):
     """Print a summary table of key metrics for each experiment."""
     print("\n" + "=" * 80)
     print("SUMMARY TABLE")
     print("=" * 80)
-    print(f"{'Experiment':<24} {'Baseline Acc':<14} {'Mean Agreement':<16} {'N Examples':<12}")
+    print(f"{'Experiment':<24} {'Mode':<14} {'Baseline Acc':<14} {'Mean Agreement':<16} {'N Examples':<12}")
     print("-" * 80)
 
-    for label, data in results_by_label.items():
+    for label, mode, param, data in entries:
         summary = data["summary"]
-        print(f"{label:<24} {summary['baseline_accuracy']:<14.3f} "
+        print(f"{label:<24} {mode:<14} {summary['baseline_accuracy']:<14.3f} "
               f"{summary['mean_agreement_rate']:<16.3f} {summary['n_examples']:<12}")
 
     print("=" * 80 + "\n")
@@ -247,45 +297,50 @@ if __name__ == "__main__":
     print(f"Experiments: {EXPERIMENTS}")
     print(f"{'=' * 60}")
 
-    # Load all results
-    results_by_label: dict[str, dict] = {}
+    # Load all results as (label, mode, param, data) tuples
+    entries: list[tuple[str, str, float, dict]] = []
 
     for mode, param in EXPERIMENTS:
         json_path = get_json_path(MODEL_NAME, VERBALIZER_LORA, DATASET_NAME, mode, param)
         data = load_results_json(json_path)
         if data is not None:
             label = make_label(mode, param)
-            results_by_label[label] = data
+            entries.append((label, mode, param, data))
             print(f"  Loaded: {label} ({len(data['results'])} examples)")
 
-    if not results_by_label:
+    if not entries:
         print("ERROR: No results found! Check your configuration and JSON paths.")
         exit(1)
 
     # Print summary
-    print_summary_table(results_by_label)
+    print_summary_table(entries)
 
-    # Generate output filename that includes all plotted params
+    # Check which modes are present
+    modes_present = set(m for _, m, _, _ in entries)
+    has_noise = "noise" in modes_present
+    has_temp = "temperature" in modes_present
+    if has_noise and has_temp:
+        print("Plotting both noise (blues) and temperature (oranges/reds) experiments")
+    elif has_noise:
+        print("Plotting noise experiments (blues)")
+    else:
+        print("Plotting temperature experiments (oranges/reds)")
+
+    # Generate output filename
     model_name_str = MODEL_NAME.split("/")[-1]
     lora_name_str = VERBALIZER_LORA.split("/")[-1]
-    # Build a compact param string from all experiments, e.g. "noise0.003_noise0.01" or "temp0.3_temp1.0_temp2.0"
-    param_parts = []
-    for mode, param in EXPERIMENTS:
-        if f"{make_label(mode, param)}" in results_by_label:
-            param_parts.append(f"{'noise' if mode == 'noise' else 'temp'}{param}")
-    params_str = "_".join(param_parts)
-    output_base = f"{OUTPUT_DIR}/stability_comparison_{model_name_str}_{lora_name_str}_{DATASET_NAME}_{params_str}"
+    output_base = f"{OUTPUT_DIR}/stability_comparison_{model_name_str}_{lora_name_str}_{DATASET_NAME}"
 
     # Plot 1: Accuracy & Coverage vs Threshold (side by side)
     plot_curves(
-        results_by_label=results_by_label,
+        entries=entries,
         output_path=f"{output_base}_curves.png",
         title=f"Stability Analysis: {DATASET_NAME}\n{lora_name_str}",
     )
 
     # Plot 2: Accuracy-Coverage Tradeoff
     plot_tradeoff(
-        results_by_label=results_by_label,
+        entries=entries,
         output_path=f"{output_base}_tradeoff.png",
         title=f"Accuracy-Coverage Tradeoff: {DATASET_NAME}\n{lora_name_str}",
     )
