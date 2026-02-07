@@ -2,13 +2,17 @@
 """
 Perturbation Stability Experiment
 
-This script evaluates how stable model predictions are under small perturbations
-to the activation/steering vectors. The hypothesis is that robustly encoded concepts
-should be stable under noise, while uncertain predictions will be unstable.
+Two modes for measuring prediction stability:
+  - noise: Add Gaussian noise to activation/steering vectors
+  - temperature: Use temperature sampling (do_sample=True, temperature=1.0)
+
+Both modes run N forward passes, compute agreement rate via majority vote,
+and output the same JSON format for downstream plotting.
 
 Usage:
-    python stability_eval.py              # Run evaluation (skips if JSON exists)
-    python stability_eval.py --force-rerun  # Force re-run even if JSON exists
+    python stability_eval.py --mode noise              # Activation noise (default)
+    python stability_eval.py --mode temperature         # Temperature sampling
+    python stability_eval.py --mode noise --force-rerun # Force re-run
 
 Outputs:
 - Raw results JSON (plots are generated separately via plotting/plot_stability_eval.py)
@@ -49,8 +53,10 @@ from nl_probes.base_experiment import sanitize_lora_name
 
 @dataclass
 class StabilityConfig:
-    n_samples: int = 10  # Number of noisy forward passes
-    noise_scale: float = 0.05  # Fraction of activation norm for noise std
+    mode: str = "noise"  # "noise" or "temperature"
+    n_samples: int = 10  # Number of forward passes
+    noise_scale: float = 0.05  # (noise mode) Fraction of activation norm for noise std
+    temperature: float = 1.0  # (temperature mode) Sampling temperature
 
 
 # Model configuration
@@ -152,36 +158,63 @@ def evaluate_with_stability(
     Run stability evaluation on all examples.
     
     For each example:
-    1. Run N noisy forward passes
-    2. Compute agreement rate
+    1. Run N forward passes (with noise or temperature sampling)
+    2. Compute agreement rate via majority vote
     3. Store predictions and metrics
     """
+    is_temperature_mode = stability_config.mode == "temperature"
+    
+    # Build generation kwargs for this mode
+    if is_temperature_mode:
+        gen_kwargs = {
+            **generation_kwargs,
+            "do_sample": True,
+            "temperature": stability_config.temperature,
+        }
+        desc = f"Temperature eval (T={stability_config.temperature})"
+    else:
+        gen_kwargs = generation_kwargs
+        desc = f"Noise eval (scale={stability_config.noise_scale})"
+    
     results = []
 
-    for i, datapoint in enumerate(tqdm(eval_data, desc="Stability evaluation")):
+    for i, datapoint in enumerate(tqdm(eval_data, desc=desc)):
         # Prepare single example
         dp = get_prompt_tokens_only(datapoint)
         batch = materialize_missing_steering_vectors([dp], tokenizer, model)
         batch_data = construct_batch(batch, tokenizer, device)
 
-        # Get base steering vectors
         base_vectors = batch_data.steering_vectors
 
-        # Run N noisy forward passes
+        # Run N forward passes
         predictions = []
         for _ in range(stability_config.n_samples):
-            noisy_vectors = add_noise_to_vectors(base_vectors, stability_config.noise_scale)
-            pred = run_single_inference(
-                model=model,
-                tokenizer=tokenizer,
-                submodule=submodule,
-                batch_data=batch_data,
-                steering_coefficient=steering_coefficient,
-                generation_kwargs=generation_kwargs,
-                device=device,
-                dtype=dtype,
-                noisy_vectors=noisy_vectors,
-            )
+            if is_temperature_mode:
+                # Temperature mode: use clean vectors, stochastic decoding
+                pred = run_single_inference(
+                    model=model,
+                    tokenizer=tokenizer,
+                    submodule=submodule,
+                    batch_data=batch_data,
+                    steering_coefficient=steering_coefficient,
+                    generation_kwargs=gen_kwargs,
+                    device=device,
+                    dtype=dtype,
+                )
+            else:
+                # Noise mode: perturb vectors, deterministic decoding
+                noisy_vectors = add_noise_to_vectors(base_vectors, stability_config.noise_scale)
+                pred = run_single_inference(
+                    model=model,
+                    tokenizer=tokenizer,
+                    submodule=submodule,
+                    batch_data=batch_data,
+                    steering_coefficient=steering_coefficient,
+                    generation_kwargs=gen_kwargs,
+                    device=device,
+                    dtype=dtype,
+                    noisy_vectors=noisy_vectors,
+                )
             predictions.append(parse_answer(pred))
 
         # Compute stability metrics
@@ -230,23 +263,35 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description="Stability evaluation experiment")
+    parser.add_argument("--mode", choices=["noise", "temperature"], default="noise",
+                        help="Stability mode: 'noise' perturbs activations, 'temperature' uses stochastic decoding")
     parser.add_argument("--force-rerun", action="store_true", help="Force re-run even if JSON exists")
     args = parser.parse_args()
 
     print(f"{'=' * 60}")
     print(f"Stability Evaluation Experiment")
+    print(f"Mode: {args.mode}")
     print(f"Model: {MODEL_NAME}")
     print(f"Verbalizer: {VERBALIZER_LORA}")
     print(f"Dataset: {DATASET_NAME}")
     print(f"{'=' * 60}")
 
-    stability_config = StabilityConfig(n_samples=10, noise_scale=0.003)
+    if args.mode == "noise":
+        stability_config = StabilityConfig(mode="noise", n_samples=10, noise_scale=0.003)
+    else:
+        stability_config = StabilityConfig(mode="temperature", n_samples=10, temperature=1.0)
 
-    # Compute output path first to check for existing results
+    # Compute output path (mode-specific naming)
     model_name_str = MODEL_NAME.split("/")[-1]
     lora_name_str = VERBALIZER_LORA.split("/")[-1]
-    output_base = f"{OUTPUT_DIR}/stability_{model_name_str}_{lora_name_str}_{DATASET_NAME}_noise{stability_config.noise_scale}"
+    if args.mode == "noise":
+        param_str = f"noise{stability_config.noise_scale}"
+    else:
+        param_str = f"temp{stability_config.temperature}"
+    output_base = f"{OUTPUT_DIR}/stability_{model_name_str}_{lora_name_str}_{DATASET_NAME}_{param_str}"
     json_path = f"{output_base}.json"
+
+    print(f"Output: {json_path}")
 
     # Check if we can skip evaluation by loading existing results
     if os.path.exists(json_path) and not args.force_rerun:
@@ -315,7 +360,7 @@ if __name__ == "__main__":
         print(f"Loaded {len(eval_data)} test examples")
 
         # Run stability evaluation
-        print(f"\nRunning stability evaluation (n_samples={stability_config.n_samples}, noise_scale={stability_config.noise_scale})")
+        print(f"\nRunning stability evaluation ({stability_config.mode} mode, n_samples={stability_config.n_samples})")
         results = evaluate_with_stability(
             model=model,
             tokenizer=tokenizer,
