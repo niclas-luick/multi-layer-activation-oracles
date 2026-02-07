@@ -27,18 +27,18 @@ DATASET_NAME = "language_identification"
 #   mode="noise"       -> param_value is noise_scale (e.g. 0.003)
 #   mode="temperature"  -> param_value is temperature (e.g. 1.0)
 EXPERIMENTS: list[tuple[str, float]] = [
-    # ("noise", 0.001),
-    # ("noise", 0.003),
-    # ("noise", 0.005),
-    # ("noise", 0.01),
-    # ("noise", 0.02),
+    ("noise", 0.001),
+    ("noise", 0.003),
+    ("noise", 0.005),
+    ("noise", 0.01),
+    ("noise", 0.02),
     # ("noise", 0.05),
-    ("temperature", 0.3),
-    ("temperature", 0.5),
-    ("temperature", 0.7),
-    ("temperature", 1.0),
-    ("temperature", 1.5),
-    ("temperature", 2.0),
+    # ("temperature", 0.3),
+    # ("temperature", 0.5),
+    # ("temperature", 0.7),
+    # ("temperature", 1.0),
+    # ("temperature", 1.5),
+    # ("temperature", 2.0),
 ]
 
 # Input/output paths
@@ -205,7 +205,9 @@ def plot_tradeoff(
 
     ax.set_xlabel("Coverage", fontsize=12)
     ax.set_ylabel("Selective Accuracy", fontsize=12)
-    ax.set_xlim(0, 1.05)
+    ax.set_xlim(0.1, 1.05)
+    ax.set_ylim(0.7, 0.9)
+
     ax.legend(loc="lower left", fontsize=10)
     ax.grid(True, alpha=0.3)
     ax.set_title(title, fontsize=14)
