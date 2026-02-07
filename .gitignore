@@ -184,6 +184,7 @@ openai_api_key.txt
 *.ruff_cache/
 *.github/
 *temp*
+!plots/**
 *artifacts*
 #*images*
 *job_description.json

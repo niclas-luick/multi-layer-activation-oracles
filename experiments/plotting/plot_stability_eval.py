@@ -27,14 +27,14 @@ DATASET_NAME = "language_identification"
 #   mode="noise"       -> param_value is noise_scale (e.g. 0.003)
 #   mode="temperature"  -> param_value is temperature (e.g. 1.0)
 EXPERIMENTS: list[tuple[str, float]] = [
-    ("noise", 0.001),
-    ("noise", 0.003),
-    ("noise", 0.005),
-    ("noise", 0.01),
-    ("noise", 0.02),
-    ("noise", 0.05),
+    # ("noise", 0.001),
+    # ("noise", 0.003),
+    # ("noise", 0.005),
+    # ("noise", 0.01),
+    # ("noise", 0.02),
+    # ("noise", 0.05),
     # ("temperature", 0.5),
-    # ("temperature", 1.0),
+    ("temperature", 1.0),
     # ("temperature", 2.0),
 ]
 
@@ -263,7 +263,7 @@ if __name__ == "__main__":
     # Generate output filename
     model_name_str = MODEL_NAME.split("/")[-1]
     lora_name_str = VERBALIZER_LORA.split("/")[-1]
-    output_base = f"{OUTPUT_DIR}/stability_comparison_{model_name_str}_{lora_name_str}_{DATASET_NAME}"
+    output_base = f"{OUTPUT_DIR}/stability_comparison_{model_name_str}_{lora_name_str}_{DATASET_NAME}_{mode}_{param}"
 
     # Plot 1: Accuracy & Coverage vs Threshold (side by side)
     plot_curves(
