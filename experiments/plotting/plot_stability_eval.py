@@ -270,6 +270,7 @@ def plot_tradeoff(
     ax.set_xlabel("Coverage", fontsize=12)
     ax.set_ylabel("Selective Accuracy", fontsize=12)
     ax.set_xlim(0.1, 1.05)
+    ax.set_ylim(0.6, 0.9)
 
     ax.legend(loc="lower left", fontsize=10)
     ax.grid(True, alpha=0.3)
@@ -342,7 +343,7 @@ if __name__ == "__main__":
     # Generate output filename
     model_name_str = MODEL_NAME.split("/")[-1]
     lora_name_str = VERBALIZER_LORA.split("/")[-1]
-    output_base = f"{OUTPUT_DIR}/stability_comparison_{model_name_str}_{lora_name_str}_{DATASET_NAME}"
+    output_base = f"{OUTPUT_DIR}/stability_comparison_{model_name_str}_{lora_name_str}_{DATASET_NAME}_threshold_"
 
     # Plot 1: Accuracy & Coverage vs Threshold (side by side)
     plot_curves(

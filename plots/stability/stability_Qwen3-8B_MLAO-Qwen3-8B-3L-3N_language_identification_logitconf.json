@@ -1,0 +1,4227 @@
+{
+  "config": {
+    "model_name": "Qwen/Qwen3-8B",
+    "verbalizer_lora": "nluick/MLAO-Qwen3-8B-3L-3N",
+    "layer_percents": [
+      25,
+      50,
+      75
+    ],
+    "dataset_name": "language_identification",
+    "n_test_examples": 100,
+    "stability_config": {
+      "mode": "threshold",
+      "n_samples": 10,
+      "noise_scale": 0.05,
+      "temperature": 1.0
+    },
+    "steering_coefficient": 1.0
+  },
+  "summary": {
+    "baseline_accuracy": 0.7466666666666667,
+    "mean_agreement_rate": 0.8816458213329316,
+    "n_examples": 300
+  },
+  "results": [
+    {
+      "index": 0,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9840465188026428,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9840465188026428
+    },
+    {
+      "index": 1,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.9525339007377625,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9525339007377625
+    },
+    {
+      "index": 2,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.705650269985199,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.705650269985199
+    },
+    {
+      "index": 3,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.8807246088981628,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.8807246088981628
+    },
+    {
+      "index": 4,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.8354250192642212,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.8354250192642212
+    },
+    {
+      "index": 5,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9578726291656494,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9578726291656494
+    },
+    {
+      "index": 6,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9525397419929504,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9525397419929504
+    },
+    {
+      "index": 7,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.99538654088974,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.99538654088974
+    },
+    {
+      "index": 8,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 0.9859212040901184,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9859212040901184
+    },
+    {
+      "index": 9,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 0.9045941233634949,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9045941233634949
+    },
+    {
+      "index": 10,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 0.9465550184249878,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9465550184249878
+    },
+    {
+      "index": 11,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 0.9668834209442139,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9668834209442139
+    },
+    {
+      "index": 12,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9859230518341064,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9859230518341064
+    },
+    {
+      "index": 13,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9890027046203613,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9890027046203613
+    },
+    {
+      "index": 14,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9932928085327148,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9932928085327148
+    },
+    {
+      "index": 15,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.7548165917396545,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.7548165917396545
+    },
+    {
+      "index": 16,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.966880202293396,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.966880202293396
+    },
+    {
+      "index": 17,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9953827261924744,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9953827261924744
+    },
+    {
+      "index": 18,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9984962940216064,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9984962940216064
+    },
+    {
+      "index": 19,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.9240573048591614,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9240573048591614
+    },
+    {
+      "index": 20,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.8669838309288025,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.8669838309288025
+    },
+    {
+      "index": 21,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 0.7309786081314087,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.7309786081314087
+    },
+    {
+      "index": 22,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9241053462028503,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9241053462028503
+    },
+    {
+      "index": 23,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 0.8807374238967896,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.8807374238967896
+    },
+    {
+      "index": 24,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.989000678062439,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.989000678062439
+    },
+    {
+      "index": 25,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9398764371871948,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9398764371871948
+    },
+    {
+      "index": 26,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 0.7309558987617493,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.7309558987617493
+    },
+    {
+      "index": 27,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9465422034263611,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9465422034263611
+    },
+    {
+      "index": 28,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.8669435381889343,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.8669435381889343
+    },
+    {
+      "index": 29,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.7547932267189026,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.7547932267189026
+    },
+    {
+      "index": 30,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9668675661087036,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9668675661087036
+    },
+    {
+      "index": 31,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9668777585029602,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9668777585029602
+    },
+    {
+      "index": 32,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9740021228790283,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9740021228790283
+    },
+    {
+      "index": 33,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 0.6790899038314819,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.6790899038314819
+    },
+    {
+      "index": 34,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 0.7981194853782654,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.7981194853782654
+    },
+    {
+      "index": 35,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 0.6223710775375366,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.6223710775375366
+    },
+    {
+      "index": 36,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.9706545472145081,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9706545472145081
+    },
+    {
+      "index": 37,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.7772178053855896,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.7772178053855896
+    },
+    {
+      "index": 38,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.705674946308136,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.705674946308136
+    },
+    {
+      "index": 39,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.835435152053833,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.835435152053833
+    },
+    {
+      "index": 40,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.8932675123214722,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.8932675123214722
+    },
+    {
+      "index": 41,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9964011907577515,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9964011907577515
+    },
+    {
+      "index": 42,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.679054856300354,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.679054856300354
+    },
+    {
+      "index": 43,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9796492457389832,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9796492457389832
+    },
+    {
+      "index": 44,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9889940619468689,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9889940619468689
+    },
+    {
+      "index": 45,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.974024772644043,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.974024772644043
+    },
+    {
+      "index": 46,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9525394439697266,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9525394439697266
+    },
+    {
+      "index": 47,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9706625938415527,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9706625938415527
+    },
+    {
+      "index": 48,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.6790498495101929,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.6790498495101929
+    },
+    {
+      "index": 49,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9796440601348877,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9796440601348877
+    },
+    {
+      "index": 50,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9045820236206055,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9045820236206055
+    },
+    {
+      "index": 51,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9740157127380371,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9740157127380371
+    },
+    {
+      "index": 52,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9578747153282166,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9578747153282166
+    },
+    {
+      "index": 53,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.9933005571365356,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9933005571365356
+    },
+    {
+      "index": 54,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9875512719154358,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9875512719154358
+    },
+    {
+      "index": 55,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.7056846618652344,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.7056846618652344
+    },
+    {
+      "index": 56,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9740219116210938,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9740219116210938
+    },
+    {
+      "index": 57,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9940817952156067,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9940817952156067
+    },
+    {
+      "index": 58,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.988976001739502,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.988976001739502
+    },
+    {
+      "index": 59,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.6512627601623535,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.6512627601623535
+    },
+    {
+      "index": 60,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.952528715133667,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.952528715133667
+    },
+    {
+      "index": 61,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9323099851608276,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9323099851608276
+    },
+    {
+      "index": 62,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.5311423540115356,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.5311423540115356
+    },
+    {
+      "index": 63,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.7309200763702393,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.7309200763702393
+    },
+    {
+      "index": 64,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.8932498693466187,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.8932498693466187
+    },
+    {
+      "index": 65,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.5925827026367188,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.5925827026367188
+    },
+    {
+      "index": 66,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.7056739926338196,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.7056739926338196
+    },
+    {
+      "index": 67,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9740251898765564,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9740251898765564
+    },
+    {
+      "index": 68,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.984070897102356,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.984070897102356
+    },
+    {
+      "index": 69,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9706597924232483,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9706597924232483
+    },
+    {
+      "index": 70,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.8518641591072083,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.8518641591072083
+    },
+    {
+      "index": 71,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9398797154426575,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9398797154426575
+    },
+    {
+      "index": 72,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.8354016542434692,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.8354016542434692
+    },
+    {
+      "index": 73,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 0.9398542642593384,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9398542642593384
+    },
+    {
+      "index": 74,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.8807275295257568,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.8807275295257568
+    },
+    {
+      "index": 75,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9875391721725464,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9875391721725464
+    },
+    {
+      "index": 76,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9626316428184509,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9626316428184509
+    },
+    {
+      "index": 77,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9902812242507935,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9902812242507935
+    },
+    {
+      "index": 78,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.9706581234931946,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9706581234931946
+    },
+    {
+      "index": 79,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.893265426158905,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.893265426158905
+    },
+    {
+      "index": 80,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.8354116082191467,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.8354116082191467
+    },
+    {
+      "index": 81,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.85187166929245,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.85187166929245
+    },
+    {
+      "index": 82,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9045550227165222,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9045550227165222
+    },
+    {
+      "index": 83,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.962632954120636,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.962632954120636
+    },
+    {
+      "index": 84,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.7772079110145569,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.7772079110145569
+    },
+    {
+      "index": 85,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.974012553691864,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.974012553691864
+    },
+    {
+      "index": 86,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.9525339007377625,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9525339007377625
+    },
+    {
+      "index": 87,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9558585286140442,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9558585286140442
+    },
+    {
+      "index": 88,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.973378598690033,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.973378598690033
+    },
+    {
+      "index": 89,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.8932303786277771,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.8932303786277771
+    },
+    {
+      "index": 90,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.562089741230011,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.562089741230011
+    },
+    {
+      "index": 91,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9240776896476746,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9240776896476746
+    },
+    {
+      "index": 92,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.914840817451477,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.914840817451477
+    },
+    {
+      "index": 93,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9578713178634644,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9578713178634644
+    },
+    {
+      "index": 94,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.7056770324707031,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.7056770324707031
+    },
+    {
+      "index": 95,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 0.7056910395622253,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.7056910395622253
+    },
+    {
+      "index": 96,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 0.5311155915260315,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.5311155915260315
+    },
+    {
+      "index": 97,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.8174947500228882,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.8174947500228882
+    },
+    {
+      "index": 98,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.8807343244552612,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.8807343244552612
+    },
+    {
+      "index": 99,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.8518738746643066,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.8518738746643066
+    },
+    {
+      "index": 100,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.7548332810401917,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.7548332810401917
+    },
+    {
+      "index": 101,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.8518707156181335,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.8518707156181335
+    },
+    {
+      "index": 102,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.8807187080383301,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.8807187080383301
+    },
+    {
+      "index": 103,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9668768644332886,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9668768644332886
+    },
+    {
+      "index": 104,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.903133749961853,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.903133749961853
+    },
+    {
+      "index": 105,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9045075178146362,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9045075178146362
+    },
+    {
+      "index": 106,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9148002862930298,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9148002862930298
+    },
+    {
+      "index": 107,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9959190487861633,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9959190487861633
+    },
+    {
+      "index": 108,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.8174689412117004,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.8174689412117004
+    },
+    {
+      "index": 109,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.8352513313293457,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.8352513313293457
+    },
+    {
+      "index": 110,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.8668883442878723,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.8668883442878723
+    },
+    {
+      "index": 111,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.8669374585151672,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.8669374585151672
+    },
+    {
+      "index": 112,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.939628005027771,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.939628005027771
+    },
+    {
+      "index": 113,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9739752411842346,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9739752411842346
+    },
+    {
+      "index": 114,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9324089288711548,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9324089288711548
+    },
+    {
+      "index": 115,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9241073131561279,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9241073131561279
+    },
+    {
+      "index": 116,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9241073131561279,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9241073131561279
+    },
+    {
+      "index": 117,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9398659467697144,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9398659467697144
+    },
+    {
+      "index": 118,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9770026206970215,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9770026206970215
+    },
+    {
+      "index": 119,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9940816760063171,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9940816760063171
+    },
+    {
+      "index": 120,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 0.8174925446510315,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.8174925446510315
+    },
+    {
+      "index": 121,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 0.5620658993721008,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.5620658993721008
+    },
+    {
+      "index": 122,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 0.8174843788146973,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.8174843788146973
+    },
+    {
+      "index": 123,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9889968633651733,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9889968633651733
+    },
+    {
+      "index": 124,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9889968633651733,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9889968633651733
+    },
+    {
+      "index": 125,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9525324106216431,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9525324106216431
+    },
+    {
+      "index": 126,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9706476926803589,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9706476926803589
+    },
+    {
+      "index": 127,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.8669437766075134,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.8669437766075134
+    },
+    {
+      "index": 128,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9875520467758179,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9875520467758179
+    },
+    {
+      "index": 129,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.9465702772140503,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9465702772140503
+    },
+    {
+      "index": 130,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.8807470202445984,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.8807470202445984
+    },
+    {
+      "index": 131,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.8807582259178162,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.8807582259178162
+    },
+    {
+      "index": 132,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9875524044036865,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9875524044036865
+    },
+    {
+      "index": 133,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9769928455352783,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9769928455352783
+    },
+    {
+      "index": 134,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.987550675868988,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.987550675868988
+    },
+    {
+      "index": 135,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.9796439409255981,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9796439409255981
+    },
+    {
+      "index": 136,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9323866367340088,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9323866367340088
+    },
+    {
+      "index": 137,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.932388424873352,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.932388424873352
+    },
+    {
+      "index": 138,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9964011907577515,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9964011907577515
+    },
+    {
+      "index": 139,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9968221187591553,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9968221187591553
+    },
+    {
+      "index": 140,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9796485304832458,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9796485304832458
+    },
+    {
+      "index": 141,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9148455858230591,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9148455858230591
+    },
+    {
+      "index": 142,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.8518785834312439,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.8518785834312439
+    },
+    {
+      "index": 143,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9740142226219177,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9740142226219177
+    },
+    {
+      "index": 144,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.592563271522522,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.592563271522522
+    },
+    {
+      "index": 145,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.9626439213752747,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9626439213752747
+    },
+    {
+      "index": 146,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.932407796382904,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.932407796382904
+    },
+    {
+      "index": 147,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.89316725730896,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.89316725730896
+    },
+    {
+      "index": 148,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9968205690383911,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9968205690383911
+    },
+    {
+      "index": 149,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9840695261955261,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9840695261955261
+    },
+    {
+      "index": 150,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.59257972240448,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.59257972240448
+    },
+    {
+      "index": 151,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.7772175073623657,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.7772175073623657
+    },
+    {
+      "index": 152,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9398540258407593,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9398540258407593
+    },
+    {
+      "index": 153,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9465541243553162,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9465541243553162
+    },
+    {
+      "index": 154,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9875565767288208,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9875565767288208
+    },
+    {
+      "index": 155,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9796440601348877,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9796440601348877
+    },
+    {
+      "index": 156,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9902787804603577,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9902787804603577
+    },
+    {
+      "index": 157,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9626373052597046,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9626373052597046
+    },
+    {
+      "index": 158,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9968216419219971,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9968216419219971
+    },
+    {
+      "index": 159,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 0.7309828996658325,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.7309828996658325
+    },
+    {
+      "index": 160,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.7772088050842285,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.7772088050842285
+    },
+    {
+      "index": 161,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 0.7056992650032043,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.7056992650032043
+    },
+    {
+      "index": 162,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.8354246020317078,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.8354246020317078
+    },
+    {
+      "index": 163,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9889946579933167,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9889946579933167
+    },
+    {
+      "index": 164,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.8353961706161499,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.8353961706161499
+    },
+    {
+      "index": 165,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.8174798488616943,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.8174798488616943
+    },
+    {
+      "index": 166,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.8932294249534607,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.8932294249534607
+    },
+    {
+      "index": 167,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.7056602239608765,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.7056602239608765
+    },
+    {
+      "index": 168,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9706606864929199,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9706606864929199
+    },
+    {
+      "index": 169,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9465530514717102,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9465530514717102
+    },
+    {
+      "index": 170,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.989003598690033,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.989003598690033
+    },
+    {
+      "index": 171,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9706518054008484,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9706518054008484
+    },
+    {
+      "index": 172,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.8669342994689941,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.8669342994689941
+    },
+    {
+      "index": 173,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.7772079706192017,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.7772079706192017
+    },
+    {
+      "index": 174,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9914108514785767,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9914108514785767
+    },
+    {
+      "index": 175,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9859133362770081,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9859133362770081
+    },
+    {
+      "index": 176,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9770042300224304,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9770042300224304
+    },
+    {
+      "index": 177,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9932984709739685,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9932984709739685
+    },
+    {
+      "index": 178,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 0.9324083924293518,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9324083924293518
+    },
+    {
+      "index": 179,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.5620759129524231,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.5620759129524231
+    },
+    {
+      "index": 180,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9324159622192383,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9324159622192383
+    },
+    {
+      "index": 181,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.946566641330719,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.946566641330719
+    },
+    {
+      "index": 182,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.8174663782119751,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.8174663782119751
+    },
+    {
+      "index": 183,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.7771869897842407,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.7771869897842407
+    },
+    {
+      "index": 184,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.8669268488883972,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.8669268488883972
+    },
+    {
+      "index": 185,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9148338437080383,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9148338437080383
+    },
+    {
+      "index": 186,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9398502707481384,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9398502707481384
+    },
+    {
+      "index": 187,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.8669703006744385,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.8669703006744385
+    },
+    {
+      "index": 188,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9045965671539307,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9045965671539307
+    },
+    {
+      "index": 189,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.754824161529541,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.754824161529541
+    },
+    {
+      "index": 190,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9902762174606323,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9902762174606323
+    },
+    {
+      "index": 191,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 0.5311270356178284,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.5311270356178284
+    },
+    {
+      "index": 192,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.5925715565681458,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.5925715565681458
+    },
+    {
+      "index": 193,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.5925535559654236,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.5925535559654236
+    },
+    {
+      "index": 194,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.53113853931427,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.53113853931427
+    },
+    {
+      "index": 195,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9953809976577759,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9953809976577759
+    },
+    {
+      "index": 196,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9889933466911316,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9889933466911316
+    },
+    {
+      "index": 197,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9875513911247253,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9875513911247253
+    },
+    {
+      "index": 198,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9940783977508545,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9940783977508545
+    },
+    {
+      "index": 199,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9964011907577515,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9964011907577515
+    },
+    {
+      "index": 200,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.979646623134613,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.979646623134613
+    },
+    {
+      "index": 201,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.8807340860366821,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.8807340860366821
+    },
+    {
+      "index": 202,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9241008758544922,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9241008758544922
+    },
+    {
+      "index": 203,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9398785829544067,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9398785829544067
+    },
+    {
+      "index": 204,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.5310362577438354,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.5310362577438354
+    },
+    {
+      "index": 205,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9626389145851135,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9626389145851135
+    },
+    {
+      "index": 206,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9626380801200867,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9626380801200867
+    },
+    {
+      "index": 207,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.8932517170906067,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.8932517170906067
+    },
+    {
+      "index": 208,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.9045841097831726,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9045841097831726
+    },
+    {
+      "index": 209,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.8669803738594055,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.8669803738594055
+    },
+    {
+      "index": 210,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9914108514785767,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9914108514785767
+    },
+    {
+      "index": 211,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9924117922782898,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9924117922782898
+    },
+    {
+      "index": 212,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9940817952156067,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9940817952156067
+    },
+    {
+      "index": 213,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9241035580635071,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9241035580635071
+    },
+    {
+      "index": 214,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.8932594060897827,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.8932594060897827
+    },
+    {
+      "index": 215,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9859212040901184,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9859212040901184
+    },
+    {
+      "index": 216,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.7309398651123047,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.7309398651123047
+    },
+    {
+      "index": 217,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.754780650138855,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.754780650138855
+    },
+    {
+      "index": 218,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 0.5620680451393127,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.5620680451393127
+    },
+    {
+      "index": 219,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 0.8807311058044434,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.8807311058044434
+    },
+    {
+      "index": 220,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9525442719459534,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9525442719459534
+    },
+    {
+      "index": 221,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 0.9398583769798279,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9398583769798279
+    },
+    {
+      "index": 222,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 0.8354089856147766,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.8354089856147766
+    },
+    {
+      "index": 223,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.8806983828544617,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.8806983828544617
+    },
+    {
+      "index": 224,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.8669459223747253,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.8669459223747253
+    },
+    {
+      "index": 225,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9240818619728088,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9240818619728088
+    },
+    {
+      "index": 226,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9840770959854126,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9840770959854126
+    },
+    {
+      "index": 227,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9626263380050659,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9626263380050659
+    },
+    {
+      "index": 228,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9819858074188232,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9819858074188232
+    },
+    {
+      "index": 229,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.7056512236595154,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.7056512236595154
+    },
+    {
+      "index": 230,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.6511143445968628,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.6511143445968628
+    },
+    {
+      "index": 231,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9465246796607971,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9465246796607971
+    },
+    {
+      "index": 232,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.8932453989982605,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.8932453989982605
+    },
+    {
+      "index": 233,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.8807377815246582,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.8807377815246582
+    },
+    {
+      "index": 234,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9045521020889282,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9045521020889282
+    },
+    {
+      "index": 235,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.8669453859329224,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.8669453859329224
+    },
+    {
+      "index": 236,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.7309349179267883,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.7309349179267883
+    },
+    {
+      "index": 237,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.5925678610801697,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.5925678610801697
+    },
+    {
+      "index": 238,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.7548222541809082,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.7548222541809082
+    },
+    {
+      "index": 239,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.7309811115264893,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.7309811115264893
+    },
+    {
+      "index": 240,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.531143844127655,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.531143844127655
+    },
+    {
+      "index": 241,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.9578744769096375,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9578744769096375
+    },
+    {
+      "index": 242,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9668934345245361,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9668934345245361
+    },
+    {
+      "index": 243,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.7980936765670776,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.7980936765670776
+    },
+    {
+      "index": 244,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.8932345509529114,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.8932345509529114
+    },
+    {
+      "index": 245,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.6223589181900024,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.6223589181900024
+    },
+    {
+      "index": 246,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 0.9924141764640808,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9924141764640808
+    },
+    {
+      "index": 247,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 0.9924141764640808,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9924141764640808
+    },
+    {
+      "index": 248,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.9240685105323792,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9240685105323792
+    },
+    {
+      "index": 249,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.8353976607322693,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.8353976607322693
+    },
+    {
+      "index": 250,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.7056612372398376,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.7056612372398376
+    },
+    {
+      "index": 251,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.8669483065605164,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.8669483065605164
+    },
+    {
+      "index": 252,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9964010715484619,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9964010715484619
+    },
+    {
+      "index": 253,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9398516416549683,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9398516416549683
+    },
+    {
+      "index": 254,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.9148602485656738,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9148602485656738
+    },
+    {
+      "index": 255,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9398584365844727,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9398584365844727
+    },
+    {
+      "index": 256,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9875484704971313,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9875484704971313
+    },
+    {
+      "index": 257,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9578776955604553,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9578776955604553
+    },
+    {
+      "index": 258,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.8931893110275269,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.8931893110275269
+    },
+    {
+      "index": 259,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.8353848457336426,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.8353848457336426
+    },
+    {
+      "index": 260,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.8172141313552856,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.8172141313552856
+    },
+    {
+      "index": 261,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.9525296688079834,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9525296688079834
+    },
+    {
+      "index": 262,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.8518689274787903,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.8518689274787903
+    },
+    {
+      "index": 263,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.981992244720459,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.981992244720459
+    },
+    {
+      "index": 264,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.970658004283905,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.970658004283905
+    },
+    {
+      "index": 265,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9706677794456482,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9706677794456482
+    },
+    {
+      "index": 266,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9875621795654297,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9875621795654297
+    },
+    {
+      "index": 267,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.7056455016136169,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.7056455016136169
+    },
+    {
+      "index": 268,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.7309581637382507,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.7309581637382507
+    },
+    {
+      "index": 269,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.6512597799301147,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.6512597799301147
+    },
+    {
+      "index": 270,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.9626267552375793,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9626267552375793
+    },
+    {
+      "index": 271,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9740153551101685,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9740153551101685
+    },
+    {
+      "index": 272,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9796282052993774,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9796282052993774
+    },
+    {
+      "index": 273,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.9914160370826721,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9914160370826721
+    },
+    {
+      "index": 274,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9875510334968567,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9875510334968567
+    },
+    {
+      "index": 275,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.8668997883796692,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.8668997883796692
+    },
+    {
+      "index": 276,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9045701026916504,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9045701026916504
+    },
+    {
+      "index": 277,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.49990299344062805,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.49990299344062805
+    },
+    {
+      "index": 278,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.9525356292724609,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9525356292724609
+    },
+    {
+      "index": 279,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9706649780273438,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9706649780273438
+    },
+    {
+      "index": 280,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9668816328048706,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9668816328048706
+    },
+    {
+      "index": 281,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9578902721405029,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9578902721405029
+    },
+    {
+      "index": 282,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9465600252151489,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9465600252151489
+    },
+    {
+      "index": 283,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.817518949508667,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.817518949508667
+    },
+    {
+      "index": 284,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9241020083427429,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9241020083427429
+    },
+    {
+      "index": 285,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.8174797892570496,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.8174797892570496
+    },
+    {
+      "index": 286,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.977002739906311,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.977002739906311
+    },
+    {
+      "index": 287,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9324014782905579,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9324014782905579
+    },
+    {
+      "index": 288,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.9148368835449219,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9148368835449219
+    },
+    {
+      "index": 289,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9668735861778259,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9668735861778259
+    },
+    {
+      "index": 290,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.939872682094574,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.939872682094574
+    },
+    {
+      "index": 291,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 0.914858341217041,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.914858341217041
+    },
+    {
+      "index": 292,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.7547394037246704,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.7547394037246704
+    },
+    {
+      "index": 293,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.6511853337287903,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.6511853337287903
+    },
+    {
+      "index": 294,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 0.9525083899497986,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.9525083899497986
+    },
+    {
+      "index": 295,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.592585027217865,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.592585027217865
+    },
+    {
+      "index": 296,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 0.49990442395210266,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.49990442395210266
+    },
+    {
+      "index": 297,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 0.9045846462249756,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.9045846462249756
+    },
+    {
+      "index": 298,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 0.981995701789856,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "confidence": 0.981995701789856
+    },
+    {
+      "index": 299,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 0.952522873878479,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "confidence": 0.952522873878479
+    }
+  ]
+}
