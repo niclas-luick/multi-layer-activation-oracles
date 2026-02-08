@@ -2,16 +2,17 @@
 """
 Perturbation Stability Experiment
 
-Two modes for measuring prediction stability:
-  - noise: Add Gaussian noise to activation/steering vectors
-  - temperature: Use temperature sampling (do_sample=True, temperature=1.0)
+Three modes for measuring prediction stability:
+  - noise: Add Gaussian noise to activation/steering vectors (N passes)
+  - temperature: Use temperature sampling (N passes)
+  - threshold: Single deterministic pass, use softmax confidence as stability score
 
-Both modes run N forward passes, compute agreement rate via majority vote,
-and output the same JSON format for downstream plotting.
+All modes output the same JSON format (agreement_rate field) for downstream plotting.
 
 Usage:
     python stability_eval.py --mode noise              # Activation noise (default)
     python stability_eval.py --mode temperature         # Temperature sampling
+    python stability_eval.py --mode threshold           # Logit confidence
     python stability_eval.py --mode noise --force-rerun # Force re-run
 
 Outputs:
@@ -53,8 +54,8 @@ from nl_probes.base_experiment import sanitize_lora_name
 
 @dataclass
 class StabilityConfig:
-    mode: str = "noise"  # "noise" or "temperature"
-    n_samples: int = 10  # Number of forward passes
+    mode: str = "noise"  # "noise", "temperature", or "threshold"
+    n_samples: int = 10  # Number of forward passes (ignored for threshold mode)
     noise_scale: float = 0.05  # (noise mode) Fraction of activation norm for noise std
     temperature: float = 1.0  # (temperature mode) Sampling temperature
 
@@ -143,6 +144,60 @@ def run_single_inference(
     return decoded_output[0]  # Single example
 
 
+@torch.no_grad()
+def run_inference_with_confidence(
+    model,
+    tokenizer,
+    submodule,
+    batch_data,
+    steering_coefficient: float,
+    generation_kwargs: dict,
+    device: torch.device,
+    dtype: torch.dtype,
+) -> tuple[str, float]:
+    """Single deterministic forward pass returning (decoded_answer, confidence).
+    
+    Confidence is the softmax probability of the first generated token.
+    """
+    vectors = batch_data.steering_vectors
+    positions = batch_data.positions
+
+    hook_fn = get_hf_activation_steering_hook(
+        vectors=vectors,
+        positions=positions,
+        steering_coefficient=steering_coefficient,
+        device=device,
+        dtype=dtype,
+    )
+
+    tokenized_input = {
+        "input_ids": batch_data.input_ids,
+        "attention_mask": batch_data.attention_mask,
+    }
+
+    gen_kwargs = {
+        **generation_kwargs,
+        "return_dict_in_generate": True,
+        "output_scores": True,
+    }
+
+    with add_hook(submodule, hook_fn):
+        outputs = model.generate(**tokenized_input, **gen_kwargs)
+
+    # scores[0] = logits at first generated token, shape (batch, vocab_size)
+    first_token_logits = outputs.scores[0][0]  # (vocab_size,)
+    probs = torch.softmax(first_token_logits, dim=-1)
+
+    # Confidence = probability assigned to the token the model actually generated
+    generated_token_id = outputs.sequences[0, batch_data.input_ids.shape[1]]
+    confidence = probs[generated_token_id].item()
+
+    generated_tokens = outputs.sequences[:, batch_data.input_ids.shape[1]:]
+    decoded = tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)[0]
+
+    return decoded, confidence
+
+
 def evaluate_with_stability(
     model,
     tokenizer,
@@ -157,21 +212,23 @@ def evaluate_with_stability(
     """
     Run stability evaluation on all examples.
     
-    For each example:
-    1. Run N forward passes (with noise or temperature sampling)
-    2. Compute agreement rate via majority vote
-    3. Store predictions and metrics
+    Modes:
+    - noise/temperature: Run N forward passes, compute agreement via majority vote
+    - threshold: Single deterministic pass, use softmax confidence as agreement_rate
     """
-    is_temperature_mode = stability_config.mode == "temperature"
+    mode = stability_config.mode
     
     # Build generation kwargs for this mode
-    if is_temperature_mode:
+    if mode == "temperature":
         gen_kwargs = {
             **generation_kwargs,
             "do_sample": True,
             "temperature": stability_config.temperature,
         }
         desc = f"Temperature eval (T={stability_config.temperature})"
+    elif mode == "threshold":
+        gen_kwargs = generation_kwargs  # deterministic
+        desc = "Threshold eval (logit confidence)"
     else:
         gen_kwargs = generation_kwargs
         desc = f"Noise eval (scale={stability_config.noise_scale})"
@@ -184,72 +241,95 @@ def evaluate_with_stability(
         batch = materialize_missing_steering_vectors([dp], tokenizer, model)
         batch_data = construct_batch(batch, tokenizer, device)
 
-        base_vectors = batch_data.steering_vectors
-
-        # Run N forward passes
-        predictions = []
-        for _ in range(stability_config.n_samples):
-            if is_temperature_mode:
-                # Temperature mode: use clean vectors, stochastic decoding
-                pred = run_single_inference(
-                    model=model,
-                    tokenizer=tokenizer,
-                    submodule=submodule,
-                    batch_data=batch_data,
-                    steering_coefficient=steering_coefficient,
-                    generation_kwargs=gen_kwargs,
-                    device=device,
-                    dtype=dtype,
-                )
-            else:
-                # Noise mode: perturb vectors, deterministic decoding
-                noisy_vectors = add_noise_to_vectors(base_vectors, stability_config.noise_scale)
-                pred = run_single_inference(
-                    model=model,
-                    tokenizer=tokenizer,
-                    submodule=submodule,
-                    batch_data=batch_data,
-                    steering_coefficient=steering_coefficient,
-                    generation_kwargs=gen_kwargs,
-                    device=device,
-                    dtype=dtype,
-                    noisy_vectors=noisy_vectors,
-                )
-            predictions.append(parse_answer(pred))
-
-        # Compute stability metrics
-        yes_count = sum(1 for p in predictions if p == "yes")
-        no_count = sum(1 for p in predictions if p == "no")
-        other_count = stability_config.n_samples - yes_count - no_count
-
-        # Majority vote
-        if yes_count >= no_count and yes_count >= other_count:
-            majority_vote = "yes"
-            majority_count = yes_count
-        elif no_count >= yes_count and no_count >= other_count:
-            majority_vote = "no"
-            majority_count = no_count
-        else:
-            majority_vote = "other"
-            majority_count = other_count
-
-        agreement_rate = majority_count / stability_config.n_samples
-
-        # Ground truth
         ground_truth = parse_answer(datapoint.target_output)
-        is_correct = majority_vote == ground_truth
 
-        result = {
-            "index": i,
-            "ground_truth": ground_truth,
-            "majority_vote": majority_vote,
-            "is_correct": is_correct,
-            "agreement_rate": agreement_rate,
-            "yes_count": yes_count,
-            "no_count": no_count,
-            "other_count": other_count,
-            "predictions": predictions,
-        }
+        if mode == "threshold":
+            # Single forward pass with confidence extraction
+            pred_text, confidence = run_inference_with_confidence(
+                model=model,
+                tokenizer=tokenizer,
+                submodule=submodule,
+                batch_data=batch_data,
+                steering_coefficient=steering_coefficient,
+                generation_kwargs=gen_kwargs,
+                device=device,
+                dtype=dtype,
+            )
+            predicted = parse_answer(pred_text)
+            
+            result = {
+                "index": i,
+                "ground_truth": ground_truth,
+                "majority_vote": predicted,
+                "is_correct": predicted == ground_truth,
+                "agreement_rate": confidence,  # Softmax confidence as stability score
+                "yes_count": 1 if predicted == "yes" else 0,
+                "no_count": 1 if predicted == "no" else 0,
+                "other_count": 1 if predicted not in ("yes", "no") else 0,
+                "predictions": [predicted],
+                "confidence": confidence,
+            }
+        else:
+            # Sampling modes: N forward passes
+            base_vectors = batch_data.steering_vectors
+            predictions = []
+            for _ in range(stability_config.n_samples):
+                if mode == "temperature":
+                    pred = run_single_inference(
+                        model=model,
+                        tokenizer=tokenizer,
+                        submodule=submodule,
+                        batch_data=batch_data,
+                        steering_coefficient=steering_coefficient,
+                        generation_kwargs=gen_kwargs,
+                        device=device,
+                        dtype=dtype,
+                    )
+                else:
+                    noisy_vectors = add_noise_to_vectors(base_vectors, stability_config.noise_scale)
+                    pred = run_single_inference(
+                        model=model,
+                        tokenizer=tokenizer,
+                        submodule=submodule,
+                        batch_data=batch_data,
+                        steering_coefficient=steering_coefficient,
+                        generation_kwargs=gen_kwargs,
+                        device=device,
+                        dtype=dtype,
+                        noisy_vectors=noisy_vectors,
+                    )
+                predictions.append(parse_answer(pred))
+
+            # Compute stability metrics
+            yes_count = sum(1 for p in predictions if p == "yes")
+            no_count = sum(1 for p in predictions if p == "no")
+            other_count = stability_config.n_samples - yes_count - no_count
+
+            # Majority vote
+            if yes_count >= no_count and yes_count >= other_count:
+                majority_vote = "yes"
+                majority_count = yes_count
+            elif no_count >= yes_count and no_count >= other_count:
+                majority_vote = "no"
+                majority_count = no_count
+            else:
+                majority_vote = "other"
+                majority_count = other_count
+
+            agreement_rate = majority_count / stability_config.n_samples
+
+            result = {
+                "index": i,
+                "ground_truth": ground_truth,
+                "majority_vote": majority_vote,
+                "is_correct": majority_vote == ground_truth,
+                "agreement_rate": agreement_rate,
+                "yes_count": yes_count,
+                "no_count": no_count,
+                "other_count": other_count,
+                "predictions": predictions,
+            }
+
         results.append(result)
 
     return results
@@ -263,8 +343,8 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description="Stability evaluation experiment")
-    parser.add_argument("--mode", choices=["noise", "temperature"], default="noise",
-                        help="Stability mode: 'noise' perturbs activations, 'temperature' uses stochastic decoding")
+    parser.add_argument("--mode", choices=["noise", "temperature", "threshold"], default="noise",
+                        help="Stability mode: 'noise' perturbs activations, 'temperature' uses stochastic decoding, 'threshold' uses logit confidence")
     parser.add_argument("--noise-scales", type=float, nargs="+", default=[0.003],
                         help="Noise scale(s) for noise mode (default: 0.003)")
     parser.add_argument("--temperatures", type=float, nargs="+", default=[1.0],
@@ -272,11 +352,13 @@ if __name__ == "__main__":
     parser.add_argument("--force-rerun", action="store_true", help="Force re-run even if JSON exists")
     args = parser.parse_args()
 
-    # Build list of (mode, param_value) pairs to evaluate
+    # Build list of param values to evaluate
     if args.mode == "noise":
         param_values = args.noise_scales
-    else:
+    elif args.mode == "temperature":
         param_values = args.temperatures
+    else:
+        param_values = [0]  # Threshold mode: single run, no sweep parameter
 
     print(f"{'=' * 60}")
     print(f"Stability Evaluation Experiment")
@@ -296,9 +378,12 @@ if __name__ == "__main__":
         if args.mode == "noise":
             cfg = StabilityConfig(mode="noise", n_samples=10, noise_scale=param)
             param_str = f"noise{param}"
-        else:
+        elif args.mode == "temperature":
             cfg = StabilityConfig(mode="temperature", n_samples=10, temperature=param)
             param_str = f"temp{param}"
+        else:
+            cfg = StabilityConfig(mode="threshold")
+            param_str = "logitconf"
 
         json_path = f"{OUTPUT_DIR}/stability_{model_name_str}_{lora_name_str}_{DATASET_NAME}_{param_str}.json"
 

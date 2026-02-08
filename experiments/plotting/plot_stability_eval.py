@@ -26,6 +26,7 @@ DATASET_NAME = "language_identification"
 # Each entry: (mode, param_value)
 #   mode="noise"       -> param_value is noise_scale (e.g. 0.003)
 #   mode="temperature"  -> param_value is temperature (e.g. 1.0)
+#   mode="threshold"    -> param_value is ignored (use 0), single deterministic pass
 EXPERIMENTS: list[tuple[str, float]] = [
     ("noise", 0.001),
     ("noise", 0.003),
@@ -39,6 +40,7 @@ EXPERIMENTS: list[tuple[str, float]] = [
     ("temperature", 1.0),
     ("temperature", 1.5),
     ("temperature", 2.0),
+    ("threshold", 0),
 ]
 
 # Input/output paths
@@ -88,8 +90,10 @@ def get_json_path(model_name: str, lora_name: str, dataset_name: str, mode: str,
     lora_name_str = lora_name.split("/")[-1]
     if mode == "noise":
         param_str = f"noise{param}"
-    else:
+    elif mode == "temperature":
         param_str = f"temp{param}"
+    else:
+        param_str = "logitconf"
     return f"{INPUT_DIR}/stability_{model_name_str}_{lora_name_str}_{dataset_name}_{param_str}.json"
 
 
@@ -97,7 +101,9 @@ def make_label(mode: str, param: float) -> str:
     """Human-readable label for a (mode, param) pair."""
     if mode == "noise":
         return f"noise={param}"
-    return f"T={param}"
+    if mode == "temperature":
+        return f"T={param}"
+    return "logit conf."
 
 
 def assign_colors(
@@ -106,7 +112,7 @@ def assign_colors(
     """
     Assign colors to entries based on mode.
     
-    Blues for noise, oranges/reds for temperature.
+    Blues for noise, oranges/reds for temperature, green for threshold.
     Intensity varies within each family (lighter = smaller param, darker = larger param).
     
     Args:
@@ -117,10 +123,11 @@ def assign_colors(
     """
     noise_entries = [(i, p) for i, (_, m, p) in enumerate(entries) if m == "noise"]
     temp_entries = [(i, p) for i, (_, m, p) in enumerate(entries) if m == "temperature"]
+    threshold_entries = [(i, p) for i, (_, m, p) in enumerate(entries) if m == "threshold"]
     
     colors: list[tuple[float, float, float, float] | None] = [None] * len(entries)
     
-    # Blues for noise (range 0.3–0.9 to avoid too-light / too-dark extremes)
+    # Blues for noise (range 0.35–0.9 to avoid too-light / too-dark extremes)
     if noise_entries:
         n = len(noise_entries)
         blue_values = plt.cm.Blues(np.linspace(0.35, 0.9, n))
@@ -134,6 +141,10 @@ def assign_colors(
         for j, (idx, _) in enumerate(temp_entries):
             colors[idx] = tuple(red_values[j])
     
+    # Green for threshold (single entry, distinct from both families)
+    for idx, _ in threshold_entries:
+        colors[idx] = (0.15, 0.65, 0.15, 1.0)  # Forest green
+    
     return colors
 
 
@@ -141,7 +152,9 @@ def assign_markers(mode: str) -> str:
     """Return marker style based on mode."""
     if mode == "noise":
         return "o"
-    return "s"
+    if mode == "temperature":
+        return "s"
+    return "D"  # Diamond for threshold
 
 
 # ============================================================================
