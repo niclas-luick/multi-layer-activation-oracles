@@ -28,31 +28,6 @@ from nl_probes.base_experiment import sanitize_lora_name
 # -----------------------------
 
 
-# # Model and eval for the training run with 1x LatentQA, 1x Past Lens and 3x Classification
-# MODEL_CONFIGS = {
-#     "Qwen/Qwen3-4B": [
-#         ["adamkarvonen/checkpoints_latentqa_cls_past_lens_Qwen3-4B", 50],
-#         ["nluick/activation-oracle-multilayer-qwen3-8b-25-50-75", [25, 50, 75]], # typo in hf name 8b->4b
-#         ["nluick/activation-oracle-multilayer-qwen3-4b-6L-3xlayer-loop", [15, 30, 45, 60, 75, 90]],
-#     ],
-#     "Qwen/Qwen3-8B": [
-#         ["adamkarvonen/checkpoints_latentqa_cls_past_lens_addition_Qwen3-8B", 50],
-#         ["nluick/activation-oracle-multilayer-qwen3-14b-25-50-75", [25, 50, 75]], # typo in hf name 14b->8b
-#     ],
-# }
-
-# # Model and eval for the training run with 1x LatentQA, 1x Past Lens and 1x Classification
-# MODEL_CONFIGS = {
-#     "Qwen/Qwen3-4B": [
-#         ["adamkarvonen/checkpoints_latentqa_cls_past_lens_Qwen3-4B", 50],
-#         ["nluick/activation-oracle-multilayer-qwen3-4b-3L", [25, 50, 75]],
-#         ["nluick/activation-oracle-multilayer-qwen3-4b-6L", [15, 30, 45, 60, 75, 90]],
-#     ],
-#     "Qwen/Qwen3-8B": [
-#         ["adamkarvonen/checkpoints_latentqa_cls_past_lens_addition_Qwen3-8B", 50],
-#         ["nluick/activation-oracle-multilayer-qwen3-8b-3L", [25, 50, 75]],
-#     ],
-# }
 CONFIG_3L = [25, 50, 75]
 CONFIG_6L = [15, 30, 45, 60, 75, 90]
 
