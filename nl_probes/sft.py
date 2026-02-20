@@ -46,6 +46,11 @@ from nl_probes.utils.dataset_utils import (
     materialize_missing_steering_vectors,
 )
 from nl_probes.utils.eval import run_evaluation, score_eval_responses
+from nl_probes.utils.confidence_utils import (
+    get_confidence_json_path,
+    load_confidence_map,
+    apply_confidence_labels_to_dataset,
+)
 
 
 def push_lora_to_hf(
@@ -560,11 +565,53 @@ def length_grouped_reorder(
     return [data[i] for i in new_order]
 
 
+def _maybe_apply_confidence(
+    train_data: list[TrainingDataPoint],
+    dataset_loader: ActDatasetLoader,
+    split: str,
+    tokenizer: PreTrainedTokenizer | None,
+) -> list[TrainingDataPoint]:
+    """
+    If a confidence JSON sidecar exists for this dataset's .pt file,
+    apply confidence labels to the training data. Otherwise, return unchanged.
+    """
+    assert tokenizer is not None, "tokenizer required for confidence labeling"
+
+    pt_filename = dataset_loader.get_dataset_filename(split)
+    pt_path = Path(dataset_loader.dataset_config.dataset_folder) / pt_filename
+    json_path = get_confidence_json_path(pt_path)
+
+    if not json_path.exists():
+        print(f"  [CONFIDENCE] No JSON found for {pt_filename}, using original labels")
+        return train_data
+
+    print(f"  [CONFIDENCE] Loading from {json_path.name}")
+    confidence_map = load_confidence_map(json_path)
+    # confidence_map may be smaller than train_data (IDK entries are excluded)
+    assert len(confidence_map) <= len(train_data), (
+        f"Confidence map size {len(confidence_map)} > dataset size {len(train_data)}"
+    )
+
+    relabeled = apply_confidence_labels_to_dataset(train_data, confidence_map, tokenizer)
+
+    if confidence_map:
+        confidences = list(confidence_map.values())
+        mean_conf = sum(confidences) / len(confidences)
+        skipped = len(train_data) - len(confidence_map)
+        print(f"  [CONFIDENCE] Applied to {len(confidence_map)} datapoints "
+              f"(skipped {skipped} IDK): mean={mean_conf:.2f}, "
+              f"min={min(confidences):.2f}, max={max(confidences):.2f}")
+
+    return relabeled
+
+
 def build_datasets(
     cfg: SelfInterpTrainingConfig,
     dataset_loaders: list[ActDatasetLoader],
     max_len_percentile: float | None = 0.999,
     window_mult: int | None = 20,
+    apply_confidence_labels: bool = False,
+    tokenizer: PreTrainedTokenizer | None = None,
 ) -> tuple[list[TrainingDataPoint], dict[str, list[TrainingDataPoint]]]:
     set_seed(cfg.seed)
     all_training_data: list[TrainingDataPoint] = []
@@ -573,7 +620,16 @@ def build_datasets(
 
     for dataset_loader in dataset_loaders:
         if "train" in dataset_loader.dataset_config.splits:
-            all_training_data.extend(dataset_loader.load_dataset("train"))
+            train_data = dataset_loader.load_dataset("train")
+
+            # Apply confidence labels only to classification datasets
+            if (
+                apply_confidence_labels
+                and dataset_loader.dataset_config.dataset_name.startswith("classification_")
+            ):
+                train_data = _maybe_apply_confidence(train_data, dataset_loader, "train", tokenizer)
+
+            all_training_data.extend(train_data)
         if "test" in dataset_loader.dataset_config.splits:
             all_eval_data[dataset_loader.dataset_config.dataset_name] = dataset_loader.load_dataset("test")
 
@@ -1066,7 +1122,8 @@ if __name__ == "__main__":
         position_resample_repeats = 1  # 1 for -1N, 3 for -3N, 6 for -6N
         enable_idk_mixing = True       # True = train with IDK samples (~1/3 yes, 1/3 no, 1/3 idk)
         idk_ratio = 0.33               # Only used if enable_idk_mixing=True
-        
+        apply_confidence_labels = False # True = relabel classification data with confidence scores
+
         # Layer config
         layer_percents = [25, 50, 75]   # 3L config; use [15, 30, 45, 60, 75, 90] for 6L
         
@@ -1178,7 +1235,8 @@ if __name__ == "__main__":
             dist.barrier()
 
             all_training_data, all_eval_data = build_datasets(
-                cfg, dataset_loaders=loop_dataset_loaders, window_mult=cfg.window_mult
+                cfg, dataset_loaders=loop_dataset_loaders, window_mult=cfg.window_mult,
+                apply_confidence_labels=apply_confidence_labels, tokenizer=tokenizer,
             )
 
             # for debugging

@@ -1,5 +1,6 @@
 import json
 import math
+import re
 
 import torch
 from tqdm import tqdm
@@ -160,7 +161,32 @@ def run_evaluation(
 
 
 def parse_answer(answer: str) -> str:
+    """Parse the core answer from a model response, stripping confidence annotations.
+
+    Handles both plain answers ("Yes", "No") and confidence-annotated answers
+    ("Yes. Confidence: 80%", "No. Confidence: 30%").
+    """
+    # Strip confidence annotation if present
+    match = re.match(r'^(.*?)\.\s*[Cc]onfidence:\s*\d+%', answer)
+    if match:
+        answer = match.group(1)
     return answer.rstrip(".!?,;:").strip().lower()
+
+
+def parse_confidence(answer: str) -> float | None:
+    """Extract confidence percentage from a model response.
+
+    Returns confidence as a float in [0, 1], or None if no confidence found.
+
+    Examples:
+        "Yes. Confidence: 80%" -> 0.8
+        "No. Confidence: 30%" -> 0.3
+        "Yes" -> None
+    """
+    match = re.search(r'[Cc]onfidence:\s*(\d+)%', answer)
+    if match:
+        return int(match.group(1)) / 100.0
+    return None
 
 
 def score_eval_responses(
