@@ -23,7 +23,7 @@ import json
 from pathlib import Path
 
 import torch
-from peft import LoraConfig
+from peft import LoraConfig, get_peft_model
 from tqdm import tqdm
 
 from nl_probes.utils.common import load_model, load_tokenizer
@@ -298,9 +298,8 @@ if __name__ == "__main__":
     model = load_model(MODEL_NAME, DTYPE)
     submodule = get_hf_submodule(model, INJECTION_LAYER)
 
-    # Add dummy adapter for PEFT compatibility
-    dummy_config = LoraConfig()
-    model.add_adapter(dummy_config, adapter_name="default")
+    # Wrap as PeftModel for compatibility with materialize_missing_steering_vectors
+    model = get_peft_model(model, LoraConfig())
 
     # Load verbalizer LoRA
     print(f"Loading verbalizer LoRA: {VERBALIZER_LORA}")
