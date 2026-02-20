@@ -42,8 +42,8 @@ from nl_probes.base_experiment import sanitize_lora_name
 from experiments.stability_eval import (
     StabilityConfig,
     add_noise_to_vectors,
-    run_single_inference,
 )
+from nl_probes.utils.steering_hooks import add_hook, get_hf_activation_steering_hook
 
 
 # ============================================================================
@@ -73,6 +73,41 @@ def find_classification_train_pt_files(folder: str) -> list[Path]:
     return sorted(Path(folder).glob("classification_*_train_*.pt"))
 
 
+@torch.no_grad()
+def run_batch_inference(
+    model,
+    tokenizer,
+    submodule,
+    batch_data,
+    steering_coefficient: float,
+    generation_kwargs: dict,
+    device: torch.device,
+    dtype: torch.dtype,
+    noisy_vectors: list[torch.Tensor] | None = None,
+) -> list[str]:
+    """Run a single forward pass on a batch, returning one prediction per example."""
+    vectors = noisy_vectors if noisy_vectors is not None else batch_data.steering_vectors
+
+    hook_fn = get_hf_activation_steering_hook(
+        vectors=vectors,
+        positions=batch_data.positions,
+        steering_coefficient=steering_coefficient,
+        device=device,
+        dtype=dtype,
+    )
+
+    tokenized_input = {
+        "input_ids": batch_data.input_ids,
+        "attention_mask": batch_data.attention_mask,
+    }
+
+    with add_hook(submodule, hook_fn):
+        output_ids = model.generate(**tokenized_input, **generation_kwargs)
+
+    generated_tokens = output_ids[:, batch_data.input_ids.shape[1]:]
+    return tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
+
+
 def compute_confidence_for_dataset(
     datapoints: list[TrainingDataPoint],
     model,
@@ -83,10 +118,14 @@ def compute_confidence_for_dataset(
     generation_kwargs: dict,
     device: torch.device,
     dtype: torch.dtype,
+    batch_size: int = 64,
 ) -> list[dict]:
     """
     For each datapoint, run oracle N times and compute confidence =
     fraction of responses matching ground truth.
+
+    Processes datapoints in batches for efficiency. Each batch runs
+    n_samples forward passes (one per sample round).
     """
     mode = stability_config.mode
 
@@ -96,22 +135,67 @@ def compute_confidence_for_dataset(
             "do_sample": True,
             "temperature": stability_config.temperature,
         }
-        desc = f"Confidence (temp={stability_config.temperature})"
+        desc = f"Confidence (temp={stability_config.temperature}, batch={batch_size})"
     else:
         gen_kwargs = generation_kwargs
-        desc = f"Confidence (noise={stability_config.noise_scale})"
+        desc = f"Confidence (noise={stability_config.noise_scale}, batch={batch_size})"
 
+    # Separate scorable (yes/no) from IDK datapoints
+    scorable_indices = []
+    idk_indices = set()
+    for i, dp in enumerate(datapoints):
+        gt = parse_answer(dp.target_output)
+        if gt in ("yes", "no"):
+            scorable_indices.append(i)
+        else:
+            idk_indices.add(i)
+
+    # Storage for per-datapoint predictions across sample rounds
+    all_predictions: dict[int, list[str]] = {i: [] for i in scorable_indices}
+
+    # Process scorable datapoints in batches
+    n_batches = (len(scorable_indices) + batch_size - 1) // batch_size
+    for batch_start in tqdm(range(0, len(scorable_indices), batch_size),
+                            total=n_batches, desc=desc):
+        batch_indices = scorable_indices[batch_start:batch_start + batch_size]
+        batch_dps = [get_prompt_tokens_only(datapoints[i]) for i in batch_indices]
+        batch_dps = materialize_missing_steering_vectors(batch_dps, tokenizer, model)
+        batch_data = construct_batch(batch_dps, tokenizer, device)
+
+        base_vectors = batch_data.steering_vectors
+
+        # Run n_samples forward passes on this batch
+        for _ in range(stability_config.n_samples):
+            if mode == "noise":
+                noisy_vectors = add_noise_to_vectors(base_vectors, stability_config.noise_scale)
+            else:
+                noisy_vectors = None
+
+            preds = run_batch_inference(
+                model=model,
+                tokenizer=tokenizer,
+                submodule=submodule,
+                batch_data=batch_data,
+                steering_coefficient=steering_coefficient,
+                generation_kwargs=gen_kwargs,
+                device=device,
+                dtype=dtype,
+                noisy_vectors=noisy_vectors,
+            )
+
+            for idx, pred in zip(batch_indices, preds):
+                all_predictions[idx].append(parse_answer(pred))
+
+    # Build results list in original order
     results = []
+    for i, dp in enumerate(datapoints):
+        ground_truth = parse_answer(dp.target_output)
 
-    for i, datapoint in enumerate(tqdm(datapoints, desc=desc)):
-        ground_truth = parse_answer(datapoint.target_output)
-
-        # Skip IDK datapoints — confidence is incompatible with "I don't know"
-        if ground_truth not in ("yes", "no"):
+        if i in idk_indices:
             results.append({
                 "index": i,
                 "ground_truth": ground_truth,
-                "target_output": datapoint.target_output,
+                "target_output": dp.target_output,
                 "confidence": None,
                 "match_count": None,
                 "n_samples": stability_config.n_samples,
@@ -121,65 +205,27 @@ def compute_confidence_for_dataset(
                 "predictions": None,
                 "skipped": True,
             })
-            continue
+        else:
+            predictions = all_predictions[i]
+            match_count = sum(1 for p in predictions if p == ground_truth)
+            confidence = match_count / stability_config.n_samples
+            yes_count = sum(1 for p in predictions if p == "yes")
+            no_count = sum(1 for p in predictions if p == "no")
+            other_count = stability_config.n_samples - yes_count - no_count
 
-        dp = get_prompt_tokens_only(datapoint)
-        batch = materialize_missing_steering_vectors([dp], tokenizer, model)
-        batch_data = construct_batch(batch, tokenizer, device)
-
-        base_vectors = batch_data.steering_vectors
-        predictions = []
-
-        for _ in range(stability_config.n_samples):
-            if mode == "temperature":
-                pred = run_single_inference(
-                    model=model,
-                    tokenizer=tokenizer,
-                    submodule=submodule,
-                    batch_data=batch_data,
-                    steering_coefficient=steering_coefficient,
-                    generation_kwargs=gen_kwargs,
-                    device=device,
-                    dtype=dtype,
-                )
-            else:  # noise
-                noisy_vectors = add_noise_to_vectors(
-                    base_vectors, stability_config.noise_scale
-                )
-                pred = run_single_inference(
-                    model=model,
-                    tokenizer=tokenizer,
-                    submodule=submodule,
-                    batch_data=batch_data,
-                    steering_coefficient=steering_coefficient,
-                    generation_kwargs=gen_kwargs,
-                    device=device,
-                    dtype=dtype,
-                    noisy_vectors=noisy_vectors,
-                )
-            predictions.append(parse_answer(pred))
-
-        # Confidence = fraction matching ground truth
-        match_count = sum(1 for p in predictions if p == ground_truth)
-        confidence = match_count / stability_config.n_samples
-
-        yes_count = sum(1 for p in predictions if p == "yes")
-        no_count = sum(1 for p in predictions if p == "no")
-        other_count = stability_config.n_samples - yes_count - no_count
-
-        results.append({
-            "index": i,
-            "ground_truth": ground_truth,
-            "target_output": datapoint.target_output,
-            "confidence": confidence,
-            "match_count": match_count,
-            "n_samples": stability_config.n_samples,
-            "yes_count": yes_count,
-            "no_count": no_count,
-            "other_count": other_count,
-            "predictions": predictions,
-            "skipped": False,
-        })
+            results.append({
+                "index": i,
+                "ground_truth": ground_truth,
+                "target_output": dp.target_output,
+                "confidence": confidence,
+                "match_count": match_count,
+                "n_samples": stability_config.n_samples,
+                "yes_count": yes_count,
+                "no_count": no_count,
+                "other_count": other_count,
+                "predictions": predictions,
+                "skipped": False,
+            })
 
     return results
 
@@ -201,6 +247,7 @@ if __name__ == "__main__":
     parser.add_argument("--temperature", type=float, default=1.0, help="Temperature (temperature mode)")
     parser.add_argument("--dataset-folder", type=str, default=DATASET_FOLDER)
     parser.add_argument("--force-rerun", action="store_true", help="Re-run even if JSON exists")
+    parser.add_argument("--batch-size", type=int, default=64, help="Batch size for inference (default: 64)")
     parser.add_argument("--max-datapoints", type=int, default=None, help="Limit datapoints per file (for quick testing)")
     args = parser.parse_args()
 
@@ -224,6 +271,7 @@ if __name__ == "__main__":
         print(f"Noise scale: {args.noise_scale}")
     else:
         print(f"Temperature: {args.temperature}")
+    print(f"Batch size: {args.batch_size}")
     print(f"Dataset folder: {args.dataset_folder}")
     print(f"Found {len(pt_files)} classification training .pt files")
     print(f"{'=' * 60}")
@@ -287,6 +335,7 @@ if __name__ == "__main__":
             generation_kwargs=GENERATION_KWARGS,
             device=device,
             dtype=DTYPE,
+            batch_size=args.batch_size,
         )
 
         # Summary stats (exclude skipped IDK datapoints)
