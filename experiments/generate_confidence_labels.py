@@ -136,9 +136,12 @@ def compute_confidence_for_dataset(
             "temperature": stability_config.temperature,
         }
         desc = f"Confidence (temp={stability_config.temperature}, batch={batch_size})"
-    else:
+    elif mode == "noise":
         gen_kwargs = generation_kwargs
         desc = f"Confidence (noise={stability_config.noise_scale}, batch={batch_size})"
+    else:  # greedy
+        gen_kwargs = generation_kwargs
+        desc = f"Confidence (greedy, batch={batch_size})"
 
     # Separate scorable (yes/no) from IDK datapoints
     scorable_indices = []
@@ -168,7 +171,7 @@ def compute_confidence_for_dataset(
         for _ in range(stability_config.n_samples):
             if mode == "noise":
                 noisy_vectors = add_noise_to_vectors(base_vectors, stability_config.noise_scale)
-            else:
+            else:  # temperature or greedy — no vector perturbation
                 noisy_vectors = None
 
             preds = run_batch_inference(
@@ -239,8 +242,8 @@ if __name__ == "__main__":
         description="Generate confidence labels for classification training data"
     )
     parser.add_argument(
-        "--mode", choices=["noise", "temperature"], default="temperature",
-        help="Perturbation mode (default: temperature)",
+        "--mode", choices=["noise", "temperature", "greedy"], default="greedy",
+        help="Perturbation mode (default: greedy)",
     )
     parser.add_argument("--n-samples", type=int, default=10, help="Oracle passes per example")
     parser.add_argument("--noise-scale", type=float, default=0.05, help="Noise scale (noise mode)")
@@ -256,28 +259,33 @@ if __name__ == "__main__":
         stability_config = StabilityConfig(
             mode="noise", n_samples=args.n_samples, noise_scale=args.noise_scale,
         )
-    else:
+    elif args.mode == "temperature":
         stability_config = StabilityConfig(
             mode="temperature", n_samples=args.n_samples, temperature=args.temperature,
         )
+    else:  # greedy
+        stability_config = StabilityConfig(
+            mode="greedy", n_samples=1,
+        )
 
     # Build JSON suffix from verbalizer LoRA name (encodes model, layers, repeats)
-    # e.g. "confidence_MLAO-Qwen3-8B-3L-3N_temp1.0_n10"
     verbalizer_short = VERBALIZER_LORA.split("/")[-1]
     if args.mode == "noise":
         json_suffix = f"confidence_{verbalizer_short}_noise{args.noise_scale}_n{args.n_samples}"
-    else:
+    elif args.mode == "temperature":
         json_suffix = f"confidence_{verbalizer_short}_temp{args.temperature}_n{args.n_samples}"
+    else:  # greedy
+        json_suffix = f"confidence_{verbalizer_short}_greedy"
 
     # Find classification training .pt files
     pt_files = find_classification_train_pt_files(args.dataset_folder)
     print(f"{'=' * 60}")
     print(f"Confidence Label Generation")
     print(f"Mode: {args.mode}")
-    print(f"N samples: {args.n_samples}")
+    print(f"N samples: {stability_config.n_samples}")
     if args.mode == "noise":
         print(f"Noise scale: {args.noise_scale}")
-    else:
+    elif args.mode == "temperature":
         print(f"Temperature: {args.temperature}")
     print(f"Batch size: {args.batch_size}")
     print(f"Dataset folder: {args.dataset_folder}")
