@@ -22,32 +22,38 @@ import numpy as np
 
 
 def run_synthetic_test():
-    """Create fake TrainingDataPoints and test threshold-based IDK relabeling (no GPU needed)."""
+    """Create fake TrainingDataPoints and test two-threshold IDK relabeling (no GPU needed)."""
     import torch
     from nl_probes.utils.common import load_tokenizer
     from nl_probes.utils.dataset_utils import TrainingDataPoint
-    from nl_probes.utils.confidence_utils import relabel_with_confidence
+    from nl_probes.utils.confidence_utils import apply_confidence_labels_to_dataset
     from nl_probes.utils.eval import parse_answer
 
-    THRESHOLD = 0.5
+    FILTER_THRESHOLD = 0.33
+    IDK_THRESHOLD = 0.66
 
     print("=" * 60)
-    print(f"SYNTHETIC IDK RELABELING TEST (threshold={THRESHOLD})")
+    print(f"SYNTHETIC IDK RELABELING TEST")
+    print(f"  filter < {FILTER_THRESHOLD}  |  IDK < {IDK_THRESHOLD}  |  keep >= {IDK_THRESHOLD}")
     print("=" * 60)
 
     tokenizer = load_tokenizer("Qwen/Qwen3-8B")
 
-    # (original_target, confidence) — below threshold → "I don't know"
+    # (original_target, confidence)
     test_cases = [
-        ("Yes", 1.0),   # above → keep "Yes"
-        ("Yes", 0.8),   # above → keep "Yes"
-        ("Yes", 0.5),   # at threshold → keep "Yes"
-        ("No", 0.3),    # below → "I don't know"
-        ("No", 0.0),    # below → "I don't know"
-        ("No", 0.7),    # above → keep "No"
+        ("Yes", 1.0),   # keep Yes
+        ("Yes", 0.8),   # keep Yes
+        ("Yes", 0.5),   # IDK zone
+        ("No", 0.3),    # IDK zone
+        ("No", 0.2),    # filtered out
+        ("No", 0.0),    # filtered out
+        ("No", 0.7),    # keep No
     ]
 
-    for original_target, confidence in test_cases:
+    # Build datapoints
+    datapoints = []
+    confidence_map = {}
+    for i, (original_target, confidence) in enumerate(test_cases):
         user_msg = [{"role": "user", "content": "Answer with 'Yes' or 'No' only. Is this text about science?"}]
         full_msg = user_msg + [{"role": "assistant", "content": original_target}]
 
@@ -74,21 +80,40 @@ def run_synthetic_test():
             context_positions=None,
             ds_label="test_ds",
         )
+        datapoints.append(dp)
+        confidence_map[i] = confidence
 
-        new_dp = relabel_with_confidence(dp, confidence, tokenizer, threshold=THRESHOLD)
+    # Apply two-threshold relabeling
+    result, filtered_count, idk_count = apply_confidence_labels_to_dataset(
+        datapoints, confidence_map, tokenizer,
+        idk_threshold=IDK_THRESHOLD, filter_threshold=FILTER_THRESHOLD,
+    )
 
-        # Decode the full new response
-        prompt_end = next(i for i, l in enumerate(new_dp.labels) if l != -100)
-        new_response = tokenizer.decode(new_dp.input_ids[prompt_end:], skip_special_tokens=True)
-        parsed_answer = parse_answer(new_response)
+    print(f"\n  Input: {len(datapoints)} datapoints")
+    print(f"  Filtered out: {filtered_count}")
+    print(f"  Relabeled to IDK: {idk_count}")
+    print(f"  Output: {len(result)} datapoints")
 
-        changed = "→ IDK" if new_dp.target_output == "I don't know" else "→ kept"
-        original_preserved = new_dp.meta_info.get("original_target_output", "n/a")
+    print(f"\n  --- Per-datapoint results ---")
+    result_idx = 0
+    for i, (original_target, confidence) in enumerate(test_cases):
+        if confidence < FILTER_THRESHOLD:
+            print(f"  [{i}] {original_target!r:6s}  conf={confidence:.0%}  → FILTERED OUT")
+        else:
+            dp = result[result_idx]
+            result_idx += 1
+            original_preserved = dp.meta_info.get("original_target_output", "n/a")
 
-        print(f"\n  Original: {dp.target_output!r:6s}  Confidence: {confidence:.0%}  {changed}")
-        print(f"  target_output: {new_dp.target_output!r}")
-        print(f"  meta_info['original_target_output']: {original_preserved!r}")
-        print(f"  Decoded response: {new_response!r}  parse_answer: {parsed_answer!r}")
+            prompt_end = next(j for j, l in enumerate(dp.labels) if l != -100)
+            response = tokenizer.decode(dp.input_ids[prompt_end:], skip_special_tokens=True)
+
+            if dp.target_output == "I don't know":
+                zone = "IDK"
+            else:
+                zone = "KEPT"
+            print(f"  [{i}] {original_target!r:6s}  conf={confidence:.0%}  → {zone:4s}  "
+                  f"target={dp.target_output!r}  original_gt={original_preserved!r}  "
+                  f"response={response!r}")
 
     print("\n" + "=" * 60)
     print("SYNTHETIC TEST COMPLETE")

@@ -570,12 +570,15 @@ def _maybe_apply_confidence(
     dataset_loader: ActDatasetLoader,
     split: str,
     tokenizer: PreTrainedTokenizer | None,
-    threshold: float = 0.5,
-    filter_idk: bool = False,
+    idk_threshold: float = 0.66,
+    filter_threshold: float = 0.33,
 ) -> list[TrainingDataPoint]:
     """
     If a confidence JSON sidecar exists for this dataset's .pt file,
-    relabel low-confidence datapoints as "I don't know". Optionally filter them out.
+    apply two-threshold confidence relabeling:
+      confidence < filter_threshold  → removed from training
+      filter_threshold <= confidence < idk_threshold → "I don't know"
+      confidence >= idk_threshold   → kept as original Yes/No
     """
     assert tokenizer is not None, "tokenizer required for confidence labeling"
 
@@ -587,25 +590,20 @@ def _maybe_apply_confidence(
         print(f"  [CONFIDENCE] No JSON found for {pt_filename}, using original labels")
         return train_data
 
-    print(f"  [CONFIDENCE] Loading from {json_path.name} (threshold={threshold})")
+    print(f"  [CONFIDENCE] Loading from {json_path.name} "
+          f"(filter<{filter_threshold}, idk<{idk_threshold})")
     confidence_map = load_confidence_map(json_path)
     assert len(confidence_map) <= len(train_data), (
         f"Confidence map size {len(confidence_map)} > dataset size {len(train_data)}"
     )
 
-    relabeled = apply_confidence_labels_to_dataset(train_data, confidence_map, tokenizer, threshold)
-
-    # Count how many were relabeled to IDK
-    idk_count = sum(1 for dp in relabeled if dp.target_output == "I don't know")
+    relabeled, filtered_count, idk_count = apply_confidence_labels_to_dataset(
+        train_data, confidence_map, tokenizer,
+        idk_threshold=idk_threshold, filter_threshold=filter_threshold,
+    )
     kept_count = len(relabeled) - idk_count
-
-    if filter_idk:
-        relabeled = [dp for dp in relabeled if dp.target_output != "I don't know"]
-        print(f"  [CONFIDENCE] {idk_count} relabeled to IDK, filtered out. "
-              f"{len(relabeled)} datapoints remaining.")
-    else:
-        print(f"  [CONFIDENCE] {idk_count} relabeled to IDK, {kept_count} kept as Yes/No. "
-              f"Total: {len(relabeled)} datapoints.")
+    print(f"  [CONFIDENCE] {filtered_count} filtered out, {idk_count} → IDK, "
+          f"{kept_count} kept as Yes/No. Total: {len(relabeled)} datapoints.")
 
     return relabeled
 
@@ -616,8 +614,8 @@ def build_datasets(
     max_len_percentile: float | None = 0.999,
     window_mult: int | None = 20,
     apply_confidence_labels: bool = False,
-    confidence_idk_threshold: float = 0.5,
-    confidence_filter_idk: bool = False,
+    confidence_idk_threshold: float = 0.66,
+    confidence_filter_threshold: float = 0.33,
     tokenizer: PreTrainedTokenizer | None = None,
 ) -> tuple[list[TrainingDataPoint], dict[str, list[TrainingDataPoint]]]:
     set_seed(cfg.seed)
@@ -636,7 +634,8 @@ def build_datasets(
             ):
                 train_data = _maybe_apply_confidence(
                     train_data, dataset_loader, "train", tokenizer,
-                    threshold=confidence_idk_threshold, filter_idk=confidence_filter_idk,
+                    idk_threshold=confidence_idk_threshold,
+                    filter_threshold=confidence_filter_threshold,
                 )
 
             all_training_data.extend(train_data)
@@ -1132,9 +1131,9 @@ if __name__ == "__main__":
         position_resample_repeats = 1  # 1 for -1N, 3 for -3N, 6 for -6N
         enable_idk_mixing = True       # True = train with IDK samples (~1/3 yes, 1/3 no, 1/3 idk)
         idk_ratio = 0.33               # Only used if enable_idk_mixing=True
-        apply_confidence_labels = False # True = relabel low-confidence data as "I don't know"
-        confidence_idk_threshold = 0.5  # confidence below this → "I don't know"
-        confidence_filter_idk = False   # True = remove IDK-relabeled datapoints from training
+        apply_confidence_labels = False  # True = apply confidence-based IDK relabeling
+        confidence_idk_threshold = 0.66  # confidence below this → "I don't know"
+        confidence_filter_threshold = 0.33  # confidence below this → removed from training
 
         # Layer config
         layer_percents = [25, 50, 75]   # 3L config; use [15, 30, 45, 60, 75, 90] for 6L
@@ -1250,7 +1249,7 @@ if __name__ == "__main__":
                 cfg, dataset_loaders=loop_dataset_loaders, window_mult=cfg.window_mult,
                 apply_confidence_labels=apply_confidence_labels,
                 confidence_idk_threshold=confidence_idk_threshold,
-                confidence_filter_idk=confidence_filter_idk,
+                confidence_filter_threshold=confidence_filter_threshold,
                 tokenizer=tokenizer,
             )
 

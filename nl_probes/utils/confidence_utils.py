@@ -1,9 +1,10 @@
 """
 Utilities for confidence-based IDK relabeling of classification training data.
 
-If the oracle's confidence (fraction of N runs matching ground truth) is below
-a threshold, the datapoint's response is changed to "I don't know".
-High-confidence datapoints are returned unchanged.
+Two thresholds define three zones:
+  confidence < filter_threshold  → removed from training entirely
+  filter_threshold <= confidence < idk_threshold → relabeled as "I don't know"
+  confidence >= idk_threshold   → kept as original Yes/No
 
 The prompt portion (input_ids where labels == -100) is preserved exactly,
 so steering vector injection positions remain valid.
@@ -17,30 +18,16 @@ from transformers import AutoTokenizer
 from nl_probes.utils.dataset_utils import TrainingDataPoint
 
 
-def relabel_with_confidence(
+def relabel_as_idk(
     datapoint: TrainingDataPoint,
-    confidence: float,
     tokenizer: AutoTokenizer,
-    threshold: float = 0.5,
 ) -> TrainingDataPoint:
     """
-    If confidence is below threshold, relabel the datapoint as "I don't know".
-    Otherwise return the original datapoint unchanged.
+    Relabel a datapoint's response as "I don't know".
 
     The original ground truth is preserved in meta_info["original_target_output"].
-
-    Args:
-        datapoint: The original training data point.
-        confidence: Float in [0, 1], e.g. 0.8 for 80%.
-        tokenizer: The tokenizer (needed to re-tokenize the new response).
-        threshold: Confidence threshold. Below this → "I don't know".
-
-    Returns:
-        The original datapoint (if confident) or a new one with "I don't know".
+    The prompt portion (all tokens where labels == -100) is preserved exactly.
     """
-    if confidence >= threshold:
-        return datapoint
-
     new_target = "I don't know"
 
     # Find prompt/response boundary: first index where labels != -100
@@ -107,27 +94,39 @@ def apply_confidence_labels_to_dataset(
     datapoints: list[TrainingDataPoint],
     confidence_map: dict[int, float],
     tokenizer: AutoTokenizer,
-    threshold: float = 0.5,
+    idk_threshold: float = 0.66,
+    filter_threshold: float = 0.33,
 ) -> list[TrainingDataPoint]:
     """
-    Apply confidence-based IDK relabeling to a list of TrainingDataPoints.
+    Apply confidence-based relabeling and filtering to training data.
 
-    Datapoints with confidence below threshold are relabeled as "I don't know".
-    Datapoints above threshold or not in the confidence map are unchanged.
+    Three zones based on confidence score:
+      confidence < filter_threshold  → removed (not included in output)
+      filter_threshold <= confidence < idk_threshold → relabeled as "I don't know"
+      confidence >= idk_threshold   → kept as original Yes/No
 
-    Args:
-        datapoints: List of training data points (loaded from .pt file).
-        confidence_map: Mapping from index to confidence score.
-        tokenizer: Tokenizer for re-encoding the response.
-        threshold: Confidence threshold. Below this → "I don't know".
+    Datapoints not in the confidence map (e.g. existing IDK) are kept unchanged.
 
     Returns:
-        New list of TrainingDataPoints with IDK relabeling applied.
+        Filtered and relabeled list of TrainingDataPoints.
     """
-    relabeled = []
+    result = []
+    filtered_count = 0
+    idk_count = 0
+
     for i, dp in enumerate(datapoints):
-        if i in confidence_map:
-            relabeled.append(relabel_with_confidence(dp, confidence_map[i], tokenizer, threshold))
+        if i not in confidence_map:
+            result.append(dp)
+            continue
+
+        conf = confidence_map[i]
+        if conf < filter_threshold:
+            filtered_count += 1
+            continue  # remove from training
+        elif conf < idk_threshold:
+            result.append(relabel_as_idk(dp, tokenizer))
+            idk_count += 1
         else:
-            relabeled.append(dp)
-    return relabeled
+            result.append(dp)
+
+    return result, filtered_count, idk_count
