@@ -261,12 +261,13 @@ if __name__ == "__main__":
             mode="temperature", n_samples=args.n_samples, temperature=args.temperature,
         )
 
-    # Build JSON suffix from config: e.g. "confidence_temp1.0_n10" or "confidence_noise0.05_n10"
-    model_short = MODEL_NAME.split("/")[-1]
+    # Build JSON suffix from verbalizer LoRA name (encodes model, layers, repeats)
+    # e.g. "confidence_MLAO-Qwen3-8B-3L-3N_temp1.0_n10"
+    verbalizer_short = VERBALIZER_LORA.split("/")[-1]
     if args.mode == "noise":
-        json_suffix = f"confidence_{model_short}_noise{args.noise_scale}_n{args.n_samples}"
+        json_suffix = f"confidence_{verbalizer_short}_noise{args.noise_scale}_n{args.n_samples}"
     else:
-        json_suffix = f"confidence_{model_short}_temp{args.temperature}_n{args.n_samples}"
+        json_suffix = f"confidence_{verbalizer_short}_temp{args.temperature}_n{args.n_samples}"
 
     # Find classification training .pt files
     pt_files = find_classification_train_pt_files(args.dataset_folder)

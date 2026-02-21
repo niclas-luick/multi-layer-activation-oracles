@@ -1137,7 +1137,7 @@ if __name__ == "__main__":
         apply_confidence_labels = False  # True = apply confidence-based IDK relabeling
         confidence_idk_threshold = 0.66  # confidence below this → "I don't know"
         confidence_filter_threshold = 0.33  # confidence below this → removed from training
-        confidence_json_suffix = "confidence_Qwen3-8B_temp1.0_n10"  # which confidence JSON to load
+        confidence_json_suffix = "confidence_MLAO-Qwen3-8B-3L-3N_temp1.0_n10"  # which confidence JSON to load
 
         # Layer config
         layer_percents = [25, 50, 75]   # 3L config; use [15, 30, 45, 60, 75, 90] for 6L
