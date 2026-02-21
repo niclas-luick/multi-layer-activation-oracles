@@ -65,10 +65,15 @@ def relabel_as_idk(
     return new_dp
 
 
-def get_confidence_json_path(pt_path: str | Path) -> Path:
-    """Derive confidence JSON path from .pt path: foo.pt -> foo_confidence.json"""
+def get_confidence_json_path(pt_path: str | Path, suffix: str = "confidence") -> Path:
+    """Derive confidence JSON path from .pt path.
+
+    Examples:
+        get_confidence_json_path("foo.pt") → foo_confidence.json
+        get_confidence_json_path("foo.pt", "confidence_temp1.0_n10") → foo_confidence_temp1.0_n10.json
+    """
     pt_path = Path(pt_path)
-    return pt_path.parent / (pt_path.stem + "_confidence.json")
+    return pt_path.parent / (pt_path.stem + f"_{suffix}.json")
 
 
 def load_confidence_map(confidence_json_path: str | Path) -> dict[int, float]:

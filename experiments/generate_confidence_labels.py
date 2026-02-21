@@ -261,6 +261,13 @@ if __name__ == "__main__":
             mode="temperature", n_samples=args.n_samples, temperature=args.temperature,
         )
 
+    # Build JSON suffix from config: e.g. "confidence_temp1.0_n10" or "confidence_noise0.05_n10"
+    model_short = MODEL_NAME.split("/")[-1]
+    if args.mode == "noise":
+        json_suffix = f"confidence_{model_short}_noise{args.noise_scale}_n{args.n_samples}"
+    else:
+        json_suffix = f"confidence_{model_short}_temp{args.temperature}_n{args.n_samples}"
+
     # Find classification training .pt files
     pt_files = find_classification_train_pt_files(args.dataset_folder)
     print(f"{'=' * 60}")
@@ -273,13 +280,14 @@ if __name__ == "__main__":
         print(f"Temperature: {args.temperature}")
     print(f"Batch size: {args.batch_size}")
     print(f"Dataset folder: {args.dataset_folder}")
+    print(f"JSON suffix: {json_suffix}")
     print(f"Found {len(pt_files)} classification training .pt files")
     print(f"{'=' * 60}")
 
     # Filter to files that need processing
     files_to_process: list[tuple[Path, Path]] = []  # (pt_path, json_path)
     for pt_path in pt_files:
-        json_path = get_confidence_json_path(pt_path)
+        json_path = get_confidence_json_path(pt_path, suffix=json_suffix)
         if json_path.exists() and not args.force_rerun:
             print(f"  [SKIP] {pt_path.name}")
         else:

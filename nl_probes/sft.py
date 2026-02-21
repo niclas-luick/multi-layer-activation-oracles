@@ -572,6 +572,7 @@ def _maybe_apply_confidence(
     tokenizer: PreTrainedTokenizer | None,
     idk_threshold: float = 0.66,
     filter_threshold: float = 0.33,
+    json_suffix: str = "confidence",
 ) -> list[TrainingDataPoint]:
     """
     If a confidence JSON sidecar exists for this dataset's .pt file,
@@ -584,7 +585,7 @@ def _maybe_apply_confidence(
 
     pt_filename = dataset_loader.get_dataset_filename(split)
     pt_path = Path(dataset_loader.dataset_config.dataset_folder) / pt_filename
-    json_path = get_confidence_json_path(pt_path)
+    json_path = get_confidence_json_path(pt_path, suffix=json_suffix)
 
     if not json_path.exists():
         print(f"  [CONFIDENCE] No JSON found for {pt_filename}, using original labels")
@@ -616,6 +617,7 @@ def build_datasets(
     apply_confidence_labels: bool = False,
     confidence_idk_threshold: float = 0.66,
     confidence_filter_threshold: float = 0.33,
+    confidence_json_suffix: str = "confidence",
     tokenizer: PreTrainedTokenizer | None = None,
 ) -> tuple[list[TrainingDataPoint], dict[str, list[TrainingDataPoint]]]:
     set_seed(cfg.seed)
@@ -636,6 +638,7 @@ def build_datasets(
                     train_data, dataset_loader, "train", tokenizer,
                     idk_threshold=confidence_idk_threshold,
                     filter_threshold=confidence_filter_threshold,
+                    json_suffix=confidence_json_suffix,
                 )
 
             all_training_data.extend(train_data)
@@ -1134,6 +1137,7 @@ if __name__ == "__main__":
         apply_confidence_labels = False  # True = apply confidence-based IDK relabeling
         confidence_idk_threshold = 0.66  # confidence below this → "I don't know"
         confidence_filter_threshold = 0.33  # confidence below this → removed from training
+        confidence_json_suffix = "confidence_Qwen3-8B_temp1.0_n10"  # which confidence JSON to load
 
         # Layer config
         layer_percents = [25, 50, 75]   # 3L config; use [15, 30, 45, 60, 75, 90] for 6L
@@ -1250,6 +1254,7 @@ if __name__ == "__main__":
                 apply_confidence_labels=apply_confidence_labels,
                 confidence_idk_threshold=confidence_idk_threshold,
                 confidence_filter_threshold=confidence_filter_threshold,
+                confidence_json_suffix=confidence_json_suffix,
                 tokenizer=tokenizer,
             )
 
