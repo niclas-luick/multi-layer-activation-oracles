@@ -22,28 +22,29 @@ import numpy as np
 
 
 def run_synthetic_test():
-    """Create fake TrainingDataPoints and test relabeling (no GPU needed)."""
+    """Create fake TrainingDataPoints and test threshold-based IDK relabeling (no GPU needed)."""
     import torch
     from nl_probes.utils.common import load_tokenizer
     from nl_probes.utils.dataset_utils import TrainingDataPoint
     from nl_probes.utils.confidence_utils import relabel_with_confidence
-    from nl_probes.utils.eval import parse_answer, parse_confidence
+    from nl_probes.utils.eval import parse_answer
+
+    THRESHOLD = 0.5
 
     print("=" * 60)
-    print("SYNTHETIC CONFIDENCE LABEL TEST")
+    print(f"SYNTHETIC IDK RELABELING TEST (threshold={THRESHOLD})")
     print("=" * 60)
 
     tokenizer = load_tokenizer("Qwen/Qwen3-8B")
 
-    # Build a few realistic TrainingDataPoints
-    # IDK datapoints are excluded from confidence labeling
+    # (original_target, confidence) — below threshold → "I don't know"
     test_cases = [
-        ("Yes", 1.0),
-        ("Yes", 0.8),
-        ("Yes", 0.5),
-        ("No", 0.3),
-        ("No", 0.0),
-        ("No", 0.7),
+        ("Yes", 1.0),   # above → keep "Yes"
+        ("Yes", 0.8),   # above → keep "Yes"
+        ("Yes", 0.5),   # at threshold → keep "Yes"
+        ("No", 0.3),    # below → "I don't know"
+        ("No", 0.0),    # below → "I don't know"
+        ("No", 0.7),    # above → keep "No"
     ]
 
     for original_target, confidence in test_cases:
@@ -74,22 +75,20 @@ def run_synthetic_test():
             ds_label="test_ds",
         )
 
-        new_dp = relabel_with_confidence(dp, confidence, tokenizer)
+        new_dp = relabel_with_confidence(dp, confidence, tokenizer, threshold=THRESHOLD)
 
         # Decode the full new response
         prompt_end = next(i for i, l in enumerate(new_dp.labels) if l != -100)
         new_response = tokenizer.decode(new_dp.input_ids[prompt_end:], skip_special_tokens=True)
-
-        # Parse back
         parsed_answer = parse_answer(new_response)
-        parsed_conf = parse_confidence(new_response)
 
-        print(f"\n  Original: {dp.target_output!r:20s}  |  Confidence: {confidence:.0%}")
-        print(f"  Relabeled target_output: {new_dp.target_output!r}")
-        print(f"  Decoded response tokens: {new_response!r}")
-        print(f"  parse_answer -> {parsed_answer!r}   parse_confidence -> {parsed_conf}")
-        print(f"  Token count: {len(dp.input_ids)} -> {len(new_dp.input_ids)}  "
-              f"(+{len(new_dp.input_ids) - len(dp.input_ids)} tokens)")
+        changed = "→ IDK" if new_dp.target_output == "I don't know" else "→ kept"
+        original_preserved = new_dp.meta_info.get("original_target_output", "n/a")
+
+        print(f"\n  Original: {dp.target_output!r:6s}  Confidence: {confidence:.0%}  {changed}")
+        print(f"  target_output: {new_dp.target_output!r}")
+        print(f"  meta_info['original_target_output']: {original_preserved!r}")
+        print(f"  Decoded response: {new_response!r}  parse_answer: {parsed_answer!r}")
 
     print("\n" + "=" * 60)
     print("SYNTHETIC TEST COMPLETE")

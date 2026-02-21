@@ -1,9 +1,9 @@
 """
-Utilities for applying confidence labels to classification training data.
+Utilities for confidence-based IDK relabeling of classification training data.
 
-The confidence relabeling modifies the response portion of a TrainingDataPoint:
-  Original:  "Yes<|im_end|>"
-  Relabeled: "Yes. Confidence: 80%<|im_end|>"
+If the oracle's confidence (fraction of N runs matching ground truth) is below
+a threshold, the datapoint's response is changed to "I don't know".
+High-confidence datapoints are returned unchanged.
 
 The prompt portion (input_ids where labels == -100) is preserved exactly,
 so steering vector injection positions remain valid.
@@ -21,26 +21,27 @@ def relabel_with_confidence(
     datapoint: TrainingDataPoint,
     confidence: float,
     tokenizer: AutoTokenizer,
+    threshold: float = 0.5,
 ) -> TrainingDataPoint:
     """
-    Replace the response portion of a TrainingDataPoint with a confidence-annotated response.
+    If confidence is below threshold, relabel the datapoint as "I don't know".
+    Otherwise return the original datapoint unchanged.
 
-    Original target_output: "Yes" or "No"
-    New target_output: "Yes. Confidence: 80%" or "No. Confidence: 30%"
-
-    The prompt portion (all tokens where labels == -100) is preserved exactly.
-    The response portion is re-tokenized using the chat template for correctness.
+    The original ground truth is preserved in meta_info["original_target_output"].
 
     Args:
         datapoint: The original training data point.
         confidence: Float in [0, 1], e.g. 0.8 for 80%.
         tokenizer: The tokenizer (needed to re-tokenize the new response).
+        threshold: Confidence threshold. Below this → "I don't know".
 
     Returns:
-        A new TrainingDataPoint with updated input_ids, labels, and target_output.
+        The original datapoint (if confident) or a new one with "I don't know".
     """
-    confidence_pct = round(confidence * 100)
-    new_target = f"{datapoint.target_output}. Confidence: {confidence_pct}%"
+    if confidence >= threshold:
+        return datapoint
+
+    new_target = "I don't know"
 
     # Find prompt/response boundary: first index where labels != -100
     prompt_end_idx = 0
@@ -52,7 +53,6 @@ def relabel_with_confidence(
     prompt_ids = list(datapoint.input_ids[:prompt_end_idx])
 
     # Re-tokenize the response via chat template to ensure correct end-of-turn tokens.
-    # We use a dummy user message so the template produces the same assistant framing.
     dummy_user = [{"role": "user", "content": "x"}]
     dummy_full = dummy_user + [{"role": "assistant", "content": new_target}]
 
@@ -70,6 +70,7 @@ def relabel_with_confidence(
     new_labels = [-100] * len(prompt_ids) + response_ids
 
     new_dp = datapoint.model_copy(deep=True)
+    new_dp.meta_info = {**datapoint.meta_info, "original_target_output": datapoint.target_output}
     new_dp.input_ids = new_input_ids
     new_dp.labels = new_labels
     new_dp.target_output = new_target
@@ -106,22 +107,27 @@ def apply_confidence_labels_to_dataset(
     datapoints: list[TrainingDataPoint],
     confidence_map: dict[int, float],
     tokenizer: AutoTokenizer,
+    threshold: float = 0.5,
 ) -> list[TrainingDataPoint]:
     """
-    Apply confidence labels to a list of TrainingDataPoints.
+    Apply confidence-based IDK relabeling to a list of TrainingDataPoints.
+
+    Datapoints with confidence below threshold are relabeled as "I don't know".
+    Datapoints above threshold or not in the confidence map are unchanged.
 
     Args:
         datapoints: List of training data points (loaded from .pt file).
         confidence_map: Mapping from index to confidence score.
         tokenizer: Tokenizer for re-encoding the response.
+        threshold: Confidence threshold. Below this → "I don't know".
 
     Returns:
-        New list of TrainingDataPoints with confidence-annotated responses.
+        New list of TrainingDataPoints with IDK relabeling applied.
     """
     relabeled = []
     for i, dp in enumerate(datapoints):
         if i in confidence_map:
-            relabeled.append(relabel_with_confidence(dp, confidence_map[i], tokenizer))
+            relabeled.append(relabel_with_confidence(dp, confidence_map[i], tokenizer, threshold))
         else:
             relabeled.append(dp)
     return relabeled
