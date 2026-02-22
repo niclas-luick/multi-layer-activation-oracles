@@ -34,18 +34,19 @@ CONFIG_6L = [15, 30, 45, 60, 75, 90]
 # Model and eval for all MLAO combined
 MODEL_CONFIGS = {
     "Qwen/Qwen3-4B": [
-        ["adamkarvonen/checkpoints_latentqa_cls_past_lens_Qwen3-4B", 50],
-        ["nluick/MLAO-Qwen3-4B-3L-1N", CONFIG_3L],
-        ["nluick/MLAO-Qwen3-4B-3L-3N", CONFIG_3L],
-        ["nluick/MLAO-Qwen3-4B-6L-1N", CONFIG_6L],
-        ["nluick/MLAO-Qwen3-4B-6L-3N", CONFIG_6L],
-        ["nluick/MLAO-Qwen3-4B-6L-6N", CONFIG_6L],
+        # ["adamkarvonen/checkpoints_latentqa_cls_past_lens_Qwen3-4B", 50],
+        # ["nluick/MLAO-Qwen3-4B-3L-1N", CONFIG_3L],
+        # ["nluick/MLAO-Qwen3-4B-3L-3N", CONFIG_3L],
+        # ["nluick/MLAO-Qwen3-4B-6L-1N", CONFIG_6L],
+        # ["nluick/MLAO-Qwen3-4B-6L-3N", CONFIG_6L],
+        # ["nluick/MLAO-Qwen3-4B-6L-6N", CONFIG_6L],
+        ["nluick/MLAO-Qwen3-4B-3L-1N-filtered", CONFIG_3L],
     ],
-    "Qwen/Qwen3-8B": [
-        ["adamkarvonen/checkpoints_latentqa_cls_past_lens_addition_Qwen3-8B", 50],
-        ["nluick/MLAO-Qwen3-8B-3L-1N", CONFIG_3L],
-        ["nluick/MLAO-Qwen3-8B-3L-3N", CONFIG_3L],
-    ],
+    # "Qwen/Qwen3-8B": [
+    #     ["adamkarvonen/checkpoints_latentqa_cls_past_lens_addition_Qwen3-8B", 50],
+    #     ["nluick/MLAO-Qwen3-8B-3L-1N", CONFIG_3L],
+    #     ["nluick/MLAO-Qwen3-8B-3L-3N", CONFIG_3L],
+    # ],
 }
 
 INJECTION_LAYER = 1
@@ -67,7 +68,7 @@ SINGLE_TOKEN_MODE = True
 mode_str = "single_token" if SINGLE_TOKEN_MODE else "multi_token"
 
 EXPERIMENTS_DIR = "experiments"
-DATA_DIR = "classification"
+DATA_DIR = "classification-filtered"
 
 os.makedirs(EXPERIMENTS_DIR, exist_ok=True)
 os.makedirs(f"{EXPERIMENTS_DIR}/{DATA_DIR}", exist_ok=True)

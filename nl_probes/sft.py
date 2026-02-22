@@ -1124,7 +1124,7 @@ if __name__ == "__main__":
         # "google/gemma-3-4b-it",
         # "google/gemma-3-12b-it",
         # "google/gemma-3-27b-it",
-        "Qwen/Qwen3-8B",
+        "Qwen/Qwen3-4B",
     ]
 
     for model_name in models:
@@ -1132,12 +1132,13 @@ if __name__ == "__main__":
         # CLASSIFICATION CONFIG - REVIEW CAREFULLY BEFORE TRAINING!
         # ═══════════════════════════════════════════════════════════════════
         position_resample_repeats = 1  # 1 for -1N, 3 for -3N, 6 for -6N
-        enable_idk_mixing = True       # True = train with IDK samples (~1/3 yes, 1/3 no, 1/3 idk)
+        enable_idk_mixing = False       # True = train with IDK samples (~1/3 yes, 1/3 no, 1/3 idk)
         idk_ratio = 0.33               # Only used if enable_idk_mixing=True
-        apply_confidence_labels = False  # True = apply confidence-based IDK relabeling
-        confidence_idk_threshold = 0.66  # confidence below this → "I don't know"
-        confidence_filter_threshold = 0.33  # confidence below this → removed from training
-        confidence_json_suffix = "confidence_MLAO-Qwen3-8B-3L-3N_greedy"  # which confidence JSON to load
+        apply_confidence_labels = True
+        confidence_filter_threshold = 0.5   # removes incorrect datapoints (conf=0.0)
+        confidence_idk_threshold = 0.5      # same as filter → no IDK zone, just filter
+        confidence_json_suffix = "confidence_MLAO-Qwen3-8B-3L-3N_greedy"
+
 
         # Layer config
         layer_percents = [25, 50, 75]   # 3L config; use [15, 30, 45, 60, 75, 90] for 6L
@@ -1150,11 +1151,13 @@ if __name__ == "__main__":
         hf_repo_name = f"MLAO-{model_short_name}-{num_layers}L-{position_resample_repeats}N"
         if enable_idk_mixing:
             hf_repo_name += "-IDK-fixed"
+        if apply_confidence_labels:
+            hf_repo_name += "-filtered"
         print(f"hf_repo_name: {hf_repo_name}")
         model_name_str = model_name.split("/")[-1].replace(".", "_").replace(" ", "_")
 
-        #train_batch_size = 16
-        train_batch_size = 8
+        train_batch_size = 16
+        #train_batch_size = 8
         gradient_checkpointing = True
         model_kwargs = {}
 
@@ -1178,7 +1181,7 @@ if __name__ == "__main__":
 
         save_acts = False
 
-        gradient_accumulation_steps = 2
+        gradient_accumulation_steps = 1
 
         # Build loader groups (single + multi variants)
         loader_groups = build_loader_groups(
