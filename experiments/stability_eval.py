@@ -402,6 +402,10 @@ def evaluate_with_stability(
             swapped_dp = swap_classification_prompt(
                 dp_with_vectors, tokenizer, DISTRACTOR_PREFIX, original_question,
             )
+            # Debug: print the swapped prompt for the first example
+            if i == 0:
+                swapped_text = tokenizer.decode(swapped_dp.input_ids, skip_special_tokens=False)
+                print(f"\n[DEBUG] Distractor prompt (example 0):\n{swapped_text}\n")
             batch_data = construct_batch([swapped_dp], tokenizer, device)
 
             pred = run_single_inference(
@@ -428,6 +432,7 @@ def evaluate_with_stability(
                 "other_count": 0 if is_yes_no else 1,
                 "predictions": [predicted],
                 "raw_output": pred,
+                "prompt_used": f"{DISTRACTOR_PREFIX}# {original_question}",
             }
         elif mode == "prompt":
             # Prompt paraphrase mode: run with N different prompt wordings
@@ -696,10 +701,14 @@ if __name__ == "__main__":
         if stability_config.mode == "prompt":
             print(f"Run {run_idx + 1}/{len(configs_to_run)}: prompt mode, "
                   f"vary_question={stability_config.vary_question}, vary_prefix={stability_config.vary_prefix}")
+        elif stability_config.mode == "noise":
+            print(f"Run {run_idx + 1}/{len(configs_to_run)}: noise mode, "
+                  f"noise_scale={stability_config.noise_scale}")
+        elif stability_config.mode == "temperature":
+            print(f"Run {run_idx + 1}/{len(configs_to_run)}: temperature mode, "
+                  f"temperature={stability_config.temperature}")
         else:
-            print(f"Run {run_idx + 1}/{len(configs_to_run)}: {stability_config.mode} mode, "
-                  f"{'noise_scale' if stability_config.mode == 'noise' else 'temperature'}="
-                  f"{stability_config.noise_scale if stability_config.mode == 'noise' else stability_config.temperature}")
+            print(f"Run {run_idx + 1}/{len(configs_to_run)}: {stability_config.mode} mode")
         print(f"Output: {json_path}")
         print(f"{'=' * 60}")
 
