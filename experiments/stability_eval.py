@@ -418,8 +418,18 @@ def evaluate_with_stability(
                 device=device,
                 dtype=dtype,
             )
-            predicted = parse_answer(pred)
-            is_yes_no = predicted in ("yes", "no")
+            raw_parsed = parse_answer(pred)
+            # Robust: extract yes/no even if embedded in longer output
+            lower = raw_parsed.lower()
+            if "yes" in lower:
+                predicted = "yes"
+                is_yes_no = True
+            elif "no" in lower:
+                predicted = "no"
+                is_yes_no = True
+            else:
+                predicted = raw_parsed
+                is_yes_no = False
 
             result = {
                 "index": i,
