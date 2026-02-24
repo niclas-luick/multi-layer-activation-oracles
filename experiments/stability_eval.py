@@ -2,10 +2,11 @@
 """
 Perturbation Stability Experiment
 
-Three modes for measuring prediction stability:
+Four modes for measuring prediction stability:
   - noise: Add Gaussian noise to activation/steering vectors (N passes)
   - temperature: Use temperature sampling (N passes)
   - threshold: Single deterministic pass, use softmax confidence as stability score
+  - prompt: Re-ask with paraphrased prompts (N passes with different wording)
 
 All modes output the same JSON format (agreement_rate field) for downstream plotting.
 
@@ -13,6 +14,9 @@ Usage:
     python stability_eval.py --mode noise              # Activation noise (default)
     python stability_eval.py --mode temperature         # Temperature sampling
     python stability_eval.py --mode threshold           # Logit confidence
+    python stability_eval.py --mode prompt              # Prompt paraphrasing (both question + prefix)
+    python stability_eval.py --mode prompt --no-vary-prefix   # Question paraphrasing only
+    python stability_eval.py --mode prompt --no-vary-question # Prefix paraphrasing only
     python stability_eval.py --mode noise --force-rerun # Force re-run
 
 Outputs:
@@ -24,6 +28,8 @@ import os
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 
 import json
+import re
+import random
 from dataclasses import dataclass, asdict
 from typing import Any
 import torch
@@ -54,10 +60,12 @@ from nl_probes.base_experiment import sanitize_lora_name
 
 @dataclass
 class StabilityConfig:
-    mode: str = "noise"  # "noise", "temperature", or "threshold"
+    mode: str = "noise"  # "noise", "temperature", "threshold", or "prompt"
     n_samples: int = 10  # Number of forward passes (ignored for threshold mode)
     noise_scale: float = 0.05  # (noise mode) Fraction of activation norm for noise std
     temperature: float = 1.0  # (temperature mode) Sampling temperature
+    vary_question: bool = True  # (prompt mode) Paraphrase the question
+    vary_prefix: bool = True  # (prompt mode) Paraphrase the instruction prefix
 
 
 # Model configuration
@@ -85,6 +93,85 @@ OUTPUT_DIR = "plots/stability"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 device = torch.device("cuda")
+
+# Prompt paraphrase constants
+ORIGINAL_PREFIX = "Answer with 'Yes' or 'No' only. "
+
+INSTRUCTION_PARAPHRASES = [
+    "Answer with 'Yes' or 'No' only. ",
+    "Respond with just 'Yes' or 'No'. ",
+    "Reply only with 'Yes' or 'No'. ",
+    "Your answer should be 'Yes' or 'No' only. ",
+    "Give a 'Yes' or 'No' answer. ",
+    "Please respond with either 'Yes' or 'No'. ",
+    "Simply say 'Yes' or 'No'. ",
+    "Provide your answer as 'Yes' or 'No'. ",
+    "State 'Yes' or 'No'. ",
+    "Only answer 'Yes' or 'No'. ",
+]
+
+PARAPHRASES_JSON_PATH = "datasets/classification_datasets/paraphrases/question.json"
+
+
+def load_question_paraphrases(dataset_name: str) -> list[str]:
+    """Load question paraphrase templates from question.json for a given dataset."""
+    with open(PARAPHRASES_JSON_PATH) as f:
+        all_paraphrases = json.load(f)
+    templates = all_paraphrases[dataset_name]
+    if isinstance(templates, dict):
+        # Flatten label-keyed dicts (e.g., sst2 has {"positive": [...], "negative": [...]})
+        flat = []
+        for v in templates.values():
+            flat.extend(v)
+        return flat
+    return templates
+
+
+def extract_fill_value(question_text: str, templates: list[str]) -> str | None:
+    """Extract the fill value from a question by matching against known templates.
+
+    E.g., question_text="Is this text written in English?" with
+    template="Is this text written in {}?" → returns "English".
+    """
+    for template in templates:
+        if "{}" not in template:
+            continue
+        # Convert "Is this text written in {}?" → regex "Is this text written in (.+?)\\?"
+        pattern = re.escape(template).replace(r"\{\}", "(.+?)")
+        pattern = "^" + pattern + "$"
+        match = re.match(pattern, question_text)
+        if match:
+            return match.group(1)
+    return None
+
+
+def swap_classification_prompt(
+    datapoint: "TrainingDataPoint",
+    tokenizer,
+    new_prefix: str,
+    new_question: str,
+) -> "TrainingDataPoint":
+    """Replace the instruction prefix + question in a datapoint's input_ids.
+
+    Decodes input_ids → replaces the classification prompt → re-encodes.
+    Steering vectors and positions are preserved (they precede the swapped region).
+    """
+    decoded = tokenizer.decode(datapoint.input_ids, skip_special_tokens=False)
+
+    # Find the original classification prompt: "Answer with 'Yes' or 'No' only. # <question>"
+    prefix_idx = decoded.index(ORIGINAL_PREFIX)
+    end_marker = "<|im_end|>"
+    end_idx = decoded.index(end_marker, prefix_idx)
+
+    new_cls_prompt = f"{new_prefix}# {new_question}"
+    new_decoded = decoded[:prefix_idx] + new_cls_prompt + decoded[end_idx:]
+
+    new_ids = tokenizer.encode(new_decoded, add_special_tokens=False)
+
+    new_dp = datapoint.model_copy()
+    new_dp.input_ids = new_ids
+    return new_dp
+
 
 # ============================================================================
 # Stability Evaluation Functions
@@ -198,6 +285,31 @@ def run_inference_with_confidence(
     return decoded, confidence
 
 
+def _compute_majority_vote(predictions: list[str], n_samples: int) -> dict:
+    """Compute majority vote statistics from a list of parsed predictions."""
+    yes_count = sum(1 for p in predictions if p == "yes")
+    no_count = sum(1 for p in predictions if p == "no")
+    other_count = n_samples - yes_count - no_count
+
+    if yes_count >= no_count and yes_count >= other_count:
+        majority_vote = "yes"
+        majority_count = yes_count
+    elif no_count >= yes_count and no_count >= other_count:
+        majority_vote = "no"
+        majority_count = no_count
+    else:
+        majority_vote = "other"
+        majority_count = other_count
+
+    return {
+        "majority_vote": majority_vote,
+        "agreement_rate": majority_count / n_samples,
+        "yes_count": yes_count,
+        "no_count": no_count,
+        "other_count": other_count,
+    }
+
+
 def evaluate_with_stability(
     model,
     tokenizer,
@@ -208,16 +320,18 @@ def evaluate_with_stability(
     generation_kwargs: dict,
     device: torch.device,
     dtype: torch.dtype,
+    question_paraphrases: list[str] | None = None,
 ) -> list[dict]:
     """
     Run stability evaluation on all examples.
-    
+
     Modes:
     - noise/temperature: Run N forward passes, compute agreement via majority vote
     - threshold: Single deterministic pass, use softmax confidence as agreement_rate
+    - prompt: Re-ask with paraphrased prompts, compute agreement via majority vote
     """
     mode = stability_config.mode
-    
+
     # Build generation kwargs for this mode
     if mode == "temperature":
         gen_kwargs = {
@@ -229,21 +343,27 @@ def evaluate_with_stability(
     elif mode == "threshold":
         gen_kwargs = generation_kwargs  # deterministic
         desc = "Threshold eval (logit confidence)"
+    elif mode == "prompt":
+        gen_kwargs = generation_kwargs  # deterministic
+        vary_q = stability_config.vary_question
+        vary_p = stability_config.vary_prefix
+        desc = f"Prompt eval (vary_question={vary_q}, vary_prefix={vary_p})"
     else:
         gen_kwargs = generation_kwargs
         desc = f"Noise eval (scale={stability_config.noise_scale})"
-    
+
     results = []
 
     for i, datapoint in enumerate(tqdm(eval_data, desc=desc)):
         # Prepare single example
         dp = get_prompt_tokens_only(datapoint)
         batch = materialize_missing_steering_vectors([dp], tokenizer, model)
-        batch_data = construct_batch(batch, tokenizer, device)
+        dp_with_vectors = batch[0]
 
         ground_truth = parse_answer(datapoint.target_output)
 
         if mode == "threshold":
+            batch_data = construct_batch(batch, tokenizer, device)
             # Single forward pass with confidence extraction
             pred_text, confidence = run_inference_with_confidence(
                 model=model,
@@ -256,7 +376,7 @@ def evaluate_with_stability(
                 dtype=dtype,
             )
             predicted = parse_answer(pred_text)
-            
+
             result = {
                 "index": i,
                 "ground_truth": ground_truth,
@@ -269,8 +389,85 @@ def evaluate_with_stability(
                 "predictions": [predicted],
                 "confidence": confidence,
             }
+        elif mode == "prompt":
+            # Prompt paraphrase mode: run with N different prompt wordings
+            vary_q = stability_config.vary_question
+            vary_p = stability_config.vary_prefix
+            n_samples = stability_config.n_samples
+
+            # Extract the original question text and fill value
+            decoded = tokenizer.decode(dp_with_vectors.input_ids, skip_special_tokens=False)
+            prefix_idx = decoded.index(ORIGINAL_PREFIX)
+            end_idx = decoded.index("<|im_end|>", prefix_idx)
+            original_cls = decoded[prefix_idx + len(ORIGINAL_PREFIX):end_idx]
+            # Strip "# " prefix from question
+            original_question = original_cls[2:] if original_cls.startswith("# ") else original_cls
+
+            fill_value = None
+            if vary_q and question_paraphrases is not None:
+                fill_value = extract_fill_value(original_question, question_paraphrases)
+
+            # Sample question paraphrases
+            sampled_questions = None
+            if vary_q and question_paraphrases is not None:
+                sampled_templates = random.sample(
+                    question_paraphrases, min(n_samples, len(question_paraphrases))
+                )
+                while len(sampled_templates) < n_samples:
+                    sampled_templates.append(random.choice(question_paraphrases))
+                # Fill templates with the extracted value (or use as-is for template-less questions)
+                sampled_questions = []
+                for t in sampled_templates:
+                    if "{}" in t and fill_value is not None:
+                        sampled_questions.append(t.format(fill_value))
+                    else:
+                        sampled_questions.append(t)
+
+            predictions = []
+            prompt_variants = []
+            for s in range(n_samples):
+                # Determine prefix and question for this variant
+                new_prefix = INSTRUCTION_PARAPHRASES[s % len(INSTRUCTION_PARAPHRASES)] if vary_p else ORIGINAL_PREFIX
+                new_question = sampled_questions[s] if sampled_questions is not None else original_question
+
+                if new_prefix != ORIGINAL_PREFIX or new_question != original_question:
+                    swapped_dp = swap_classification_prompt(
+                        dp_with_vectors, tokenizer, new_prefix, new_question,
+                    )
+                    variant_batch = construct_batch([swapped_dp], tokenizer, device)
+                else:
+                    variant_batch = construct_batch([dp_with_vectors], tokenizer, device)
+
+                pred = run_single_inference(
+                    model=model,
+                    tokenizer=tokenizer,
+                    submodule=submodule,
+                    batch_data=variant_batch,
+                    steering_coefficient=steering_coefficient,
+                    generation_kwargs=gen_kwargs,
+                    device=device,
+                    dtype=dtype,
+                )
+                parsed = parse_answer(pred)
+                predictions.append(parsed)
+                prompt_variants.append(f"{new_prefix}# {new_question}")
+
+            stats = _compute_majority_vote(predictions, n_samples)
+            result = {
+                "index": i,
+                "ground_truth": ground_truth,
+                "majority_vote": stats["majority_vote"],
+                "is_correct": stats["majority_vote"] == ground_truth,
+                "agreement_rate": stats["agreement_rate"],
+                "yes_count": stats["yes_count"],
+                "no_count": stats["no_count"],
+                "other_count": stats["other_count"],
+                "predictions": predictions,
+                "prompt_variants": prompt_variants,
+            }
         else:
-            # Sampling modes: N forward passes
+            # Sampling modes (noise/temperature): N forward passes
+            batch_data = construct_batch(batch, tokenizer, device)
             base_vectors = batch_data.steering_vectors
             predictions = []
             for _ in range(stability_config.n_samples):
@@ -300,33 +497,16 @@ def evaluate_with_stability(
                     )
                 predictions.append(parse_answer(pred))
 
-            # Compute stability metrics
-            yes_count = sum(1 for p in predictions if p == "yes")
-            no_count = sum(1 for p in predictions if p == "no")
-            other_count = stability_config.n_samples - yes_count - no_count
-
-            # Majority vote
-            if yes_count >= no_count and yes_count >= other_count:
-                majority_vote = "yes"
-                majority_count = yes_count
-            elif no_count >= yes_count and no_count >= other_count:
-                majority_vote = "no"
-                majority_count = no_count
-            else:
-                majority_vote = "other"
-                majority_count = other_count
-
-            agreement_rate = majority_count / stability_config.n_samples
-
+            stats = _compute_majority_vote(predictions, stability_config.n_samples)
             result = {
                 "index": i,
                 "ground_truth": ground_truth,
-                "majority_vote": majority_vote,
-                "is_correct": majority_vote == ground_truth,
-                "agreement_rate": agreement_rate,
-                "yes_count": yes_count,
-                "no_count": no_count,
-                "other_count": other_count,
+                "majority_vote": stats["majority_vote"],
+                "is_correct": stats["majority_vote"] == ground_truth,
+                "agreement_rate": stats["agreement_rate"],
+                "yes_count": stats["yes_count"],
+                "no_count": stats["no_count"],
+                "other_count": stats["other_count"],
                 "predictions": predictions,
             }
 
@@ -343,12 +523,17 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description="Stability evaluation experiment")
-    parser.add_argument("--mode", choices=["noise", "temperature", "threshold"], default="noise",
-                        help="Stability mode: 'noise' perturbs activations, 'temperature' uses stochastic decoding, 'threshold' uses logit confidence")
+    parser.add_argument("--mode", choices=["noise", "temperature", "threshold", "prompt"], default="noise",
+                        help="Stability mode: 'noise' perturbs activations, 'temperature' uses stochastic decoding, "
+                             "'threshold' uses logit confidence, 'prompt' uses paraphrased prompts")
     parser.add_argument("--noise-scales", type=float, nargs="+", default=[0.003],
                         help="Noise scale(s) for noise mode (default: 0.003)")
     parser.add_argument("--temperatures", type=float, nargs="+", default=[1.0],
                         help="Temperature(s) for temperature mode (default: 1.0)")
+    parser.add_argument("--vary-question", action=argparse.BooleanOptionalAction, default=True,
+                        help="(prompt mode) Paraphrase the question (default: True)")
+    parser.add_argument("--vary-prefix", action=argparse.BooleanOptionalAction, default=True,
+                        help="(prompt mode) Paraphrase the instruction prefix (default: True)")
     parser.add_argument("--force-rerun", action="store_true", help="Force re-run even if JSON exists")
     args = parser.parse_args()
 
@@ -358,7 +543,7 @@ if __name__ == "__main__":
     elif args.mode == "temperature":
         param_values = args.temperatures
     else:
-        param_values = [0]  # Threshold mode: single run, no sweep parameter
+        param_values = [0]  # Threshold/prompt mode: single run, no sweep parameter
 
     print(f"{'=' * 60}")
     print(f"Stability Evaluation Experiment")
@@ -381,6 +566,13 @@ if __name__ == "__main__":
         elif args.mode == "temperature":
             cfg = StabilityConfig(mode="temperature", n_samples=10, temperature=param)
             param_str = f"temp{param}"
+        elif args.mode == "prompt":
+            cfg = StabilityConfig(
+                mode="prompt", n_samples=10,
+                vary_question=args.vary_question, vary_prefix=args.vary_prefix,
+            )
+            flags = ("q" if args.vary_question else "") + ("p" if args.vary_prefix else "")
+            param_str = f"promptvar_{flags}" if flags else "promptvar_none"
         else:
             cfg = StabilityConfig(mode="threshold")
             param_str = "logitconf"
@@ -445,12 +637,22 @@ if __name__ == "__main__":
     eval_data = dataset_loader.load_dataset("test")
     print(f"Loaded {len(eval_data)} test examples")
 
+    # Load question paraphrases for prompt mode
+    question_paraphrases = None
+    if args.mode == "prompt":
+        question_paraphrases = load_question_paraphrases(DATASET_NAME)
+        print(f"Loaded {len(question_paraphrases)} question paraphrases for '{DATASET_NAME}'")
+
     # Run stability evaluation for each param value
     for run_idx, (stability_config, json_path) in enumerate(configs_to_run):
         print(f"\n{'=' * 60}")
-        print(f"Run {run_idx + 1}/{len(configs_to_run)}: {stability_config.mode} mode, "
-              f"{'noise_scale' if stability_config.mode == 'noise' else 'temperature'}="
-              f"{stability_config.noise_scale if stability_config.mode == 'noise' else stability_config.temperature}")
+        if stability_config.mode == "prompt":
+            print(f"Run {run_idx + 1}/{len(configs_to_run)}: prompt mode, "
+                  f"vary_question={stability_config.vary_question}, vary_prefix={stability_config.vary_prefix}")
+        else:
+            print(f"Run {run_idx + 1}/{len(configs_to_run)}: {stability_config.mode} mode, "
+                  f"{'noise_scale' if stability_config.mode == 'noise' else 'temperature'}="
+                  f"{stability_config.noise_scale if stability_config.mode == 'noise' else stability_config.temperature}")
         print(f"Output: {json_path}")
         print(f"{'=' * 60}")
 
@@ -464,6 +666,7 @@ if __name__ == "__main__":
             generation_kwargs=GENERATION_KWARGS,
             device=device,
             dtype=DTYPE,
+            question_paraphrases=question_paraphrases,
         )
 
         # Compute summary statistics

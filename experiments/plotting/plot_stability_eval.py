@@ -1,8 +1,9 @@
 """
 Plot stability evaluation results from existing JSON files.
 
-Supports both noise and temperature modes. Configure the EXPERIMENTS list below
-to select which JSON files to load and overlay on the same plot.
+Supports noise, temperature, threshold, and prompt modes. Configure the
+EXPERIMENTS list below to select which JSON files to load and overlay on the
+same plot.
 
 Usage:
     python plot_stability_eval.py
@@ -27,7 +28,8 @@ DATASET_NAME = "language_identification"
 #   mode="noise"       -> param_value is noise_scale (e.g. 0.003)
 #   mode="temperature"  -> param_value is temperature (e.g. 1.0)
 #   mode="threshold"    -> param_value is ignored (use 0), single deterministic pass
-EXPERIMENTS: list[tuple[str, float]] = [
+#   mode="prompt"       -> param_value is a string flags combo: "qp", "q", "p", or "none"
+EXPERIMENTS: list[tuple[str, float | str]] = [
     ("noise", 0.001),
     ("noise", 0.003),
     ("noise", 0.005),
@@ -41,6 +43,9 @@ EXPERIMENTS: list[tuple[str, float]] = [
     ("temperature", 1.5),
     ("temperature", 2.0),
     ("threshold", 0),
+    ("prompt", "qp"),
+    #("prompt", "q"),
+    #("prompt", "p"),
 ]
 
 # Input/output paths
@@ -84,7 +89,7 @@ def load_results_json(json_path: str) -> dict | None:
         return json.load(f)
 
 
-def get_json_path(model_name: str, lora_name: str, dataset_name: str, mode: str, param: float) -> str:
+def get_json_path(model_name: str, lora_name: str, dataset_name: str, mode: str, param: float | str) -> str:
     """Construct the expected JSON path for a given configuration."""
     model_name_str = model_name.split("/")[-1]
     lora_name_str = lora_name.split("/")[-1]
@@ -92,17 +97,22 @@ def get_json_path(model_name: str, lora_name: str, dataset_name: str, mode: str,
         param_str = f"noise{param}"
     elif mode == "temperature":
         param_str = f"temp{param}"
+    elif mode == "prompt":
+        param_str = f"promptvar_{param}" if param else "promptvar_none"
     else:
         param_str = "logitconf"
     return f"{INPUT_DIR}/stability_{model_name_str}_{lora_name_str}_{dataset_name}_{param_str}.json"
 
 
-def make_label(mode: str, param: float) -> str:
+def make_label(mode: str, param: float | str) -> str:
     """Human-readable label for a (mode, param) pair."""
     if mode == "noise":
         return f"noise={param}"
     if mode == "temperature":
         return f"T={param}"
+    if mode == "prompt":
+        flag_labels = {"qp": "question+prefix", "q": "question", "p": "prefix", "none": "baseline"}
+        return f"prompt ({flag_labels.get(param, param)})"
     return "logit conf."
 
 
@@ -124,27 +134,35 @@ def assign_colors(
     noise_entries = [(i, p) for i, (_, m, p) in enumerate(entries) if m == "noise"]
     temp_entries = [(i, p) for i, (_, m, p) in enumerate(entries) if m == "temperature"]
     threshold_entries = [(i, p) for i, (_, m, p) in enumerate(entries) if m == "threshold"]
-    
+    prompt_entries = [(i, p) for i, (_, m, p) in enumerate(entries) if m == "prompt"]
+
     colors: list[tuple[float, float, float, float] | None] = [None] * len(entries)
-    
+
     # Blues for noise (range 0.35–0.9 to avoid too-light / too-dark extremes)
     if noise_entries:
         n = len(noise_entries)
         blue_values = plt.cm.Blues(np.linspace(0.35, 0.9, n))
         for j, (idx, _) in enumerate(noise_entries):
             colors[idx] = tuple(blue_values[j])
-    
+
     # Oranges/reds for temperature
     if temp_entries:
         n = len(temp_entries)
         red_values = plt.cm.OrRd(np.linspace(0.35, 0.9, n))
         for j, (idx, _) in enumerate(temp_entries):
             colors[idx] = tuple(red_values[j])
-    
+
     # Green for threshold (single entry, distinct from both families)
     for idx, _ in threshold_entries:
         colors[idx] = (0.15, 0.65, 0.15, 1.0)  # Forest green
-    
+
+    # Purples for prompt paraphrase
+    if prompt_entries:
+        n = len(prompt_entries)
+        purple_values = plt.cm.Purples(np.linspace(0.45, 0.9, n))
+        for j, (idx, _) in enumerate(prompt_entries):
+            colors[idx] = tuple(purple_values[j])
+
     return colors
 
 
@@ -154,6 +172,8 @@ def assign_markers(mode: str) -> str:
         return "o"
     if mode == "temperature":
         return "s"
+    if mode == "prompt":
+        return "^"  # Triangle for prompt
     return "D"  # Diamond for threshold
 
 
@@ -331,14 +351,14 @@ if __name__ == "__main__":
 
     # Check which modes are present
     modes_present = set(m for _, m, _, _ in entries)
-    has_noise = "noise" in modes_present
-    has_temp = "temperature" in modes_present
-    if has_noise and has_temp:
-        print("Plotting both noise (blues) and temperature (oranges/reds) experiments")
-    elif has_noise:
-        print("Plotting noise experiments (blues)")
-    else:
-        print("Plotting temperature experiments (oranges/reds)")
+    mode_descriptions = {
+        "noise": "noise (blues)",
+        "temperature": "temperature (oranges/reds)",
+        "threshold": "threshold (green)",
+        "prompt": "prompt (purples)",
+    }
+    present_str = ", ".join(mode_descriptions[m] for m in modes_present if m in mode_descriptions)
+    print(f"Plotting: {present_str}")
 
     # Generate output filename
     model_name_str = MODEL_NAME.split("/")[-1]
