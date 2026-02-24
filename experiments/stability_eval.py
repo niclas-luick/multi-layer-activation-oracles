@@ -115,8 +115,16 @@ DISTRACTOR_PREFIX = "Answer only with one of the following: 'Yes', 'No', '1', '2
 PARAPHRASES_JSON_PATH = "datasets/classification_datasets/paraphrases/question.json"
 
 
-def load_question_paraphrases(dataset_name: str) -> list[str] | None:
-    """Load question paraphrase templates from question.json for a given dataset."""
+def load_question_paraphrases(dataset_name: str) -> list[str] | dict[str, list[str]] | None:
+    """Load question paraphrase templates from question.json for a given dataset.
+
+    Returns:
+        - list[str]: For datasets with a flat list of paraphrases (all same polarity)
+        - dict[str, list[str]]: For label-keyed datasets where different label groups
+          have opposite-polarity questions (e.g., sst2: positive/negative,
+          engels: trump/not_trump). Keys are label names, values are question lists.
+        - None: If not found
+    """
     with open(PARAPHRASES_JSON_PATH) as f:
         all_paraphrases = json.load(f)
 
@@ -131,17 +139,6 @@ def load_question_paraphrases(dataset_name: str) -> list[str] | None:
         print(f"  WARNING: No question paraphrases found for '{dataset_name}'")
         return None
 
-    if isinstance(templates, dict):
-        # Flatten label-keyed dicts (e.g., sst2 has {"positive": [...], "negative": [...]})
-        flat = []
-        for v in templates.values():
-            if isinstance(v, list):
-                flat.extend(v)
-            elif isinstance(v, dict):
-                # Nested further (e.g. engels subtasks with label keys)
-                for vv in v.values():
-                    flat.extend(vv)
-        return flat
     return templates
 
 
@@ -161,6 +158,27 @@ def extract_fill_value(question_text: str, templates: list[str]) -> str | None:
         if match:
             return match.group(1)
     return None
+
+
+def _find_label_group(question: str, label_dict: dict[str, list[str]]) -> str | None:
+    """Find which label group a question belongs to in a label-keyed dict.
+
+    For datasets like sst2 (positive/negative) or engels (trump/not_trump),
+    determines which group the question came from via exact string match.
+    """
+    for label, templates in label_dict.items():
+        if question in templates:
+            return label
+    return None
+
+
+def _flip_prediction(prediction: str) -> str:
+    """Flip a yes/no prediction to its opposite (for opposite-polarity questions)."""
+    if prediction == "yes":
+        return "no"
+    if prediction == "no":
+        return "yes"
+    return prediction
 
 
 def swap_classification_prompt(
@@ -338,7 +356,7 @@ def evaluate_with_stability(
     generation_kwargs: dict,
     device: torch.device,
     dtype: torch.dtype,
-    question_paraphrases: list[str] | None = None,
+    question_paraphrases: list[str] | dict[str, list[str]] | None = None,
 ) -> list[dict]:
     """
     Run stability evaluation on all examples.
@@ -466,41 +484,56 @@ def evaluate_with_stability(
             vary_p = stability_config.vary_prefix
             n_samples = stability_config.n_samples
 
-            # Extract the original question text and fill value
+            # Extract the original question text
             decoded = tokenizer.decode(dp_with_vectors.input_ids, skip_special_tokens=False)
             prefix_idx = decoded.index(ORIGINAL_PREFIX)
             end_idx = decoded.index("<|im_end|>", prefix_idx)
             original_cls = decoded[prefix_idx + len(ORIGINAL_PREFIX):end_idx]
-            # Strip "# " prefix from question
             original_question = original_cls[2:] if original_cls.startswith("# ") else original_cls
 
-            fill_value = None
-            if vary_q and question_paraphrases is not None:
-                fill_value = extract_fill_value(original_question, question_paraphrases)
-
-            # Build all (prefix, question) pairs and sample n_samples unique ones
             prefixes = INSTRUCTION_PARAPHRASES if vary_p else [ORIGINAL_PREFIX]
-            if vary_q and question_paraphrases is not None:
-                questions = []
-                for t in question_paraphrases:
-                    if "{}" in t and fill_value is not None:
-                        questions.append(t.format(fill_value))
-                    else:
-                        questions.append(t)
-            else:
-                questions = [original_question]
 
-            all_pairs = [(p, q) for p in prefixes for q in questions]
-            if n_samples <= len(all_pairs):
-                sampled_pairs = random.sample(all_pairs, n_samples)
+            # Build (prefix, question, needs_flip) triples
+            # needs_flip=True for opposite-polarity questions in label-keyed datasets
+            if vary_q and question_paraphrases is not None:
+                if isinstance(question_paraphrases, dict):
+                    # Label-keyed paraphrases (e.g., sst2: positive/negative)
+                    # Determine which label group the original question belongs to
+                    original_label = _find_label_group(original_question, question_paraphrases)
+                    if original_label is None and i == 0:
+                        print(f"  WARNING: Could not match original question to any label group: {original_question!r}")
+
+                    all_items: list[tuple[str, str, bool]] = []
+                    for label, templates in question_paraphrases.items():
+                        needs_flip = (label != original_label) if original_label else False
+                        for t in templates:
+                            for p in prefixes:
+                                all_items.append((p, t, needs_flip))
+                else:
+                    # Flat list paraphrases: extract fill value and build questions
+                    fill_value = extract_fill_value(original_question, question_paraphrases)
+                    questions = []
+                    for t in question_paraphrases:
+                        if "{}" in t and fill_value is not None:
+                            questions.append(t.format(fill_value))
+                        else:
+                            questions.append(t)
+                    all_items = [(p, q, False) for p in prefixes for q in questions]
             else:
-                sampled_pairs = all_pairs[:]
-                while len(sampled_pairs) < n_samples:
-                    sampled_pairs.append(random.choice(all_pairs))
+                all_items = [(p, original_question, False) for p in prefixes]
+
+            # Sample
+            if n_samples <= len(all_items):
+                sampled = random.sample(all_items, n_samples)
+            else:
+                sampled = all_items[:]
+                while len(sampled) < n_samples:
+                    sampled.append(random.choice(all_items))
 
             predictions = []
+            raw_predictions = []
             prompt_variants = []
-            for new_prefix, new_question in sampled_pairs:
+            for new_prefix, new_question, needs_flip in sampled:
 
                 if new_prefix != ORIGINAL_PREFIX or new_question != original_question:
                     swapped_dp = swap_classification_prompt(
@@ -521,7 +554,12 @@ def evaluate_with_stability(
                     dtype=dtype,
                 )
                 parsed = parse_answer(pred)
-                predictions.append(parsed)
+                raw_predictions.append(parsed)
+
+                # Normalize: flip prediction for opposite-polarity questions
+                # so that all predictions are in the same reference frame as ground_truth
+                normalized = _flip_prediction(parsed) if needs_flip else parsed
+                predictions.append(normalized)
                 prompt_variants.append(f"{new_prefix}# {new_question}")
 
             stats = _compute_majority_vote(predictions, n_samples)
@@ -535,6 +573,7 @@ def evaluate_with_stability(
                 "no_count": stats["no_count"],
                 "other_count": stats["other_count"],
                 "predictions": predictions,
+                "raw_predictions": raw_predictions,
                 "prompt_variants": prompt_variants,
             }
         else:
@@ -720,7 +759,12 @@ if __name__ == "__main__":
     if args.mode == "prompt":
         question_paraphrases = load_question_paraphrases(DATASET_NAME)
         if question_paraphrases is not None:
-            print(f"Loaded {len(question_paraphrases)} question paraphrases for '{DATASET_NAME}'")
+            if isinstance(question_paraphrases, dict):
+                total = sum(len(v) for v in question_paraphrases.values())
+                groups = ", ".join(f"{k}({len(v)})" for k, v in question_paraphrases.items())
+                print(f"Loaded {total} question paraphrases for '{DATASET_NAME}' (label groups: {groups})")
+            else:
+                print(f"Loaded {len(question_paraphrases)} question paraphrases for '{DATASET_NAME}'")
 
     # Run stability evaluation for each param value
     for run_idx, (stability_config, json_path) in enumerate(configs_to_run):
