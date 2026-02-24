@@ -60,7 +60,7 @@ from nl_probes.base_experiment import sanitize_lora_name
 
 @dataclass
 class StabilityConfig:
-    mode: str = "noise"  # "noise", "temperature", "threshold", or "prompt"
+    mode: str = "noise"  # "noise", "temperature", "threshold", "prompt", or "distractor"
     n_samples: int = 10  # Number of forward passes (ignored for threshold mode)
     noise_scale: float = 0.05  # (noise mode) Fraction of activation norm for noise std
     temperature: float = 1.0  # (temperature mode) Sampling temperature
@@ -109,6 +109,8 @@ INSTRUCTION_PARAPHRASES = [
     "State 'Yes' or 'No'. ",
     "Only answer 'Yes' or 'No'. ",
 ]
+
+DISTRACTOR_PREFIX = "Answer only with one of the following: 'Yes', 'No', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'. "
 
 PARAPHRASES_JSON_PATH = "datasets/classification_datasets/paraphrases/question.json"
 
@@ -340,9 +342,9 @@ def evaluate_with_stability(
             "temperature": stability_config.temperature,
         }
         desc = f"Temperature eval (T={stability_config.temperature})"
-    elif mode == "threshold":
+    elif mode in ("threshold", "distractor"):
         gen_kwargs = generation_kwargs  # deterministic
-        desc = "Threshold eval (logit confidence)"
+        desc = "Threshold eval (logit confidence)" if mode == "threshold" else "Distractor eval"
     elif mode == "prompt":
         gen_kwargs = generation_kwargs  # deterministic
         vary_q = stability_config.vary_question
@@ -388,6 +390,44 @@ def evaluate_with_stability(
                 "other_count": 1 if predicted not in ("yes", "no") else 0,
                 "predictions": [predicted],
                 "confidence": confidence,
+            }
+        elif mode == "distractor":
+            # Distractor mode: single pass with numbered distractors in prompt
+            decoded = tokenizer.decode(dp_with_vectors.input_ids, skip_special_tokens=False)
+            prefix_idx = decoded.index(ORIGINAL_PREFIX)
+            end_idx = decoded.index("<|im_end|>", prefix_idx)
+            original_cls = decoded[prefix_idx + len(ORIGINAL_PREFIX):end_idx]
+            original_question = original_cls[2:] if original_cls.startswith("# ") else original_cls
+
+            swapped_dp = swap_classification_prompt(
+                dp_with_vectors, tokenizer, DISTRACTOR_PREFIX, original_question,
+            )
+            batch_data = construct_batch([swapped_dp], tokenizer, device)
+
+            pred = run_single_inference(
+                model=model,
+                tokenizer=tokenizer,
+                submodule=submodule,
+                batch_data=batch_data,
+                steering_coefficient=steering_coefficient,
+                generation_kwargs=gen_kwargs,
+                device=device,
+                dtype=dtype,
+            )
+            predicted = parse_answer(pred)
+            is_yes_no = predicted in ("yes", "no")
+
+            result = {
+                "index": i,
+                "ground_truth": ground_truth,
+                "majority_vote": predicted,
+                "is_correct": predicted == ground_truth,
+                "agreement_rate": 1.0 if is_yes_no else 0.0,
+                "yes_count": 1 if predicted == "yes" else 0,
+                "no_count": 1 if predicted == "no" else 0,
+                "other_count": 0 if is_yes_no else 1,
+                "predictions": [predicted],
+                "raw_output": pred,
             }
         elif mode == "prompt":
             # Prompt paraphrase mode: run with N different prompt wordings
@@ -524,9 +564,10 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description="Stability evaluation experiment")
-    parser.add_argument("--mode", choices=["noise", "temperature", "threshold", "prompt"], default="noise",
+    parser.add_argument("--mode", choices=["noise", "temperature", "threshold", "prompt", "distractor"], default="noise",
                         help="Stability mode: 'noise' perturbs activations, 'temperature' uses stochastic decoding, "
-                             "'threshold' uses logit confidence, 'prompt' uses paraphrased prompts")
+                             "'threshold' uses logit confidence, 'prompt' uses paraphrased prompts, "
+                             "'distractor' adds numbered decoy options")
     parser.add_argument("--noise-scales", type=float, nargs="+", default=[0.003],
                         help="Noise scale(s) for noise mode (default: 0.003)")
     parser.add_argument("--temperatures", type=float, nargs="+", default=[1.0],
@@ -576,6 +617,9 @@ if __name__ == "__main__":
             )
             flags = ("q" if args.vary_question else "") + ("p" if args.vary_prefix else "")
             param_str = f"promptvar_{flags}_n{cfg.n_samples}" if flags else f"promptvar_none_n{cfg.n_samples}"
+        elif args.mode == "distractor":
+            cfg = StabilityConfig(mode="distractor")
+            param_str = "distractor"
         else:
             cfg = StabilityConfig(mode="threshold")
             param_str = "logitconf"

@@ -104,6 +104,8 @@ def get_json_path(model_name: str, lora_name: str, dataset_name: str, mode: str,
         param_str = f"temp{param}_n{n_samples}"
     elif mode == "prompt":
         param_str = f"promptvar_{param}_n{n_samples}" if param else f"promptvar_none_n{n_samples}"
+    elif mode == "distractor":
+        param_str = "distractor"
     else:
         param_str = "logitconf"
     return f"{INPUT_DIR}/stability_{model_name_str}_{lora_name_str}_{dataset_name}_{param_str}.json"
@@ -119,6 +121,8 @@ def make_label(mode: str, param: float | str, n_samples: int = DEFAULT_N_SAMPLES
     if mode == "prompt":
         flag_labels = {"qp": "question+prefix", "q": "question", "p": "prefix", "none": "baseline"}
         return f"prompt ({flag_labels.get(param, param)}{n_suffix})"
+    if mode == "distractor":
+        return "distractor"
     return f"logit conf.{n_suffix}"
 
 
@@ -141,6 +145,7 @@ def assign_colors(
     temp_entries = [(i, p) for i, (_, m, p) in enumerate(entries) if m == "temperature"]
     threshold_entries = [(i, p) for i, (_, m, p) in enumerate(entries) if m == "threshold"]
     prompt_entries = [(i, p) for i, (_, m, p) in enumerate(entries) if m == "prompt"]
+    distractor_entries = [(i, p) for i, (_, m, p) in enumerate(entries) if m == "distractor"]
 
     colors: list[tuple[float, float, float, float] | None] = [None] * len(entries)
 
@@ -169,6 +174,10 @@ def assign_colors(
         for j, (idx, _) in enumerate(prompt_entries):
             colors[idx] = tuple(purple_values[j])
 
+    # Gold for distractor
+    for idx, _ in distractor_entries:
+        colors[idx] = (0.85, 0.65, 0.0, 1.0)
+
     return colors
 
 
@@ -180,6 +189,8 @@ def assign_markers(mode: str) -> str:
         return "s"
     if mode == "prompt":
         return "^"  # Triangle for prompt
+    if mode == "distractor":
+        return "X"  # X for distractor
     return "D"  # Diamond for threshold
 
 
@@ -364,6 +375,7 @@ if __name__ == "__main__":
         "temperature": "temperature (oranges/reds)",
         "threshold": "threshold (green)",
         "prompt": "prompt (purples)",
+        "distractor": "distractor (gold)",
     }
     present_str = ", ".join(mode_descriptions[m] for m in modes_present if m in mode_descriptions)
     print(f"Plotting: {present_str}")
