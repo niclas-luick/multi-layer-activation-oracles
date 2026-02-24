@@ -24,12 +24,13 @@ MODEL_NAME = "Qwen/Qwen3-8B"
 VERBALIZER_LORA = "nluick/MLAO-Qwen3-8B-3L-3N"
 DATASET_NAME = "language_identification"
 
-# Each entry: (mode, param_value)
+# Each entry: (mode, param_value) or (mode, param_value, n_samples)
 #   mode="noise"       -> param_value is noise_scale (e.g. 0.003)
 #   mode="temperature"  -> param_value is temperature (e.g. 1.0)
 #   mode="threshold"    -> param_value is ignored (use 0), single deterministic pass
 #   mode="prompt"       -> param_value is a string flags combo: "qp", "q", "p", or "none"
-EXPERIMENTS: list[tuple[str, float | str]] = [
+#   n_samples (optional, default 10) -> number of forward passes used in stability_eval.py
+EXPERIMENTS: list[tuple] = [
     ("noise", 0.001),
     ("noise", 0.003),
     ("noise", 0.005),
@@ -46,10 +47,10 @@ EXPERIMENTS: list[tuple[str, float | str]] = [
     ("prompt", "qp"),
     #("prompt", "q"),
     #("prompt", "p"),
+    #("prompt", "qp", 50),
 ]
 
-# Number of samples per experiment (must match --n-samples used in stability_eval.py)
-N_SAMPLES = 10
+DEFAULT_N_SAMPLES = 10
 
 # Input/output paths
 INPUT_DIR = "plots/stability"
@@ -92,31 +93,32 @@ def load_results_json(json_path: str) -> dict | None:
         return json.load(f)
 
 
-def get_json_path(model_name: str, lora_name: str, dataset_name: str, mode: str, param: float | str) -> str:
+def get_json_path(model_name: str, lora_name: str, dataset_name: str, mode: str, param: float | str, n_samples: int = DEFAULT_N_SAMPLES) -> str:
     """Construct the expected JSON path for a given configuration."""
     model_name_str = model_name.split("/")[-1]
     lora_name_str = lora_name.split("/")[-1]
     if mode == "noise":
-        param_str = f"noise{param}_n{N_SAMPLES}"
+        param_str = f"noise{param}_n{n_samples}"
     elif mode == "temperature":
-        param_str = f"temp{param}_n{N_SAMPLES}"
+        param_str = f"temp{param}_n{n_samples}"
     elif mode == "prompt":
-        param_str = f"promptvar_{param}_n{N_SAMPLES}" if param else f"promptvar_none_n{N_SAMPLES}"
+        param_str = f"promptvar_{param}_n{n_samples}" if param else f"promptvar_none_n{n_samples}"
     else:
         param_str = "logitconf"
     return f"{INPUT_DIR}/stability_{model_name_str}_{lora_name_str}_{dataset_name}_{param_str}.json"
 
 
-def make_label(mode: str, param: float | str) -> str:
-    """Human-readable label for a (mode, param) pair."""
+def make_label(mode: str, param: float | str, n_samples: int = DEFAULT_N_SAMPLES) -> str:
+    """Human-readable label for a (mode, param, n_samples) tuple."""
+    n_suffix = f", n={n_samples}"
     if mode == "noise":
-        return f"noise={param}"
+        return f"noise={param}{n_suffix}"
     if mode == "temperature":
-        return f"T={param}"
+        return f"T={param}{n_suffix}"
     if mode == "prompt":
         flag_labels = {"qp": "question+prefix", "q": "question", "p": "prefix", "none": "baseline"}
-        return f"prompt ({flag_labels.get(param, param)})"
-    return "logit conf."
+        return f"prompt ({flag_labels.get(param, param)}{n_suffix})"
+    return f"logit conf.{n_suffix}"
 
 
 def assign_colors(
@@ -337,11 +339,13 @@ if __name__ == "__main__":
     # Load all results as (label, mode, param, data) tuples
     entries: list[tuple[str, str, float, dict]] = []
 
-    for mode, param in EXPERIMENTS:
-        json_path = get_json_path(MODEL_NAME, VERBALIZER_LORA, DATASET_NAME, mode, param)
+    for exp in EXPERIMENTS:
+        mode, param = exp[0], exp[1]
+        n_samples = exp[2] if len(exp) > 2 else DEFAULT_N_SAMPLES
+        json_path = get_json_path(MODEL_NAME, VERBALIZER_LORA, DATASET_NAME, mode, param, n_samples)
         data = load_results_json(json_path)
         if data is not None:
-            label = make_label(mode, param)
+            label = make_label(mode, param, n_samples)
             entries.append((label, mode, param, data))
             print(f"  Loaded: {label} ({len(data['results'])} examples)")
 
