@@ -360,10 +360,11 @@ if __name__ == "__main__":
     present_str = ", ".join(mode_descriptions[m] for m in modes_present if m in mode_descriptions)
     print(f"Plotting: {present_str}")
 
-    # Generate output filename
+    # Generate output filename that encodes which modes are included
     model_name_str = MODEL_NAME.split("/")[-1]
     lora_name_str = VERBALIZER_LORA.split("/")[-1]
-    output_base = f"{OUTPUT_DIR}/stability_comparison_{model_name_str}_{lora_name_str}_{DATASET_NAME}_threshold_"
+    modes_suffix = "_".join(sorted(modes_present))
+    output_base = f"{OUTPUT_DIR}/stability_comparison_{model_name_str}_{lora_name_str}_{DATASET_NAME}_{modes_suffix}"
 
     # Plot 1: Accuracy & Coverage vs Threshold (side by side)
     plot_curves(
