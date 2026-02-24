@@ -115,16 +115,32 @@ DISTRACTOR_PREFIX = "Answer only with one of the following: 'Yes', 'No', '1', '2
 PARAPHRASES_JSON_PATH = "datasets/classification_datasets/paraphrases/question.json"
 
 
-def load_question_paraphrases(dataset_name: str) -> list[str]:
+def load_question_paraphrases(dataset_name: str) -> list[str] | None:
     """Load question paraphrase templates from question.json for a given dataset."""
     with open(PARAPHRASES_JSON_PATH) as f:
         all_paraphrases = json.load(f)
-    templates = all_paraphrases[dataset_name]
+
+    # Handle engels_ prefix: e.g. "engels_headline_istrump" -> all_paraphrases["engels"]["headline_istrump"]
+    if dataset_name.startswith("engels_"):
+        subtask = dataset_name[len("engels_"):]
+        templates = all_paraphrases.get("engels", {}).get(subtask)
+    else:
+        templates = all_paraphrases.get(dataset_name)
+
+    if templates is None:
+        print(f"  WARNING: No question paraphrases found for '{dataset_name}'")
+        return None
+
     if isinstance(templates, dict):
         # Flatten label-keyed dicts (e.g., sst2 has {"positive": [...], "negative": [...]})
         flat = []
         for v in templates.values():
-            flat.extend(v)
+            if isinstance(v, list):
+                flat.extend(v)
+            elif isinstance(v, dict):
+                # Nested further (e.g. engels subtasks with label keys)
+                for vv in v.values():
+                    flat.extend(vv)
         return flat
     return templates
 
@@ -703,7 +719,8 @@ if __name__ == "__main__":
     question_paraphrases = None
     if args.mode == "prompt":
         question_paraphrases = load_question_paraphrases(DATASET_NAME)
-        print(f"Loaded {len(question_paraphrases)} question paraphrases for '{DATASET_NAME}'")
+        if question_paraphrases is not None:
+            print(f"Loaded {len(question_paraphrases)} question paraphrases for '{DATASET_NAME}'")
 
     # Run stability evaluation for each param value
     for run_idx, (stability_config, json_path) in enumerate(configs_to_run):
