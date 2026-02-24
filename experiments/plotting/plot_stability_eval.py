@@ -48,6 +48,9 @@ EXPERIMENTS: list[tuple[str, float | str]] = [
     #("prompt", "p"),
 ]
 
+# Number of samples per experiment (must match --n-samples used in stability_eval.py)
+N_SAMPLES = 10
+
 # Input/output paths
 INPUT_DIR = "plots/stability"
 OUTPUT_DIR = "plots/stability"
@@ -94,11 +97,11 @@ def get_json_path(model_name: str, lora_name: str, dataset_name: str, mode: str,
     model_name_str = model_name.split("/")[-1]
     lora_name_str = lora_name.split("/")[-1]
     if mode == "noise":
-        param_str = f"noise{param}"
+        param_str = f"noise{param}_n{N_SAMPLES}"
     elif mode == "temperature":
-        param_str = f"temp{param}"
+        param_str = f"temp{param}_n{N_SAMPLES}"
     elif mode == "prompt":
-        param_str = f"promptvar_{param}" if param else "promptvar_none"
+        param_str = f"promptvar_{param}_n{N_SAMPLES}" if param else f"promptvar_none_n{N_SAMPLES}"
     else:
         param_str = "logitconf"
     return f"{INPUT_DIR}/stability_{model_name_str}_{lora_name_str}_{dataset_name}_{param_str}.json"

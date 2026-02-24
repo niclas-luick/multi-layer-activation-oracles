@@ -407,28 +407,29 @@ def evaluate_with_stability(
             if vary_q and question_paraphrases is not None:
                 fill_value = extract_fill_value(original_question, question_paraphrases)
 
-            # Sample question paraphrases
-            sampled_questions = None
+            # Build all (prefix, question) pairs and sample n_samples unique ones
+            prefixes = INSTRUCTION_PARAPHRASES if vary_p else [ORIGINAL_PREFIX]
             if vary_q and question_paraphrases is not None:
-                sampled_templates = random.sample(
-                    question_paraphrases, min(n_samples, len(question_paraphrases))
-                )
-                while len(sampled_templates) < n_samples:
-                    sampled_templates.append(random.choice(question_paraphrases))
-                # Fill templates with the extracted value (or use as-is for template-less questions)
-                sampled_questions = []
-                for t in sampled_templates:
+                questions = []
+                for t in question_paraphrases:
                     if "{}" in t and fill_value is not None:
-                        sampled_questions.append(t.format(fill_value))
+                        questions.append(t.format(fill_value))
                     else:
-                        sampled_questions.append(t)
+                        questions.append(t)
+            else:
+                questions = [original_question]
+
+            all_pairs = [(p, q) for p in prefixes for q in questions]
+            if n_samples <= len(all_pairs):
+                sampled_pairs = random.sample(all_pairs, n_samples)
+            else:
+                sampled_pairs = all_pairs[:]
+                while len(sampled_pairs) < n_samples:
+                    sampled_pairs.append(random.choice(all_pairs))
 
             predictions = []
             prompt_variants = []
-            for s in range(n_samples):
-                # Determine prefix and question for this variant
-                new_prefix = INSTRUCTION_PARAPHRASES[s % len(INSTRUCTION_PARAPHRASES)] if vary_p else ORIGINAL_PREFIX
-                new_question = sampled_questions[s] if sampled_questions is not None else original_question
+            for new_prefix, new_question in sampled_pairs:
 
                 if new_prefix != ORIGINAL_PREFIX or new_question != original_question:
                     swapped_dp = swap_classification_prompt(
@@ -534,6 +535,8 @@ if __name__ == "__main__":
                         help="(prompt mode) Paraphrase the question (default: True)")
     parser.add_argument("--vary-prefix", action=argparse.BooleanOptionalAction, default=True,
                         help="(prompt mode) Paraphrase the instruction prefix (default: True)")
+    parser.add_argument("--n-samples", type=int, default=10,
+                        help="Number of forward passes per example (default: 10)")
     parser.add_argument("--force-rerun", action="store_true", help="Force re-run even if JSON exists")
     args = parser.parse_args()
 
@@ -561,18 +564,18 @@ if __name__ == "__main__":
     configs_to_run: list[tuple[StabilityConfig, str]] = []  # (config, json_path)
     for param in param_values:
         if args.mode == "noise":
-            cfg = StabilityConfig(mode="noise", n_samples=10, noise_scale=param)
-            param_str = f"noise{param}"
+            cfg = StabilityConfig(mode="noise", n_samples=args.n_samples, noise_scale=param)
+            param_str = f"noise{param}_n{cfg.n_samples}"
         elif args.mode == "temperature":
-            cfg = StabilityConfig(mode="temperature", n_samples=10, temperature=param)
-            param_str = f"temp{param}"
+            cfg = StabilityConfig(mode="temperature", n_samples=args.n_samples, temperature=param)
+            param_str = f"temp{param}_n{cfg.n_samples}"
         elif args.mode == "prompt":
             cfg = StabilityConfig(
-                mode="prompt", n_samples=10,
+                mode="prompt", n_samples=args.n_samples,
                 vary_question=args.vary_question, vary_prefix=args.vary_prefix,
             )
             flags = ("q" if args.vary_question else "") + ("p" if args.vary_prefix else "")
-            param_str = f"promptvar_{flags}" if flags else "promptvar_none"
+            param_str = f"promptvar_{flags}_n{cfg.n_samples}" if flags else f"promptvar_none_n{cfg.n_samples}"
         else:
             cfg = StabilityConfig(mode="threshold")
             param_str = "logitconf"
