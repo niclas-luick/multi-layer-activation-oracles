@@ -53,8 +53,9 @@ EXPERIMENTS: list[tuple] = [
 DEFAULT_N_SAMPLES = 10
 
 # Input/output paths
-INPUT_DIR = "plots/stability"
-OUTPUT_DIR = "plots/stability"
+INPUT_DIR = "plots/stability/data"
+OUTPUT_DIR = "plots/stability/plots"
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # ============================================================================
 # Helpers

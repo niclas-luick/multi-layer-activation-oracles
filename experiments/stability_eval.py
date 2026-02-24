@@ -89,7 +89,7 @@ DATASET_NAME = "language_identification"
 NUM_TEST_EXAMPLES = 100
 
 # Output settings
-OUTPUT_DIR = "plots/stability"
+OUTPUT_DIR = "plots/stability/data"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 device = torch.device("cuda")
