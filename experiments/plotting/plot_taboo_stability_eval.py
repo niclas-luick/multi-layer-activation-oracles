@@ -261,7 +261,7 @@ def plot_average_only(
     ax3.set_xlabel("Coverage", fontsize=12)
     ax3.set_ylabel("Selective Accuracy", fontsize=12)
     ax3.set_xlim(0.0, 1.05)
-    ax3.set_ylim(0.0, 1.05)
+    ax3.set_ylim(0.45, 0.8)
     ax3.legend(loc="lower left", fontsize=10)
     ax3.grid(True, alpha=0.3)
     ax3.set_title("Accuracy-Coverage Tradeoff", fontsize=12)

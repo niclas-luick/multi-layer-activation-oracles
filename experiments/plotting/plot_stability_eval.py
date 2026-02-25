@@ -22,7 +22,7 @@ import numpy as np
 # Model configuration (must match the JSON files you want to load)
 MODEL_NAME = "Qwen/Qwen3-8B"
 VERBALIZER_LORA = "nluick/MLAO-Qwen3-8B-3L-3N"
-DATASET_NAME = "language_identification"
+DATASET_NAME = "engels_headline_istrump"
 
 # Each entry: (mode, param_value) or (mode, param_value, n_samples)
 #   mode="noise"       -> param_value is noise_scale (e.g. 0.003)

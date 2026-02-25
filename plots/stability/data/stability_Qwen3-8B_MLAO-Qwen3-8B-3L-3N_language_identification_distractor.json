@@ -1,0 +1,4529 @@
+{
+  "config": {
+    "model_name": "Qwen/Qwen3-8B",
+    "verbalizer_lora": "nluick/MLAO-Qwen3-8B-3L-3N",
+    "layer_percents": [
+      25,
+      50,
+      75
+    ],
+    "dataset_name": "language_identification",
+    "n_test_examples": 100,
+    "stability_config": {
+      "mode": "distractor",
+      "n_samples": 10,
+      "noise_scale": 0.05,
+      "temperature": 1.0,
+      "vary_question": true,
+      "vary_prefix": true
+    },
+    "steering_coefficient": 1.0
+  },
+  "summary": {
+    "baseline_accuracy": 0.7833333333333333,
+    "mean_agreement_rate": 1.0,
+    "n_examples": 300
+  },
+  "results": [
+    {
+      "index": 0,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this written in the language Indonesian?"
+    },
+    {
+      "index": 1,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we determine that this is in Pushto?"
+    },
+    {
+      "index": 2,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the language used here Arabic?"
+    },
+    {
+      "index": 3,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you agree that this is in Korean?"
+    },
+    {
+      "index": 4,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you identify this text as being in Korean?"
+    },
+    {
+      "index": 5,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this writing reflect the language Korean?"
+    },
+    {
+      "index": 6,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you classify this as written in Latin?"
+    },
+    {
+      "index": 7,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we determine that this is in Pushto?"
+    },
+    {
+      "index": 8,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this passage composed in Hindi?"
+    },
+    {
+      "index": 9,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you classify this as written in Thai?"
+    },
+    {
+      "index": 10,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this passage composed in Thai?"
+    },
+    {
+      "index": 11,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this text written in Thai?"
+    },
+    {
+      "index": 12,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we determine that this is in Latin?"
+    },
+    {
+      "index": 13,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you classify this as written in Latin?"
+    },
+    {
+      "index": 14,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you agree that this is in Persian?"
+    },
+    {
+      "index": 15,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this passage use Persian?"
+    },
+    {
+      "index": 16,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the content of this text in English?"
+    },
+    {
+      "index": 17,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this writing reflect the language French?"
+    },
+    {
+      "index": 18,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this written in the language Russian?"
+    },
+    {
+      "index": 19,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this passage use Chinese?"
+    },
+    {
+      "index": 20,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the language of this text Hindi?"
+    },
+    {
+      "index": 21,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you identify this text as being in Chinese?"
+    },
+    {
+      "index": 22,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you identify this text as being in Arabic?"
+    },
+    {
+      "index": 23,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the text presented in Chinese?"
+    },
+    {
+      "index": 24,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this passage composed in Latin?"
+    },
+    {
+      "index": 25,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you agree that this is in Dutch?"
+    },
+    {
+      "index": 26,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the content of this text in Persian?"
+    },
+    {
+      "index": 27,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this text written in Hindi?"
+    },
+    {
+      "index": 28,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the primary language of this text Urdu?"
+    },
+    {
+      "index": 29,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we determine that this is in Urdu?"
+    },
+    {
+      "index": 30,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we say this is in Indonesian?"
+    },
+    {
+      "index": 31,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this text written in Indonesian?"
+    },
+    {
+      "index": 32,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we determine that this is in Indonesian?"
+    },
+    {
+      "index": 33,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the language of this text Estonian?"
+    },
+    {
+      "index": 34,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Am I correct in saying this is in Estonian?"
+    },
+    {
+      "index": 35,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this text predominantly in Estonian?"
+    },
+    {
+      "index": 36,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the language used here Persian?"
+    },
+    {
+      "index": 37,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the text presented in Spanish?"
+    },
+    {
+      "index": 38,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we determine that this is in Swedish?"
+    },
+    {
+      "index": 39,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Am I correct in saying this is in Estonian?"
+    },
+    {
+      "index": 40,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you classify this as written in Estonian?"
+    },
+    {
+      "index": 41,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the content of this text in Russian?"
+    },
+    {
+      "index": 42,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this passage use Tamil?"
+    },
+    {
+      "index": 43,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the language of this text Hindi?"
+    },
+    {
+      "index": 44,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the language used here Indonesian?"
+    },
+    {
+      "index": 45,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you identify this text as being in Arabic?"
+    },
+    {
+      "index": 46,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you agree that this is in Korean?"
+    },
+    {
+      "index": 47,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this writing reflect the language Urdu?"
+    },
+    {
+      "index": 48,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this passage use Spanish?"
+    },
+    {
+      "index": 49,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we determine that this is in Japanese?"
+    },
+    {
+      "index": 50,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the primary language of this text Korean?"
+    },
+    {
+      "index": 51,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the content of this text in Swedish?"
+    },
+    {
+      "index": 52,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you agree that this is in Swedish?"
+    },
+    {
+      "index": 53,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we determine that this is in French?"
+    },
+    {
+      "index": 54,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this writing reflect the language Korean?"
+    },
+    {
+      "index": 55,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the language used here Tamil?"
+    },
+    {
+      "index": 56,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the primary language of this text Korean?"
+    },
+    {
+      "index": 57,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you classify this as written in Russian?"
+    },
+    {
+      "index": 58,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this written in the language Spanish?"
+    },
+    {
+      "index": 59,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the text presented in Persian?"
+    },
+    {
+      "index": 60,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we say this is in Spanish?"
+    },
+    {
+      "index": 61,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the content of this text in Spanish?"
+    },
+    {
+      "index": 62,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you identify this text as being in Turkish?"
+    },
+    {
+      "index": 63,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this writing reflect the language Spanish?"
+    },
+    {
+      "index": 64,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this text predominantly in Indonesian?"
+    },
+    {
+      "index": 65,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we determine that this is in Turkish?"
+    },
+    {
+      "index": 66,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this passage use Thai?"
+    },
+    {
+      "index": 67,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you agree that this is in Russian?"
+    },
+    {
+      "index": 68,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we confirm this is in Japanese?"
+    },
+    {
+      "index": 69,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you identify this text as being in Tamil?"
+    },
+    {
+      "index": 70,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this passage use Pushto?"
+    },
+    {
+      "index": 71,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Am I correct in saying this is in Swedish?"
+    },
+    {
+      "index": 72,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the content of this text in Estonian?"
+    },
+    {
+      "index": 73,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we say this is in Chinese?"
+    },
+    {
+      "index": 74,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the language of this text Thai?"
+    },
+    {
+      "index": 75,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the primary language of this text Spanish?"
+    },
+    {
+      "index": 76,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we confirm this is in Spanish?"
+    },
+    {
+      "index": 77,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you identify this text as being in Spanish?"
+    },
+    {
+      "index": 78,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the language used here Turkish?"
+    },
+    {
+      "index": 79,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Am I correct in saying this is in Portugese?"
+    },
+    {
+      "index": 80,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the language of this text Romanian?"
+    },
+    {
+      "index": 81,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this written in the language Arabic?"
+    },
+    {
+      "index": 82,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we confirm this is in Urdu?"
+    },
+    {
+      "index": 83,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the text presented in Portugese?"
+    },
+    {
+      "index": 84,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the text presented in Thai?"
+    },
+    {
+      "index": 85,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this passage use Thai?"
+    },
+    {
+      "index": 86,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we confirm this is in Romanian?"
+    },
+    {
+      "index": 87,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this text written in Spanish?"
+    },
+    {
+      "index": 88,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the language of this text Spanish?"
+    },
+    {
+      "index": 89,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the text presented in Turkish?"
+    },
+    {
+      "index": 90,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the content of this text in Portugese?"
+    },
+    {
+      "index": 91,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the content of this text in Russian?"
+    },
+    {
+      "index": 92,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Am I correct in saying this is in Persian?"
+    },
+    {
+      "index": 93,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you agree that this is in Turkish?"
+    },
+    {
+      "index": 94,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Am I correct in saying this is in English?"
+    },
+    {
+      "index": 95,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the text presented in Chinese?"
+    },
+    {
+      "index": 96,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Am I correct in saying this is in Pushto?"
+    },
+    {
+      "index": 97,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we say this is in Thai?"
+    },
+    {
+      "index": 98,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we confirm this is in Spanish?"
+    },
+    {
+      "index": 99,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we say this is in Dutch?"
+    },
+    {
+      "index": 100,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you agree that this is in Arabic?"
+    },
+    {
+      "index": 101,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we say this is in Spanish?"
+    },
+    {
+      "index": 102,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we confirm this is in Swedish?"
+    },
+    {
+      "index": 103,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you identify this text as being in Spanish?"
+    },
+    {
+      "index": 104,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this passage composed in Spanish?"
+    },
+    {
+      "index": 105,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this passage composed in French?"
+    },
+    {
+      "index": 106,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the content of this text in French?"
+    },
+    {
+      "index": 107,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this text written in Tamil?"
+    },
+    {
+      "index": 108,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this passage composed in Hindi?"
+    },
+    {
+      "index": 109,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the text presented in Spanish?"
+    },
+    {
+      "index": 110,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the language of this text Spanish?"
+    },
+    {
+      "index": 111,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this text written in Latin?"
+    },
+    {
+      "index": 112,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this text predominantly in Romanian?"
+    },
+    {
+      "index": 113,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this passage composed in Tamil?"
+    },
+    {
+      "index": 114,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you agree that this is in Persian?"
+    },
+    {
+      "index": 115,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you identify this text as being in Persian?"
+    },
+    {
+      "index": 116,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you identify this text as being in Persian?"
+    },
+    {
+      "index": 117,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we confirm this is in Portugese?"
+    },
+    {
+      "index": 118,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the language used here Pushto?"
+    },
+    {
+      "index": 119,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this writing reflect the language Russian?"
+    },
+    {
+      "index": 120,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the text presented in Chinese?"
+    },
+    {
+      "index": 121,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we determine that this is in Chinese?"
+    },
+    {
+      "index": 122,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the content of this text in Chinese?"
+    },
+    {
+      "index": 123,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this passage use Russian?"
+    },
+    {
+      "index": 124,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this passage use Russian?"
+    },
+    {
+      "index": 125,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we say this is in Russian?"
+    },
+    {
+      "index": 126,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the language of this text French?"
+    },
+    {
+      "index": 127,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we confirm this is in Tamil?"
+    },
+    {
+      "index": 128,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you classify this as written in Latin?"
+    },
+    {
+      "index": 129,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we confirm this is in French?"
+    },
+    {
+      "index": 130,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this passage composed in Russian?"
+    },
+    {
+      "index": 131,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you identify this text as being in French?"
+    },
+    {
+      "index": 132,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this writing reflect the language Spanish?"
+    },
+    {
+      "index": 133,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the content of this text in Romanian?"
+    },
+    {
+      "index": 134,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you identify this text as being in Spanish?"
+    },
+    {
+      "index": 135,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you classify this as written in Pushto?"
+    },
+    {
+      "index": 136,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this writing reflect the language Hindi?"
+    },
+    {
+      "index": 137,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we determine that this is in Romanian?"
+    },
+    {
+      "index": 138,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you identify this text as being in Urdu?"
+    },
+    {
+      "index": 139,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the content of this text in Portugese?"
+    },
+    {
+      "index": 140,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Am I correct in saying this is in Romanian?"
+    },
+    {
+      "index": 141,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this text predominantly in Swedish?"
+    },
+    {
+      "index": 142,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we say this is in Swedish?"
+    },
+    {
+      "index": 143,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this writing reflect the language Persian?"
+    },
+    {
+      "index": 144,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the language used here Indonesian?"
+    },
+    {
+      "index": 145,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you identify this text as being in Hindi?"
+    },
+    {
+      "index": 146,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we say this is in French?"
+    },
+    {
+      "index": 147,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we determine that this is in English?"
+    },
+    {
+      "index": 148,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we confirm this is in Russian?"
+    },
+    {
+      "index": 149,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this text predominantly in French?"
+    },
+    {
+      "index": 150,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the language used here Thai?"
+    },
+    {
+      "index": 151,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this text written in Persian?"
+    },
+    {
+      "index": 152,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this passage use Persian?"
+    },
+    {
+      "index": 153,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this written in the language Russian?"
+    },
+    {
+      "index": 154,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the language of this text Russian?"
+    },
+    {
+      "index": 155,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the text presented in Spanish?"
+    },
+    {
+      "index": 156,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this text predominantly in Indonesian?"
+    },
+    {
+      "index": 157,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you agree that this is in Indonesian?"
+    },
+    {
+      "index": 158,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this passage composed in Korean?"
+    },
+    {
+      "index": 159,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the primary language of this text Korean?"
+    },
+    {
+      "index": 160,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this text predominantly in Korean?"
+    },
+    {
+      "index": 161,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the primary language of this text Korean?"
+    },
+    {
+      "index": 162,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Am I correct in saying this is in Estonian?"
+    },
+    {
+      "index": 163,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Am I correct in saying this is in Japanese?"
+    },
+    {
+      "index": 164,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this text written in Estonian?"
+    },
+    {
+      "index": 165,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you agree that this is in Pushto?"
+    },
+    {
+      "index": 166,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this passage composed in Persian?"
+    },
+    {
+      "index": 167,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the primary language of this text Pushto?"
+    },
+    {
+      "index": 168,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the language of this text Turkish?"
+    },
+    {
+      "index": 169,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this passage use Latin?"
+    },
+    {
+      "index": 170,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the language used here English?"
+    },
+    {
+      "index": 171,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this written in the language Tamil?"
+    },
+    {
+      "index": 172,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we confirm this is in Tamil?"
+    },
+    {
+      "index": 173,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the primary language of this text Portugese?"
+    },
+    {
+      "index": 174,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this written in the language Thai?"
+    },
+    {
+      "index": 175,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you agree that this is in Urdu?"
+    },
+    {
+      "index": 176,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the language used here Spanish?"
+    },
+    {
+      "index": 177,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this passage use Urdu?"
+    },
+    {
+      "index": 178,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the language of this text Chinese?"
+    },
+    {
+      "index": 179,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the language used here Latin?"
+    },
+    {
+      "index": 180,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the language of this text Dutch?"
+    },
+    {
+      "index": 181,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the language of this text Thai?"
+    },
+    {
+      "index": 182,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this passage composed in Korean?"
+    },
+    {
+      "index": 183,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the language of this text Thai?"
+    },
+    {
+      "index": 184,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we say this is in Pushto?"
+    },
+    {
+      "index": 185,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this writing reflect the language Pushto?"
+    },
+    {
+      "index": 186,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this text predominantly in Japanese?"
+    },
+    {
+      "index": 187,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the content of this text in Japanese?"
+    },
+    {
+      "index": 188,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the text presented in Japanese?"
+    },
+    {
+      "index": 189,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we say this is in Pushto?"
+    },
+    {
+      "index": 190,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this text written in Urdu?"
+    },
+    {
+      "index": 191,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we determine that this is in Persian?"
+    },
+    {
+      "index": 192,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this writing reflect the language Romanian?"
+    },
+    {
+      "index": 193,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this text predominantly in Korean?"
+    },
+    {
+      "index": 194,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the language of this text Romanian?"
+    },
+    {
+      "index": 195,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this writing reflect the language Korean?"
+    },
+    {
+      "index": 196,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this passage composed in Estonian?"
+    },
+    {
+      "index": 197,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the content of this text in Persian?"
+    },
+    {
+      "index": 198,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the content of this text in French?"
+    },
+    {
+      "index": 199,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the text presented in Portugese?"
+    },
+    {
+      "index": 200,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this passage use Dutch?"
+    },
+    {
+      "index": 201,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we confirm this is in Chinese?"
+    },
+    {
+      "index": 202,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the language of this text Japanese?"
+    },
+    {
+      "index": 203,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this text predominantly in Japanese?"
+    },
+    {
+      "index": 204,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this text written in Hindi?"
+    },
+    {
+      "index": 205,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this passage composed in Turkish?"
+    },
+    {
+      "index": 206,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you agree that this is in Turkish?"
+    },
+    {
+      "index": 207,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you classify this as written in Hindi?"
+    },
+    {
+      "index": 208,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this passage use Romanian?"
+    },
+    {
+      "index": 209,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Am I correct in saying this is in Hindi?"
+    },
+    {
+      "index": 210,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the content of this text in Indonesian?"
+    },
+    {
+      "index": 211,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this passage use Indonesian?"
+    },
+    {
+      "index": 212,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you identify this text as being in Indonesian?"
+    },
+    {
+      "index": 213,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the content of this text in Japanese?"
+    },
+    {
+      "index": 214,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you identify this text as being in Hindi?"
+    },
+    {
+      "index": 215,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we determine that this is in Tamil?"
+    },
+    {
+      "index": 216,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this writing reflect the language Estonian?"
+    },
+    {
+      "index": 217,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this passage use Urdu?"
+    },
+    {
+      "index": 218,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this written in the language Urdu?"
+    },
+    {
+      "index": 219,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this writing reflect the language Pushto?"
+    },
+    {
+      "index": 220,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this text predominantly in Indonesian?"
+    },
+    {
+      "index": 221,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Am I correct in saying this is in Pushto?"
+    },
+    {
+      "index": 222,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you classify this as written in Romanian?"
+    },
+    {
+      "index": 223,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this writing reflect the language Tamil?"
+    },
+    {
+      "index": 224,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you identify this text as being in Chinese?"
+    },
+    {
+      "index": 225,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we say this is in Turkish?"
+    },
+    {
+      "index": 226,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this text predominantly in Turkish?"
+    },
+    {
+      "index": 227,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the text presented in Turkish?"
+    },
+    {
+      "index": 228,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this passage composed in French?"
+    },
+    {
+      "index": 229,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this writing reflect the language English?"
+    },
+    {
+      "index": 230,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the content of this text in Turkish?"
+    },
+    {
+      "index": 231,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this written in the language Portugese?"
+    },
+    {
+      "index": 232,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Am I correct in saying this is in Portugese?"
+    },
+    {
+      "index": 233,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we say this is in Pushto?"
+    },
+    {
+      "index": 234,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you classify this as written in Urdu?"
+    },
+    {
+      "index": 235,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Am I correct in saying this is in Japanese?"
+    },
+    {
+      "index": 236,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you agree that this is in Chinese?"
+    },
+    {
+      "index": 237,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we determine that this is in French?"
+    },
+    {
+      "index": 238,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we say this is in Hindi?"
+    },
+    {
+      "index": 239,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this text written in Persian?"
+    },
+    {
+      "index": 240,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this text written in Thai?"
+    },
+    {
+      "index": 241,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this writing reflect the language Hindi?"
+    },
+    {
+      "index": 242,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you identify this text as being in Dutch?"
+    },
+    {
+      "index": 243,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the language of this text Urdu?"
+    },
+    {
+      "index": 244,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the language used here Urdu?"
+    },
+    {
+      "index": 245,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Am I correct in saying this is in Urdu?"
+    },
+    {
+      "index": 246,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the language of this text Japanese?"
+    },
+    {
+      "index": 247,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the language of this text Japanese?"
+    },
+    {
+      "index": 248,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you classify this as written in Estonian?"
+    },
+    {
+      "index": 249,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you identify this text as being in Urdu?"
+    },
+    {
+      "index": 250,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the language used here Japanese?"
+    },
+    {
+      "index": 251,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the text presented in Chinese?"
+    },
+    {
+      "index": 252,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the primary language of this text Urdu?"
+    },
+    {
+      "index": 253,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the content of this text in Latin?"
+    },
+    {
+      "index": 254,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you agree that this is in Pushto?"
+    },
+    {
+      "index": 255,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the content of this text in Thai?"
+    },
+    {
+      "index": 256,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this writing reflect the language Indonesian?"
+    },
+    {
+      "index": 257,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Am I correct in saying this is in Indonesian?"
+    },
+    {
+      "index": 258,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this text predominantly in Russian?"
+    },
+    {
+      "index": 259,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this text written in Pushto?"
+    },
+    {
+      "index": 260,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the content of this text in Latin?"
+    },
+    {
+      "index": 261,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we determine that this is in Hindi?"
+    },
+    {
+      "index": 262,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this text predominantly in Swedish?"
+    },
+    {
+      "index": 263,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Am I correct in saying this is in Urdu?"
+    },
+    {
+      "index": 264,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the content of this text in Turkish?"
+    },
+    {
+      "index": 265,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this written in the language Estonian?"
+    },
+    {
+      "index": 266,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you agree that this is in English?"
+    },
+    {
+      "index": 267,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the language used here Hindi?"
+    },
+    {
+      "index": 268,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we determine that this is in Hindi?"
+    },
+    {
+      "index": 269,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this text predominantly in Hindi?"
+    },
+    {
+      "index": 270,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this writing reflect the language Spanish?"
+    },
+    {
+      "index": 271,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you identify this text as being in Urdu?"
+    },
+    {
+      "index": 272,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this written in the language Turkish?"
+    },
+    {
+      "index": 273,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we determine that this is in French?"
+    },
+    {
+      "index": 274,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the language used here Persian?"
+    },
+    {
+      "index": 275,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this written in the language Portugese?"
+    },
+    {
+      "index": 276,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the content of this text in Tamil?"
+    },
+    {
+      "index": 277,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we determine that this is in Korean?"
+    },
+    {
+      "index": 278,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you identify this text as being in Persian?"
+    },
+    {
+      "index": 279,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the language of this text Japanese?"
+    },
+    {
+      "index": 280,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we confirm this is in Japanese?"
+    },
+    {
+      "index": 281,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you identify this text as being in Japanese?"
+    },
+    {
+      "index": 282,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we determine that this is in Latin?"
+    },
+    {
+      "index": 283,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the language used here Romanian?"
+    },
+    {
+      "index": 284,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we confirm this is in Latin?"
+    },
+    {
+      "index": 285,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the primary language of this text Tamil?"
+    },
+    {
+      "index": 286,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this text predominantly in Thai?"
+    },
+    {
+      "index": 287,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this writing reflect the language Tamil?"
+    },
+    {
+      "index": 288,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the content of this text in Turkish?"
+    },
+    {
+      "index": 289,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this writing reflect the language Korean?"
+    },
+    {
+      "index": 290,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the content of this text in Korean?"
+    },
+    {
+      "index": 291,
+      "ground_truth": "no",
+      "majority_vote": "yes",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you identify this text as being in Romanian?"
+    },
+    {
+      "index": 292,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this writing reflect the language Portugese?"
+    },
+    {
+      "index": 293,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is this passage composed in Turkish?"
+    },
+    {
+      "index": 294,
+      "ground_truth": "yes",
+      "majority_vote": "yes",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 1,
+      "no_count": 0,
+      "other_count": 0,
+      "predictions": [
+        "yes"
+      ],
+      "raw_output": "Yes",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this writing reflect the language Tamil?"
+    },
+    {
+      "index": 295,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Would you identify this text as being in Pushto?"
+    },
+    {
+      "index": 296,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Is the content of this text in Tamil?"
+    },
+    {
+      "index": 297,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Does this passage use Thai?"
+    },
+    {
+      "index": 298,
+      "ground_truth": "no",
+      "majority_vote": "no",
+      "is_correct": true,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we say this is in Pushto?"
+    },
+    {
+      "index": 299,
+      "ground_truth": "yes",
+      "majority_vote": "no",
+      "is_correct": false,
+      "agreement_rate": 1.0,
+      "yes_count": 0,
+      "no_count": 1,
+      "other_count": 0,
+      "predictions": [
+        "no"
+      ],
+      "raw_output": "No",
+      "prompt_used": "Answer with 'One' or 'Two' or 'Yes' or 'No' only.# Can we confirm this is in Thai?"
+    }
+  ]
+}
