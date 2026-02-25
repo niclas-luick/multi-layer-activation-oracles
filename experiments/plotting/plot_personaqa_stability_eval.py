@@ -1,13 +1,13 @@
 """
-Plot taboo open-ended stability evaluation results.
+Plot PersonaQA open-ended stability evaluation results.
 
-Loads per-word JSON files produced by taboo_stability_eval.py and plots
-accuracy-coverage curves (one line per target word).
+Loads per-question-type JSON files produced by personaqa_stability_eval.py and
+plots accuracy-coverage curves (one line per question type).
 
 Usage:
-    python plot_taboo_stability_eval.py
-    python plot_taboo_stability_eval.py --words ship wave moon
-    python plot_taboo_stability_eval.py --prompt-type all_standard
+    python plot_personaqa_stability_eval.py
+    python plot_personaqa_stability_eval.py --question-types country favorite_food
+    python plot_personaqa_stability_eval.py --mode noise --noise-scale 0.005
 """
 
 import argparse
@@ -29,11 +29,13 @@ from plot_stability_eval import (
 MODEL_NAME = "Qwen/Qwen3-8B"
 VERBALIZER_LORA = "nluick/MLAO-Qwen3-8B-3L-3N"
 
-TARGET_WORDS = [
-    "ship", "wave", "song", "snow", "rock",
-    "moon", "jump", "green", "flame", "flag",
-    "dance", "cloud", "clock", "chair", "salt",
-    "book", "blue", "gold", "leaf", "smile",
+PROMPT_TYPES = [
+    "country",
+    "favorite_food",
+    "favorite_drink",
+    "favorite_music_genre",
+    "favorite_sport",
+    "favorite_boardgame",
 ]
 
 INPUT_DIR = "plots/stability/data"
@@ -45,17 +47,15 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 # ============================================================================
 
 
-def get_taboo_json_path(
+def get_personaqa_json_path(
     model_name: str,
     verbalizer_lora: str,
-    target_word: str,
-    prompt_type: str,
-    dataset_type: str,
+    question_type: str,
     n_samples: int,
     mode: str = "prompt",
     noise_scale: float = 0.0,
 ) -> str:
-    """Construct the expected JSON path for a taboo stability result."""
+    """Construct the expected JSON path for a personaqa stability result."""
     model_str = model_name.split("/")[-1]
     verbalizer_str = verbalizer_lora.split("/")[-1]
     if mode == "prompt":
@@ -65,8 +65,8 @@ def get_taboo_json_path(
     else:  # combined
         mode_str = f"combined{noise_scale}"
     return (
-        f"{INPUT_DIR}/taboo_stability_{model_str}_{verbalizer_str}"
-        f"_{target_word}_{prompt_type}_{dataset_type}_{mode_str}_n{n_samples}.json"
+        f"{INPUT_DIR}/personaqa_stability_{model_str}_{verbalizer_str}"
+        f"_{question_type}_{mode_str}_n{n_samples}.json"
     )
 
 
@@ -102,7 +102,7 @@ def _compute_all_curves(
 
 
 def _mean_curve(curves: list[tuple[list[float], list[float]]]) -> tuple[np.ndarray, np.ndarray]:
-    """Compute mean accuracy and coverage across all word curves."""
+    """Compute mean accuracy and coverage across all curves."""
     all_accs = np.array([accs for accs, _ in curves])
     all_covs = np.array([covs for _, covs in curves])
     return all_accs.mean(axis=0), all_covs.mean(axis=0)
@@ -111,11 +111,11 @@ def _mean_curve(curves: list[tuple[list[float], list[float]]]) -> tuple[np.ndarr
 def plot_curves(
     entries: list[tuple[str, dict]],
     output_path: str,
-    title: str = "Taboo Stability: Accuracy & Coverage vs. Threshold",
+    title: str = "PersonaQA Stability: Accuracy & Coverage vs. Threshold",
 ):
-    """Plot accuracy and coverage curves for multiple target words plus average."""
+    """Plot accuracy and coverage curves for multiple question types plus average."""
     thresholds = np.linspace(0.0, 1.0, 21)
-    cmap = plt.cm.tab20
+    cmap = plt.cm.tab10
     colors = [cmap(i / max(len(entries) - 1, 1)) for i in range(len(entries))]
 
     curves = _compute_all_curves(entries, thresholds)
@@ -154,7 +154,7 @@ def plot_curves(
     ax1.set_xlabel("Agreement Threshold", fontsize=12)
     ax1.set_ylabel("Selective Accuracy", fontsize=12)
     ax1.set_xlim(-0.05, 1.05)
-    ax1.legend(loc="lower left", fontsize=7)
+    ax1.legend(loc="lower left", fontsize=8)
     ax1.grid(True, alpha=0.3)
     ax1.set_title("Accuracy vs. Agreement Threshold", fontsize=12)
 
@@ -162,7 +162,7 @@ def plot_curves(
     ax2.set_ylabel("Coverage (fraction of data)", fontsize=12)
     ax2.set_ylim(0, 1.05)
     ax2.set_xlim(-0.05, 1.05)
-    ax2.legend(loc="upper right", fontsize=7)
+    ax2.legend(loc="upper right", fontsize=8)
     ax2.grid(True, alpha=0.3)
     ax2.set_title("Coverage vs. Agreement Threshold", fontsize=12)
 
@@ -176,11 +176,11 @@ def plot_curves(
 def plot_tradeoff(
     entries: list[tuple[str, dict]],
     output_path: str,
-    title: str = "Taboo Stability: Accuracy-Coverage Tradeoff",
+    title: str = "PersonaQA Stability: Accuracy-Coverage Tradeoff",
 ):
-    """Plot accuracy vs coverage (parametric in threshold) for multiple target words plus average."""
+    """Plot accuracy vs coverage (parametric in threshold) for multiple question types plus average."""
     thresholds = np.linspace(0.0, 1.0, 21)
-    cmap = plt.cm.tab20
+    cmap = plt.cm.tab10
     colors = [cmap(i / max(len(entries) - 1, 1)) for i in range(len(entries))]
 
     curves = _compute_all_curves(entries, thresholds)
@@ -220,9 +220,9 @@ def plot_tradeoff(
 def plot_average_only(
     entries: list[tuple[str, dict]],
     output_path: str,
-    title: str = "Taboo Stability: Average across words",
+    title: str = "PersonaQA Stability: Average across question types",
 ):
-    """Plot only the average accuracy and coverage curves (no per-word lines)."""
+    """Plot only the average accuracy and coverage curves (no per-type lines)."""
     thresholds = np.linspace(0.0, 1.0, 21)
 
     curves = _compute_all_curves(entries, thresholds)
@@ -269,12 +269,12 @@ def plot_average_only(
     ax3.set_xlabel("Coverage", fontsize=12)
     ax3.set_ylabel("Selective Accuracy", fontsize=12)
     ax3.set_xlim(0.0, 1.05)
-    ax3.set_ylim(0.45, 0.8)
+    ax3.set_ylim(0.0, 1.05)
     ax3.legend(loc="lower left", fontsize=10)
     ax3.grid(True, alpha=0.3)
     ax3.set_title("Accuracy-Coverage Tradeoff", fontsize=12)
 
-    fig.suptitle(f"{title}\n(averaged over {len(entries)} words)", fontsize=14, y=1.02)
+    fig.suptitle(f"{title}\n(averaged over {len(entries)} question types)", fontsize=14, y=1.02)
     plt.tight_layout()
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
     print(f"Saved plot to {output_path}")
@@ -286,22 +286,14 @@ def plot_average_only(
 # ============================================================================
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Plot taboo stability evaluation results")
+    parser = argparse.ArgumentParser(description="Plot PersonaQA stability evaluation results")
     parser.add_argument(
-        "--words", nargs="+", default=None,
-        help="Target words to plot (default: all 20)",
+        "--question-types", nargs="+", default=None,
+        help="Question types to plot (default: all 6)",
     )
     parser.add_argument(
         "--n-samples", type=int, default=50,
         help="N samples used in eval (default: 50)",
-    )
-    parser.add_argument(
-        "--prompt-type", choices=["all_direct", "all_standard"], default="all_direct",
-        help="Context prompt type (default: all_direct)",
-    )
-    parser.add_argument(
-        "--dataset-type", choices=["test", "val"], default="test",
-        help="Dataset split (default: test)",
     )
     parser.add_argument(
         "--mode", choices=["prompt", "noise", "combined"], default="prompt",
@@ -311,49 +303,42 @@ if __name__ == "__main__":
         "--noise-scale", type=float, default=0.005,
         help="Noise scale used in eval (default: 0.005)",
     )
-    parser.add_argument(
-        "--min-agreement", type=float, default=0.5,
-        help="Min mean agreement rate to include a word in filtered plots (default: 0.5)",
-    )
     args = parser.parse_args()
 
-    words = args.words or TARGET_WORDS
+    question_types = args.question_types or PROMPT_TYPES
 
     print(f"{'=' * 60}")
-    print(f"Taboo Stability Evaluation Plotting")
+    print(f"PersonaQA Stability Evaluation Plotting")
     print(f"Model: {MODEL_NAME}")
     print(f"Verbalizer: {VERBALIZER_LORA}")
     print(f"Mode: {args.mode}")
     if args.mode in ("noise", "combined"):
         print(f"Noise scale: {args.noise_scale}")
-    print(f"Prompt type: {args.prompt_type}")
-    print(f"Dataset: {args.dataset_type}")
     print(f"N samples: {args.n_samples}")
-    print(f"Words: {words}")
+    print(f"Question types: {question_types}")
     print(f"{'=' * 60}")
 
     # Load all results as (label, data) tuples
     entries: list[tuple[str, dict]] = []
-    for word in words:
-        json_path = get_taboo_json_path(
-            MODEL_NAME, VERBALIZER_LORA, word,
-            args.prompt_type, args.dataset_type, args.n_samples,
-            args.mode, args.noise_scale,
+    for pt in question_types:
+        json_path = get_personaqa_json_path(
+            MODEL_NAME, VERBALIZER_LORA, pt,
+            args.n_samples, args.mode, args.noise_scale,
         )
         data = load_results_json(json_path)
         if data is not None:
-            entries.append((word, data))
+            entries.append((pt, data))
             s = data["summary"]
-            print(f"  Loaded: {word} (acc={s['baseline_accuracy']:.3f}, "
+            print(f"  Loaded: {pt} (acc={s['baseline_accuracy']:.3f}, "
                   f"agreement={s['mean_agreement_rate']:.3f}, "
                   f"n={s['n_examples']})")
 
     if not entries:
-        print("ERROR: No results found! Check paths and run taboo_stability_eval.py first.")
+        print("ERROR: No results found! Check paths and run personaqa_stability_eval.py first.")
         exit(1)
 
-    # Print summary table (reuse from plot_stability_eval with taboo mode)
-    table_entries = [(word, "prompt", 0, data) for word, data in entries]
+    # Print summary table (reuse from plot_stability_eval)
+    table_entries = [(pt, "prompt", 0, data) for pt, data in entries]
     print_summary_table(table_entries)
 
     # Build output filename
@@ -366,25 +351,25 @@ if __name__ == "__main__":
     else:
         mode_str = f"combined{args.noise_scale}"
     output_base = (
-        f"{OUTPUT_DIR}/taboo_stability_{model_str}_{lora_str}"
-        f"_{args.prompt_type}_{args.dataset_type}_{mode_str}_n{args.n_samples}"
+        f"{OUTPUT_DIR}/personaqa_stability_{model_str}_{lora_str}"
+        f"_{mode_str}_n{args.n_samples}"
     )
 
     # Plot curves
-    title_suffix = f"{args.mode} | {args.prompt_type} | {args.dataset_type} | n={args.n_samples}"
+    title_suffix = f"{args.mode} | n={args.n_samples}"
     if args.mode in ("noise", "combined"):
         title_suffix += f" | noise={args.noise_scale}"
     plot_curves(
         entries=entries,
         output_path=f"{output_base}_curves.png",
-        title=f"Taboo Stability: {title_suffix}\n{lora_str}",
+        title=f"PersonaQA Stability: {title_suffix}\n{lora_str}",
     )
 
     # Plot tradeoff
     plot_tradeoff(
         entries=entries,
         output_path=f"{output_base}_tradeoff.png",
-        title=f"Taboo Accuracy-Coverage Tradeoff: {title_suffix}\n{lora_str}",
+        title=f"PersonaQA Accuracy-Coverage Tradeoff: {title_suffix}\n{lora_str}",
     )
 
     # Plot average only (separate clean plot)
@@ -392,39 +377,7 @@ if __name__ == "__main__":
         plot_average_only(
             entries=entries,
             output_path=f"{output_base}_average.png",
-            title=f"Taboo Stability Average: {title_suffix}\n{lora_str}",
+            title=f"PersonaQA Stability Average: {title_suffix}\n{lora_str}",
         )
-
-    # Plot filtered: only words with mean agreement >= threshold
-    filtered_entries = [
-        (word, data) for word, data in entries
-        if data["summary"]["mean_agreement_rate"] >= args.min_agreement
-    ]
-    if filtered_entries and len(filtered_entries) < len(entries):
-        excluded = [w for w, d in entries if d["summary"]["mean_agreement_rate"] < args.min_agreement]
-        print(f"\nFiltered plot: keeping {len(filtered_entries)}/{len(entries)} words "
-              f"(mean_agreement >= {args.min_agreement})")
-        print(f"  Excluded: {excluded}")
-
-        filtered_suffix = f"filtered_agree{args.min_agreement}"
-        plot_curves(
-            entries=filtered_entries,
-            output_path=f"{output_base}_{filtered_suffix}_curves.png",
-            title=f"Taboo Stability (agreement >= {args.min_agreement}): {title_suffix}\n{lora_str}",
-        )
-        plot_tradeoff(
-            entries=filtered_entries,
-            output_path=f"{output_base}_{filtered_suffix}_tradeoff.png",
-            title=f"Taboo Tradeoff (agreement >= {args.min_agreement}): {title_suffix}\n{lora_str}",
-        )
-        if len(filtered_entries) > 1:
-            plot_average_only(
-                entries=filtered_entries,
-                output_path=f"{output_base}_{filtered_suffix}_average.png",
-                title=f"Taboo Average (agreement >= {args.min_agreement}): {title_suffix}\n{lora_str}",
-            )
-    elif filtered_entries and len(filtered_entries) == len(entries):
-        print(f"\nAll {len(entries)} words have mean_agreement >= {args.min_agreement}, "
-              f"no filtered plot needed.")
 
     print("\nDone!")
