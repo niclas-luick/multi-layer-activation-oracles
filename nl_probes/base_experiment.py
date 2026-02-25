@@ -68,6 +68,7 @@ class VerbalizerEvalConfig:
     )
 
     steering_coefficient: float = 1.0
+    noise_scale: float = 0.0  # Gaussian noise std as fraction of steering vector norm (0 = disabled)
     eval_batch_size: int = 256
 
     # Use this to first generate a response from the target model using the context prompt and append it to the context prompt
@@ -504,6 +505,7 @@ def run_verbalizer(
             eval_batch_size=config.eval_batch_size,
             steering_coefficient=config.steering_coefficient,
             generation_kwargs=config.verbalizer_generation_kwargs,
+            noise_scale=config.noise_scale,
         )
 
         # Aggregate responses per combo and act_key

@@ -52,13 +52,21 @@ def get_taboo_json_path(
     prompt_type: str,
     dataset_type: str,
     n_samples: int,
+    mode: str = "prompt",
+    noise_scale: float = 0.0,
 ) -> str:
     """Construct the expected JSON path for a taboo stability result."""
     model_str = model_name.split("/")[-1]
     verbalizer_str = verbalizer_lora.split("/")[-1]
+    if mode == "prompt":
+        mode_str = "prompt"
+    elif mode == "noise":
+        mode_str = f"noise{noise_scale}"
+    else:  # combined
+        mode_str = f"combined{noise_scale}"
     return (
         f"{INPUT_DIR}/taboo_stability_{model_str}_{verbalizer_str}"
-        f"_{target_word}_{prompt_type}_{dataset_type}_n{n_samples}.json"
+        f"_{target_word}_{prompt_type}_{dataset_type}_{mode_str}_n{n_samples}.json"
     )
 
 
@@ -295,6 +303,14 @@ if __name__ == "__main__":
         "--dataset-type", choices=["test", "val"], default="test",
         help="Dataset split (default: test)",
     )
+    parser.add_argument(
+        "--mode", choices=["prompt", "noise", "combined"], default="prompt",
+        help="Stability mode (default: prompt)",
+    )
+    parser.add_argument(
+        "--noise-scale", type=float, default=0.005,
+        help="Noise scale used in eval (default: 0.005)",
+    )
     args = parser.parse_args()
 
     words = args.words or TARGET_WORDS
@@ -303,6 +319,9 @@ if __name__ == "__main__":
     print(f"Taboo Stability Evaluation Plotting")
     print(f"Model: {MODEL_NAME}")
     print(f"Verbalizer: {VERBALIZER_LORA}")
+    print(f"Mode: {args.mode}")
+    if args.mode in ("noise", "combined"):
+        print(f"Noise scale: {args.noise_scale}")
     print(f"Prompt type: {args.prompt_type}")
     print(f"Dataset: {args.dataset_type}")
     print(f"N samples: {args.n_samples}")
@@ -315,6 +334,7 @@ if __name__ == "__main__":
         json_path = get_taboo_json_path(
             MODEL_NAME, VERBALIZER_LORA, word,
             args.prompt_type, args.dataset_type, args.n_samples,
+            args.mode, args.noise_scale,
         )
         data = load_results_json(json_path)
         if data is not None:
@@ -335,13 +355,21 @@ if __name__ == "__main__":
     # Build output filename
     model_str = MODEL_NAME.split("/")[-1]
     lora_str = VERBALIZER_LORA.split("/")[-1]
+    if args.mode == "prompt":
+        mode_str = "prompt"
+    elif args.mode == "noise":
+        mode_str = f"noise{args.noise_scale}"
+    else:
+        mode_str = f"combined{args.noise_scale}"
     output_base = (
         f"{OUTPUT_DIR}/taboo_stability_{model_str}_{lora_str}"
-        f"_{args.prompt_type}_{args.dataset_type}_n{args.n_samples}"
+        f"_{args.prompt_type}_{args.dataset_type}_{mode_str}_n{args.n_samples}"
     )
 
     # Plot curves
-    title_suffix = f"{args.prompt_type} | {args.dataset_type} | n={args.n_samples}"
+    title_suffix = f"{args.mode} | {args.prompt_type} | {args.dataset_type} | n={args.n_samples}"
+    if args.mode in ("noise", "combined"):
+        title_suffix += f" | noise={args.noise_scale}"
     plot_curves(
         entries=entries,
         output_path=f"{output_base}_curves.png",

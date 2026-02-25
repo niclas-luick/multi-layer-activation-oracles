@@ -1,19 +1,24 @@
 """
 Taboo Open-Ended Stability Evaluation
 
-Measures prediction stability of the taboo word-guessing task by varying the
-verbalizer prompt (prefix + question) across N forward passes per context prompt.
+Measures prediction stability of the taboo word-guessing task across N forward
+passes per context prompt. Supports three modes:
+
+  prompt   – vary the verbalizer prompt (prefix + question paraphrases)
+  noise    – add Gaussian noise to steering vectors (fixed prompt)
+  combined – vary the prompt AND add noise simultaneously
 
 For each target LoRA (secret word), we:
 1. Load context prompts (direct or standard)
-2. Sample N (prefix, question) pairs from cross-product of paraphrases
+2. Build N VerbalizerInputInfo per context (varying prompt and/or noise)
 3. Run the verbalizer pipeline for each variant
 4. Compute plurality vote and agreement rate per context prompt
 
 Usage:
     python taboo_stability_eval.py --target-word ship --n-samples 50
-    python taboo_stability_eval.py --prompt-type all_standard --n-samples 20
-    python taboo_stability_eval.py  # all 20 words, n=50, all_direct
+    python taboo_stability_eval.py --mode noise --noise-scale 0.005
+    python taboo_stability_eval.py --mode combined --noise-scale 0.005
+    python taboo_stability_eval.py  # all 20 words, n=50, prompt mode
 """
 
 import os
@@ -94,6 +99,9 @@ VERBALIZER_QUESTION_PARAPHRASES = [
     "Extract the hidden word from this passage.",
 ]
 
+# Fixed prompt used for noise-only mode (canonical prefix + question)
+CANONICAL_PROMPT = "Answer with a single word only. What is the secret word in this text?"
+
 # ============================================================================
 # Helpers
 # ============================================================================
@@ -127,13 +135,21 @@ def get_output_path(
     prompt_type: str,
     dataset_type: str,
     n_samples: int,
+    mode: str = "prompt",
+    noise_scale: float = 0.0,
 ) -> str:
     """Construct the output JSON path."""
     model_str = model_name.split("/")[-1]
     verbalizer_str = verbalizer_lora.split("/")[-1]
+    if mode == "prompt":
+        mode_str = "prompt"
+    elif mode == "noise":
+        mode_str = f"noise{noise_scale}"
+    else:  # combined
+        mode_str = f"combined{noise_scale}"
     return (
         f"{OUTPUT_DIR}/taboo_stability_{model_str}_{verbalizer_str}"
-        f"_{target_word}_{prompt_type}_{dataset_type}_n{n_samples}.json"
+        f"_{target_word}_{prompt_type}_{dataset_type}_{mode_str}_n{n_samples}.json"
     )
 
 
@@ -162,6 +178,15 @@ if __name__ == "__main__":
         help="Dataset split (default: test)",
     )
     parser.add_argument(
+        "--mode", choices=["prompt", "noise", "combined"], default="prompt",
+        help="Stability mode: prompt (vary verbalizer), noise (Gaussian on vectors), "
+             "combined (both) (default: prompt)",
+    )
+    parser.add_argument(
+        "--noise-scale", type=float, default=0.005,
+        help="Noise std as fraction of steering vector norm (default: 0.005)",
+    )
+    parser.add_argument(
         "--force-rerun", action="store_true",
         help="Force re-run even if JSON exists",
     )
@@ -176,9 +201,12 @@ if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     torch.set_grad_enabled(False)
 
-    # Build cross-product of (prefix, question) pairs
+    # Build cross-product of (prefix, question) pairs (used for prompt/combined modes)
     all_pairs = [(p, q) for p in PREFIX_PARAPHRASES for q in VERBALIZER_QUESTION_PARAPHRASES]
     print(f"Total unique (prefix, question) pairs: {len(all_pairs)}")
+    print(f"Mode: {args.mode}")
+    if args.mode in ("noise", "combined"):
+        print(f"Noise scale: {args.noise_scale}")
     print(f"Sampling {args.n_samples} per context prompt")
 
     # Load context prompts
@@ -193,6 +221,7 @@ if __name__ == "__main__":
         json_path = get_output_path(
             MODEL_NAME, VERBALIZER_LORA, word,
             args.prompt_type, args.dataset_type, args.n_samples,
+            args.mode, args.noise_scale,
         )
         if os.path.exists(json_path) and not args.force_rerun:
             with open(json_path) as f:
@@ -229,6 +258,7 @@ if __name__ == "__main__":
         "temperature": 0.0,
         "max_new_tokens": 20,
     }
+    effective_noise = args.noise_scale if args.mode in ("noise", "combined") else 0.0
     config = base_experiment.VerbalizerEvalConfig(
         model_name=MODEL_NAME,
         layer_percents=LAYER_PERCENTS,
@@ -236,6 +266,7 @@ if __name__ == "__main__":
         verbalizer_input_types=["segment"],
         eval_batch_size=512,
         verbalizer_generation_kwargs=generation_kwargs,
+        noise_scale=effective_noise,
         segment_repeats=1,
         full_seq_repeats=1,
         segment_start_idx=SEGMENT_START,
@@ -245,6 +276,9 @@ if __name__ == "__main__":
     print(f"Taboo Stability Evaluation")
     print(f"Model: {MODEL_NAME}")
     print(f"Verbalizer: {VERBALIZER_LORA}")
+    print(f"Mode: {args.mode}")
+    if effective_noise > 0:
+        print(f"Noise scale: {effective_noise}")
     print(f"Prompt type: {args.prompt_type}")
     print(f"Dataset: {args.dataset_type}")
     print(f"N samples: {args.n_samples}")
@@ -256,6 +290,7 @@ if __name__ == "__main__":
         json_path = get_output_path(
             MODEL_NAME, VERBALIZER_LORA, target_word,
             args.prompt_type, args.dataset_type, args.n_samples,
+            args.mode, args.noise_scale,
         )
 
         print(f"\n{'=' * 60}")
@@ -270,21 +305,25 @@ if __name__ == "__main__":
         # Build VerbalizerInputInfo list: N variants per context prompt
         # We track which context prompt each info belongs to via ordering
         verbalizer_infos: list[VerbalizerInputInfo] = []
-        sampled_pairs_per_context: list[list[tuple[str, str]]] = []
+        prompt_variants_per_context: list[list[str]] = []
 
         for context_text in context_prompts:
-            # Sample N (prefix, question) pairs
-            if args.n_samples <= len(all_pairs):
-                sampled = random.sample(all_pairs, args.n_samples)
+            if args.mode in ("prompt", "combined"):
+                # Varying prompts: sample N (prefix, question) pairs
+                if args.n_samples <= len(all_pairs):
+                    sampled = random.sample(all_pairs, args.n_samples)
+                else:
+                    sampled = all_pairs[:]
+                    while len(sampled) < args.n_samples:
+                        sampled.append(random.choice(all_pairs))
+                prompts = [f"{p}{q}" for p, q in sampled]
             else:
-                sampled = all_pairs[:]
-                while len(sampled) < args.n_samples:
-                    sampled.append(random.choice(all_pairs))
+                # Noise-only: fixed canonical prompt, N copies
+                prompts = [CANONICAL_PROMPT] * args.n_samples
 
-            sampled_pairs_per_context.append(sampled)
+            prompt_variants_per_context.append(prompts)
 
-            for prefix, question in sampled:
-                verbalizer_prompt = f"{prefix}{question}"
+            for verbalizer_prompt in prompts:
                 info = VerbalizerInputInfo(
                     context_prompt=[{"role": "user", "content": context_text}],
                     verbalizer_prompt=verbalizer_prompt,
@@ -323,15 +362,13 @@ if __name__ == "__main__":
             start = ctx_idx * n_samples
             end = start + n_samples
             ctx_results = verbalizer_results[start:end]
-            sampled = sampled_pairs_per_context[ctx_idx]
+            prompt_variants = prompt_variants_per_context[ctx_idx]
 
             predictions = []
-            prompt_variants = []
-            for vr, (prefix, question) in zip(ctx_results, sampled):
+            for vr in ctx_results:
                 raw = vr.segment_responses[0] if vr.segment_responses else ""
                 pred = normalize_taboo_prediction(raw)
                 predictions.append(pred)
-                prompt_variants.append(f"{prefix}{question}")
 
             stats = _compute_plurality_vote(predictions)
             result = {
@@ -360,6 +397,8 @@ if __name__ == "__main__":
                 "verbalizer_lora": VERBALIZER_LORA,
                 "target_lora": target_lora_path,
                 "target_word": target_word,
+                "mode": args.mode,
+                "noise_scale": effective_noise,
                 "prompt_type": args.prompt_type,
                 "dataset_type": args.dataset_type,
                 "n_samples": args.n_samples,

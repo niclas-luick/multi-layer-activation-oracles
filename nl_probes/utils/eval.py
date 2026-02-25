@@ -17,6 +17,19 @@ from nl_probes.utils.dataset_utils import (
     materialize_missing_steering_vectors,
 )
 
+def add_noise_to_vectors(
+    vectors: list[torch.Tensor],
+    noise_scale: float,
+) -> list[torch.Tensor]:
+    """Add Gaussian noise to steering vectors, scaled by their norm."""
+    noisy = []
+    for vec in vectors:
+        vec_norm = vec.norm(dim=-1, keepdim=True).mean()
+        noise_std = noise_scale * vec_norm
+        noisy.append(vec + torch.randn_like(vec) * noise_std)
+    return noisy
+
+
 @dynamo.disable
 @torch.no_grad()
 def eval_features_batch(
@@ -28,9 +41,13 @@ def eval_features_batch(
     dtype: torch.dtype,
     steering_coefficient: float,
     generation_kwargs: dict,
+    noise_scale: float = 0.0,
 ) -> list[FeatureResult]:
     batch_steering_vectors = eval_batch.steering_vectors
     batch_positions = eval_batch.positions
+
+    if noise_scale > 0:
+        batch_steering_vectors = add_noise_to_vectors(batch_steering_vectors, noise_scale)
 
     # 3. Create and apply the activation steering hook
     hook_fn = get_hf_activation_steering_hook(
@@ -110,6 +127,7 @@ def run_evaluation(
     steering_coefficient: float,
     generation_kwargs: dict,
     verbose: bool = False,
+    noise_scale: float = 0.0,
 ) -> list[FeatureResult]:
     """Run evaluation and save results."""
     if lora_path is not None:
@@ -141,6 +159,7 @@ def run_evaluation(
                 dtype=dtype,
                 steering_coefficient=steering_coefficient,
                 generation_kwargs=generation_kwargs,
+                noise_scale=noise_scale,
             )
             if verbose:
                 for feature_result in feature_results:
