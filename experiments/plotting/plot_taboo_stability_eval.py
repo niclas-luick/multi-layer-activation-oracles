@@ -106,7 +106,7 @@ def plot_curves(
     title: str = "Taboo Stability: Accuracy & Coverage vs. Threshold",
 ):
     """Plot accuracy and coverage curves for multiple target words plus average."""
-    thresholds = np.linspace(0.5, 1.0, 11)
+    thresholds = np.linspace(0.0, 1.0, 21)
     cmap = plt.cm.tab20
     colors = [cmap(i / max(len(entries) - 1, 1)) for i in range(len(entries))]
 
@@ -145,7 +145,7 @@ def plot_curves(
 
     ax1.set_xlabel("Agreement Threshold", fontsize=12)
     ax1.set_ylabel("Selective Accuracy", fontsize=12)
-    ax1.set_xlim(0.45, 1.05)
+    ax1.set_xlim(-0.05, 1.05)
     ax1.legend(loc="lower left", fontsize=7)
     ax1.grid(True, alpha=0.3)
     ax1.set_title("Accuracy vs. Agreement Threshold", fontsize=12)
@@ -153,7 +153,7 @@ def plot_curves(
     ax2.set_xlabel("Agreement Threshold", fontsize=12)
     ax2.set_ylabel("Coverage (fraction of data)", fontsize=12)
     ax2.set_ylim(0, 1.05)
-    ax2.set_xlim(0.45, 1.05)
+    ax2.set_xlim(-0.05, 1.05)
     ax2.legend(loc="upper right", fontsize=7)
     ax2.grid(True, alpha=0.3)
     ax2.set_title("Coverage vs. Agreement Threshold", fontsize=12)
@@ -171,7 +171,7 @@ def plot_tradeoff(
     title: str = "Taboo Stability: Accuracy-Coverage Tradeoff",
 ):
     """Plot accuracy vs coverage (parametric in threshold) for multiple target words plus average."""
-    thresholds = np.linspace(0.5, 1.0, 11)
+    thresholds = np.linspace(0.0, 1.0, 21)
     cmap = plt.cm.tab20
     colors = [cmap(i / max(len(entries) - 1, 1)) for i in range(len(entries))]
 
@@ -215,7 +215,7 @@ def plot_average_only(
     title: str = "Taboo Stability: Average across words",
 ):
     """Plot only the average accuracy and coverage curves (no per-word lines)."""
-    thresholds = np.linspace(0.5, 1.0, 11)
+    thresholds = np.linspace(0.0, 1.0, 21)
 
     curves = _compute_all_curves(entries, thresholds)
     mean_accs, mean_covs = _mean_curve(curves)
@@ -233,7 +233,7 @@ def plot_average_only(
     ax1.axhline(y=mean_baseline, color="gray", linestyle=":", linewidth=1, label="Baseline (no filtering)")
     ax1.set_xlabel("Agreement Threshold", fontsize=12)
     ax1.set_ylabel("Selective Accuracy", fontsize=12)
-    ax1.set_xlim(0.45, 1.05)
+    ax1.set_xlim(-0.05, 1.05)
     ax1.legend(loc="lower left", fontsize=10)
     ax1.grid(True, alpha=0.3)
     ax1.set_title("Accuracy vs. Agreement Threshold", fontsize=12)
@@ -247,7 +247,7 @@ def plot_average_only(
     ax2.set_xlabel("Agreement Threshold", fontsize=12)
     ax2.set_ylabel("Coverage (fraction of data)", fontsize=12)
     ax2.set_ylim(0, 1.05)
-    ax2.set_xlim(0.45, 1.05)
+    ax2.set_xlim(-0.05, 1.05)
     ax2.legend(loc="upper right", fontsize=10)
     ax2.grid(True, alpha=0.3)
     ax2.set_title("Coverage vs. Agreement Threshold", fontsize=12)
